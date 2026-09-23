@@ -48,6 +48,8 @@ The default signing identity is ad-hoc for local development. Accessibility gran
 
 ## Implementation guidelines
 
+AI coding tools should also follow the repository-specific guidance in [AGENTS.md](./AGENTS.md).
+
 - Prefer direct code and the existing patterns. Add abstractions or dependencies only when they solve a concrete problem.
 - Keep image decoding and storage work off the main thread; keep UI updates on the main actor.
 - Preserve existing history data and file-reference behavior. Consider migration when changing SwiftData models or storage formats.
