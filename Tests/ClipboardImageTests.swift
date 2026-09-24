@@ -18,6 +18,8 @@ private final class TestFileManager: FileManager, @unchecked Sendable {
 @MainActor
 struct ClipboardImageTests {
     static func main() throws {
+        setbuf(stdout, nil)
+        UserDefaults.standard.setVolatileDomain([L10n.languageDefaultsKey: "zh-Hans"], forName: UserDefaults.argumentDomain)
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("PasteLite-tests-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
         let repository = ClipboardRepository(fileManager: TestFileManager(root: root))

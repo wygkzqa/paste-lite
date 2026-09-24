@@ -19,11 +19,21 @@
 		B0000000000000000000000A /* ClipboardRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* ClipboardRowView.swift */; };
 		B0000000000000000000000B /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* ClipboardHistoryView.swift */; };
 		B0000000000000000000000C /* ClipboardPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* ClipboardPanelController.swift */; };
-		B0000000000000000000000F /* ClipboardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000F /* ClipboardPreviewView.swift */; };
+		B0000000000000000000000F /* ClipboardItemForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000F /* ClipboardItemForm.swift */; };
 		B00000000000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000010 /* Assets.xcassets */; };
 		B00000000000000000000011 /* ClipboardImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000011 /* ClipboardImageLoader.swift */; };
 		B00000000000000000000012 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* AppIcon.icon */; };
 		B00000000000000000000013 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* AboutView.swift */; };
+		B00000000000000000000014 /* PasteImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000014 /* PasteImport.swift */; };
+		B00000000000000000000015 /* PasteImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000015 /* PasteImportService.swift */; };
+		B00000000000000000000016 /* PasteImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* PasteImportView.swift */; };
+		B00000000000000000000017 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* AppSettings.swift */; };
+		B00000000000000000000018 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* SettingsView.swift */; };
+		B00000000000000000000019 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = V00000000000000000000001 /* Localizable.strings */; };
+		B0000000000000000000001B /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001B /* LoginItemManager.swift */; };
+		B0000000000000000000001C /* ClipboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001C /* ClipboardGlass.swift */; };
+		B0000000000000000000001D /* ClipboardGroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001D /* ClipboardGroupViews.swift */; };
+		B0000000000000000000001E /* ClipboardItemContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001E /* ClipboardItemContextMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,13 +49,24 @@
 		F0000000000000000000000A /* ClipboardRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardRowView.swift; sourceTree = "<group>"; };
 		F0000000000000000000000B /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
 		F0000000000000000000000C /* ClipboardPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPanelController.swift; sourceTree = "<group>"; };
-		F0000000000000000000000F /* ClipboardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPreviewView.swift; sourceTree = "<group>"; };
+		F0000000000000000000000F /* ClipboardItemForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItemForm.swift; sourceTree = "<group>"; };
 		F00000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F00000000000000000000011 /* ClipboardImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardImageLoader.swift; sourceTree = "<group>"; };
 		F00000000000000000000012 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		F00000000000000000000013 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		F0000000000000000000000D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F0000000000000000000000E /* Paste Lite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Paste Lite.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F00000000000000000000014 /* PasteImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteImport.swift; sourceTree = "<group>"; };
+		F00000000000000000000015 /* PasteImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteImportService.swift; sourceTree = "<group>"; };
+		F00000000000000000000016 /* PasteImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteImportView.swift; sourceTree = "<group>"; };
+		F00000000000000000000017 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		F00000000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F00000000000000000000019 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0000000000000000000001A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0000000000000000000001B /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
+		F0000000000000000000001C /* ClipboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGlass.swift; sourceTree = "<group>"; };
+		F0000000000000000000001D /* ClipboardGroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGroupViews.swift; sourceTree = "<group>"; };
+		F0000000000000000000001E /* ClipboardItemContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItemContextMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +103,7 @@
 				G00000000000000000000005 /* Models */,
 				G00000000000000000000006 /* Services */,
 				G00000000000000000000007 /* UI */,
+				G00000000000000000000008 /* Resources */,
 				F00000000000000000000010 /* Assets.xcassets */,
 				F00000000000000000000012 /* AppIcon.icon */,
 				F0000000000000000000000D /* Info.plist */,
@@ -101,6 +123,7 @@
 		G00000000000000000000005 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F00000000000000000000014 /* PasteImport.swift */,
 				F00000000000000000000003 /* ClipboardItem.swift */,
 				F00000000000000000000004 /* ClipboardCapture.swift */,
 			);
@@ -110,6 +133,9 @@
 		G00000000000000000000006 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F00000000000000000000017 /* AppSettings.swift */,
+				F0000000000000000000001B /* LoginItemManager.swift */,
+				F00000000000000000000015 /* PasteImportService.swift */,
 				F00000000000000000000005 /* ClipboardRepository.swift */,
 				F00000000000000000000006 /* ClipboardMonitor.swift */,
 				F00000000000000000000007 /* GlobalHotKeyManager.swift */,
@@ -121,10 +147,15 @@
 		G00000000000000000000007 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				F0000000000000000000001C /* ClipboardGlass.swift */,
+				F0000000000000000000001D /* ClipboardGroupViews.swift */,
+				F0000000000000000000001E /* ClipboardItemContextMenu.swift */,
+				F00000000000000000000018 /* SettingsView.swift */,
+				F00000000000000000000016 /* PasteImportView.swift */,
 				F00000000000000000000009 /* ClipboardViewModel.swift */,
 				F0000000000000000000000A /* ClipboardRowView.swift */,
 				F0000000000000000000000B /* ClipboardHistoryView.swift */,
-				F0000000000000000000000F /* ClipboardPreviewView.swift */,
+				F0000000000000000000000F /* ClipboardItemForm.swift */,
 				F00000000000000000000011 /* ClipboardImageLoader.swift */,
 				F00000000000000000000013 /* AboutView.swift */,
 				F0000000000000000000000C /* ClipboardPanelController.swift */,
@@ -132,7 +163,22 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		G00000000000000000000008 /* Resources */ = {
+			isa = PBXGroup;
+			children = (V00000000000000000000001 /* Localizable.strings */,);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
+/* Begin PBXVariantGroup section */
+		V00000000000000000000001 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (F00000000000000000000019 /* en */, F0000000000000000000001A /* zh-Hans */,);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		T00000000000000000000001 /* PasteLite */ = {
@@ -169,11 +215,12 @@
 			};
 			buildConfigurationList = L00000000000000000000001 /* Build configuration list for PBXProject "PasteLite" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = zh_CN;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				zh_CN,
+				en,
+				"zh-Hans",
 			);
 			mainGroup = G00000000000000000000001;
 			productRefGroup = G00000000000000000000002 /* Products */;
@@ -192,6 +239,7 @@
 			files = (
 				B00000000000000000000010 /* Assets.xcassets in Resources */,
 				B00000000000000000000012 /* AppIcon.icon in Resources */,
+				B00000000000000000000019 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,6 +250,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B0000000000000000000001C /* ClipboardGlass.swift in Sources */,
+				B0000000000000000000001D /* ClipboardGroupViews.swift in Sources */,
+				B0000000000000000000001E /* ClipboardItemContextMenu.swift in Sources */,
+				B00000000000000000000018 /* SettingsView.swift in Sources */,
+				B00000000000000000000017 /* AppSettings.swift in Sources */,
+				B0000000000000000000001B /* LoginItemManager.swift in Sources */,
+				B00000000000000000000016 /* PasteImportView.swift in Sources */,
+				B00000000000000000000015 /* PasteImportService.swift in Sources */,
+				B00000000000000000000014 /* PasteImport.swift in Sources */,
 				B00000000000000000000001 /* PasteLiteApp.swift in Sources */,
 				B00000000000000000000002 /* AppDelegate.swift in Sources */,
 				B00000000000000000000003 /* ClipboardItem.swift in Sources */,
@@ -213,7 +270,7 @@
 				B00000000000000000000009 /* ClipboardViewModel.swift in Sources */,
 				B0000000000000000000000A /* ClipboardRowView.swift in Sources */,
 				B0000000000000000000000B /* ClipboardHistoryView.swift in Sources */,
-				B0000000000000000000000F /* ClipboardPreviewView.swift in Sources */,
+				B0000000000000000000000F /* ClipboardItemForm.swift in Sources */,
 				B00000000000000000000011 /* ClipboardImageLoader.swift in Sources */,
 				B00000000000000000000013 /* AboutView.swift in Sources */,
 				B0000000000000000000000C /* ClipboardPanelController.swift in Sources */,

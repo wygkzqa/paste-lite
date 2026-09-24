@@ -30,9 +30,9 @@ final class PasteService {
         let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
         guard NSWorkspace.shared.open(settingsURL) else {
             let alert = NSAlert()
-            alert.messageText = "无法打开系统设置"
-            alert.informativeText = "请前往“系统设置 → 隐私与安全性 → 辅助功能”，为 Paste Lite 开启权限。"
-            alert.addButton(withTitle: "好")
+            alert.messageText = L10n.tr("无法打开系统设置")
+            alert.informativeText = L10n.tr("请前往“系统设置 → 隐私与安全性 → 辅助功能”，为 Paste Lite 开启权限。")
+            alert.addButton(withTitle: L10n.tr("好"))
             NSApp.activate(ignoringOtherApps: true)
             alert.runModal()
             return

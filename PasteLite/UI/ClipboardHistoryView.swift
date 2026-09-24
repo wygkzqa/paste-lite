@@ -1,268 +1,312 @@
+import AppKit
 import SwiftUI
 
 struct ClipboardHistoryView: View {
+    @ObservedObject private var settings = AppSettings.shared
     @ObservedObject var viewModel: ClipboardViewModel
+    @ObservedObject private var repository: ClipboardRepository
+    @Environment(\.colorScheme) private var colorScheme
     @FocusState private var searchIsFocused: Bool
-    @State private var showsPreview = false
+    @State private var sheet: ClipboardSheet?
+    @State private var showsFilters = false
+    @State private var showsPermission = false
+
+    init(viewModel: ClipboardViewModel) {
+        self.viewModel = viewModel
+        repository = viewModel.repository
+    }
+
+    private var layout: ClipboardLayout { settings.clipboardLayout }
+    private var groupTitle: String {
+        switch viewModel.groupFilter {
+        case .all: L10n.tr("全部")
+        case .ungrouped: L10n.tr("未分组")
+        case .group(let id): repository.groups.first(where: { $0.id == id })?.name ?? L10n.tr("全部")
+        }
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             searchHeader
-            filterBar
-
-            if !viewModel.hasAccessibilityPermission {
-                permissionBanner
-            }
-
-            Divider()
-
-            HStack(spacing: 0) {
-                historyContent
-                    .frame(maxWidth: .infinity)
-
-                if showsPreview {
-                    Divider()
-                    if let item = viewModel.selectedItem {
-                        ClipboardPreviewView(
-                            item: item,
-                            timeLabel: viewModel.timeLabels[item.id],
-                            assetURL: viewModel.repository.assetURL(for: item),
-                            onPaste: { viewModel.pasteSelected() }
-                        )
-                        .id(item.id)
-                        .frame(width: 270)
-                    } else {
-                        Text("选择一条记录以预览")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 270)
-                    }
-                }
-            }
-
-            Divider()
+            if layout == .cards { groupTabs }
+            historyContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             footer
         }
-        .frame(width: 760, height: 560)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-                .allowsHitTesting(false)
-        }
+        .padding(12)
+        .frame(width: layout.width, height: layout.height)
+        .modifier(ClipboardGlass(cornerRadius: ClipboardGlass.panelCornerRadius, usesGradientBackground: settings.usesGradientBackground))
         .ignoresSafeArea()
-        .onChange(of: viewModel.presentationToken) {
-            DispatchQueue.main.async {
-                searchIsFocused = true
+        .sheet(item: $sheet) { destination in
+            switch destination {
+            case .edit(let item):
+                ClipboardItemForm(item: item, repository: repository,
+                    timeLabel: viewModel.timeLabel(for: item), isEditing: true, onPaste: {})
+            case .editGroup(let group):
+                ClipboardGroupEditor(repository: repository, group: group) { saved in
+                    viewModel.groupFilter = .group(saved.id)
+                }
+            case .createGroup(let ids):
+                ClipboardGroupEditor(repository: repository, group: nil, itemIDs: ids, onSave: { _ in })
+            case .deleteItems(let ids):
+                ClipboardDeleteConfirmation(repository: repository, itemIDs: ids)
+            case .error(let message):
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(message).fixedSize(horizontal: false, vertical: true)
+                    HStack { Spacer(); Button(L10n.tr("关闭")) { sheet = nil }.keyboardShortcut(.cancelAction) }
+                }.padding(20).frame(width: 340)
+            case .preview(let item):
+                ClipboardItemForm(item: item, repository: repository,
+                    timeLabel: viewModel.timeLabel(for: item), isEditing: false,
+                    onPaste: { sheet = nil; viewModel.paste(item) })
             }
         }
-        .onChange(of: viewModel.query) {
-            viewModel.selectedID = viewModel.filteredItems.first?.id
+        .onChange(of: sheet?.id) { updateOverlayState() }
+        .onChange(of: showsFilters) { updateOverlayState() }
+        .onChange(of: showsPermission) { updateOverlayState() }
+        .onChange(of: viewModel.presentationToken) {
+            sheet = nil
+            showsFilters = false
+            showsPermission = false
+            DispatchQueue.main.async { searchIsFocused = true }
         }
-        .onChange(of: viewModel.contentFilter) {
-            viewModel.selectedID = viewModel.filteredItems.first?.id
-        }
-        .onChange(of: viewModel.sourceFilter) {
-            viewModel.selectedID = viewModel.filteredItems.first?.id
-        }
+    }
+
+    private func updateOverlayState() {
+        viewModel.isPresentingOverlay = sheet != nil || showsFilters || showsPermission
     }
 
     private var searchHeader: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 19))
-                .foregroundStyle(.secondary)
-
-            TextField("搜索剪贴板历史…", text: $viewModel.query)
-                .textFieldStyle(.plain)
-                .font(.system(size: 18))
-                .focused($searchIsFocused)
-                .accessibilityLabel("搜索文本、链接、文件或来源应用")
-
-            if !viewModel.query.isEmpty {
-                Button {
-                    viewModel.query = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("清除搜索")
-            }
-
-            Text("⇧⌘V")
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 22)
-        .padding(.bottom, 16)
-    }
-
-    private var filterBar: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 3) {
-                ForEach(ContentFilter.allCases) { filter in
-                    Button {
-                        viewModel.contentFilter = filter
-                        searchIsFocused = true
-                    } label: {
-                        Text(filter.title)
-                            .font(.system(size: 12, weight: viewModel.contentFilter == filter ? .medium : .regular))
-                            .foregroundStyle(viewModel.contentFilter == filter ? .primary : .secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                Color.primary.opacity(viewModel.contentFilter == filter ? 0.07 : 0),
-                                in: RoundedRectangle(cornerRadius: 6)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(viewModel.contentFilter == filter ? .isSelected : [])
+        HStack(spacing: 8) {
+            HStack(spacing: 7) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(L10n.tr("搜索剪贴板…"), text: $viewModel.query)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .focused($searchIsFocused)
+                    .accessibilityLabel(L10n.tr("搜索标题、文本、链接、文件或来源应用"))
+                if !viewModel.query.isEmpty {
+                    Button { viewModel.query = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }.buttonStyle(.plain).help(L10n.tr("清除搜索"))
                 }
             }
+            .padding(.horizontal, 11)
+            .frame(height: 34)
+            .background(.white.opacity(colorScheme == .dark ? 0.06 : 0.2), in: Capsule())
+            .overlay { Capsule().strokeBorder(.white.opacity(colorScheme == .dark ? 0.12 : 0.4), lineWidth: 0.5).allowsHitTesting(false) }
 
-            Spacer(minLength: 12)
-
-            Picker("来源", selection: $viewModel.sourceFilter) {
-                Text("所有应用").tag("")
-                ForEach(viewModel.sourceApps, id: \.self) { app in
-                    Text(app).tag(app)
-                }
-            }
-            .pickerStyle(.menu)
-            .controlSize(.small)
-            .labelsHidden()
-            .frame(width: 130)
-
-            Button {
-                showsPreview.toggle()
-            } label: {
-                Image(systemName: "sidebar.right")
-                    .font(.system(size: 14))
-                    .foregroundStyle(showsPreview ? Color.indigo : Color.secondary)
-                    .frame(width: 30, height: 28)
-                    .background(
-                        Color.indigo.opacity(showsPreview ? 0.12 : 0),
-                        in: RoundedRectangle(cornerRadius: 6)
-                    )
+            if layout == .list { groupMenu }
+            Button { showsFilters.toggle() } label: {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .foregroundStyle(viewModel.contentFilter != .all || !viewModel.sourceFilter.isEmpty ? Color.accentColor : Color.secondary)
+                    .frame(width: 28, height: 30)
             }
             .buttonStyle(.plain)
-            .help(showsPreview ? "收起内容预览" : "展开内容预览")
-            .accessibilityLabel(showsPreview ? "收起内容预览" : "展开内容预览")
+            .accessibilityLabel(L10n.tr("筛选"))
+            .help(L10n.tr("筛选类型和来源"))
+            .popover(isPresented: $showsFilters) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(L10n.tr("筛选")).font(.headline)
+                    Picker(L10n.tr("类型"), selection: $viewModel.contentFilter) {
+                        ForEach(ContentFilter.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker(L10n.tr("来源"), selection: $viewModel.sourceFilter) {
+                        Text(L10n.tr("所有应用")).tag("")
+                        ForEach(viewModel.sourceApps, id: \.self) { Text(viewModel.sourceAppNames[$0] ?? $0).tag($0) }
+                    }
+                    Button(L10n.tr("清除筛选")) {
+                        viewModel.contentFilter = .all
+                        viewModel.sourceFilter = ""
+                    }
+                }.padding(18).frame(width: 280)
+            }
         }
-        .padding(.horizontal, 18)
-        .padding(.bottom, 14)
     }
 
-    private var permissionBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.shield")
-            Text("授予辅助功能权限后，可以直接粘贴到原应用；未授权时只会复制到剪贴板。")
-                .font(.system(size: 12))
-            Spacer()
-            Button("打开设置") {
-                viewModel.requestAccessibilityPermission()
+    private var groupMenu: some View {
+        Menu {
+            Button(L10n.tr("全部历史")) { viewModel.groupFilter = .all }
+            Button(L10n.tr("未分组")) { viewModel.groupFilter = .ungrouped }
+            Divider()
+            ForEach(repository.groups) { group in
+                Button { viewModel.groupFilter = .group(group.id) } label: {
+                    if viewModel.groupFilter == .group(group.id) { Label(group.name, systemImage: "checkmark") }
+                    else { Text(group.name) }
+                }
             }
-            .controlSize(.small)
-            .help("打开辅助功能设置，为 Paste Lite 开启权限")
+            Divider()
+            Button(L10n.tr("新建分组…")) { sheet = .editGroup(nil) }
+            if !repository.groups.isEmpty {
+                Menu(L10n.tr("管理分组")) {
+                    ForEach(repository.groups) { group in
+                        Button(group.name) { sheet = .editGroup(group) }
+                    }
+                }
+            }
+        } label: {
+            Text(groupTitle).font(.system(size: 12)).lineLimit(1).frame(maxWidth: 95)
         }
-        .foregroundStyle(.orange)
-        .padding(.horizontal, 22)
-        .padding(.bottom, 10)
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .padding(.horizontal, 9)
+        .frame(height: 30)
+        .background(.primary.opacity(0.045), in: Capsule())
+        .accessibilityLabel(L10n.tr("切换分组"))
+    }
+
+    private var groupTabs: some View {
+        HStack(spacing: 5) {
+            groupTab(L10n.tr("全部"), filter: .all)
+            ForEach(repository.groups.prefix(2)) { group in
+                groupTab(group.name, filter: .group(group.id))
+            }
+            Spacer(minLength: 4)
+            groupMenu
+            Button { sheet = .editGroup(nil) } label: {
+                Image(systemName: "plus").frame(width: 24, height: 24)
+            }.buttonStyle(.plain).accessibilityLabel(L10n.tr("新建分组…"))
+        }
+        .frame(height: 28)
+    }
+
+    private func groupTab(_ title: String, filter: ClipboardGroupFilter) -> some View {
+        Button { viewModel.groupFilter = filter } label: {
+            Text(title).font(.system(size: 12)).lineLimit(1)
+                .padding(.horizontal, 9).padding(.vertical, 5)
+                .background(.primary.opacity(viewModel.groupFilter == filter ? 0.08 : 0), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(viewModel.groupFilter == filter ? .isSelected : [])
     }
 
     @ViewBuilder
     private var historyContent: some View {
-        let items = viewModel.filteredItems
-        if items.isEmpty {
-            VStack(spacing: 12) {
-                Image(systemName: viewModel.repository.items.isEmpty ? "clipboard" : "magnifyingglass")
-                    .font(.system(size: 30, weight: .light))
-                    .foregroundStyle(.tertiary)
-                Text(viewModel.repository.items.isEmpty ? "复制的内容，会出现在这里" : "没有匹配的记录")
-                    .font(.system(size: 14, weight: .medium))
-                Text(viewModel.repository.items.isEmpty ? "文字、链接、图片和文件，随时找回。" : "试试其他关键词，或调整筛选条件。")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                if !viewModel.query.isEmpty || !viewModel.sourceFilter.isEmpty {
-                    Button("清除搜索和来源筛选") {
-                        viewModel.query = ""
-                        viewModel.sourceFilter = ""
-                    }
-                    .controlSize(.small)
+        if let error = viewModel.errorMessage ?? repository.errorMessage {
+            VStack(spacing: 10) {
+                Text(L10n.tr(error)).font(.callout).foregroundStyle(.secondary)
+                Button(L10n.tr("重试")) { viewModel.retrySearch() }
+            }
+        } else if viewModel.filteredItems.isEmpty {
+            if viewModel.isLoading { ProgressView().controlSize(.small) }
+            else {
+                VStack(spacing: 8) {
+                    Image(systemName: "clipboard").font(.system(size: 25, weight: .light)).foregroundStyle(.secondary)
+                    Text(repository.totalCount == 0 ? L10n.tr("复制的内容，会出现在这里") : L10n.tr("没有匹配的记录"))
+                        .font(.system(size: 13, weight: .medium))
+                    Text(viewModel.groupFilter == .all ? L10n.tr("试试其他关键词，或调整筛选条件。") : L10n.tr("在全部历史中选择记录，即可加入分组。"))
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                        let group = viewModel.dateGroups[item.id] ?? "新记录"
-                        VStack(alignment: .leading, spacing: 2) {
-                            if index == 0 || group != (viewModel.dateGroups[items[index - 1].id] ?? "新记录") {
-                                Text(group)
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                                    .padding(.horizontal, 12)
-                                    .padding(.top, index == 0 ? 4 : 12)
-                                    .padding(.bottom, 6)
-                            }
-
-                            ClipboardRowView(
-                                item: item,
-                                timeLabel: viewModel.timeLabels[item.id],
-                                previewURL: viewModel.repository.previewURL(for: item),
-                                quickIndex: index < 9 ? index + 1 : nil,
-                                isSelected: viewModel.selectedID == item.id
-                            )
-                            .onTapGesture(count: 2) {
-                                viewModel.select(item)
-                                viewModel.pasteSelected()
-                            }
-                            // Selection should not wait for the double-click recognizer to fail.
-                            .simultaneousGesture(TapGesture().onEnded {
-                                viewModel.select(item)
-                            })
-                        }
-                        .id(item.id)
+            ScrollViewReader { proxy in
+                ScrollView(layout == .cards ? .horizontal : .vertical) {
+                    if layout == .cards {
+                        LazyHStack(spacing: 8) { historyItems }
+                            .padding(.horizontal, 1)
+                    } else {
+                        LazyVStack(spacing: 2) { historyItems }
                     }
                 }
-                .padding(10)
+                .scrollIndicators(.never)
+                .id(layout)
+                .onReceive(viewModel.keyboardScrollRequests) { id in
+                    proxy.scrollTo(id)
+                }
             }
-            .scrollIndicators(.hidden)
+        }
+    }
+
+    private var historyItems: some View {
+        ForEach(viewModel.filteredItems) { item in
+            ClipboardRowView(item: item, timeLabel: viewModel.timeLabel(for: item),
+                previewURL: repository.previewURL(for: item), assetURL: repository.assetURL(for: item),
+                quickIndex: viewModel.quickIndex(for: item), isSelected: viewModel.selectedIDs.contains(item.id),
+                isCard: layout == .cards)
+                .onTapGesture(count: 2) {
+                    searchIsFocused = false
+                    guard NSEvent.modifierFlags.intersection([.command, .shift]).isEmpty else { return }
+                    viewModel.select(item); viewModel.pasteSelected()
+                }
+                .simultaneousGesture(TapGesture().onEnded {
+                    searchIsFocused = false
+                    viewModel.selectForClick(item, toggling: NSEvent.modifierFlags.contains(.command), extending: NSEvent.modifierFlags.contains(.shift))
+                })
+                .overlay {
+                    ClipboardItemContextMenu(
+                        onOpen: { searchIsFocused = false; viewModel.selectForContextMenu(item); viewModel.isPresentingContextMenu = true },
+                        onClose: { viewModel.isPresentingContextMenu = false },
+                        onEdit: { sheet = .edit(item) },
+                        onPreview: { sheet = .preview(item) },
+                        groups: repository.groups,
+                        selection: { viewModel.selectionForContextMenu },
+                        onSelectAll: viewModel.selectAll,
+                        onGroup: changeGroup,
+                        onNewGroup: { sheet = .createGroup($0) },
+                        onDelete: { sheet = .deleteItems($0) })
+                }
+                .id(item.id)
+                .onAppear { viewModel.loadMoreIfNeeded(item) }
         }
     }
 
     private var footer: some View {
-        HStack {
-            Text("\(viewModel.filteredItems.count) 条记录")
-            Spacer()
-            HStack(spacing: 12) {
-                shortcutHint("↑↓", title: "选择")
-                shortcutHint("↩", title: "粘贴")
-                shortcutHint("⌘1–9", title: "快速粘贴")
-                shortcutHint("esc", title: "关闭")
+        HStack(spacing: 9) {
+            Text(viewModel.isSelectingAll ? L10n.tr("正在全选…") : (viewModel.selectedIDs.count > 1 ? L10n.tr("已选 %d 条", viewModel.selectedIDs.count) : L10n.tr("%d 条记录", viewModel.resultCount)))
+                .foregroundStyle(.secondary)
+            if !viewModel.hasAccessibilityPermission {
+                Button { showsPermission.toggle() } label: {
+                    Image(systemName: "exclamationmark.shield").foregroundStyle(.orange)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.tr("辅助功能权限"))
+                .popover(isPresented: $showsPermission) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(L10n.tr("授予辅助功能权限后，可以直接粘贴到原应用；未授权时只会复制到剪贴板。"))
+                            .font(.callout)
+                        Button(L10n.tr("打开设置")) {
+                            showsPermission = false
+                            viewModel.requestAccessibilityPermission()
+                        }
+                    }.padding(18).frame(width: 290)
+                }
             }
+            Spacer(minLength: 4)
+            Text("↑↓ \(L10n.tr("选择"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
+            Button {
+                settings.clipboardLayout = layout == .list ? .cards : .list
+            } label: {
+                Label(layout == .list ? L10n.tr("切换为卡片") : L10n.tr("切换为列表"),
+                      systemImage: layout == .list ? "rectangle.split.3x1" : "list.bullet")
+                    .labelStyle(.iconOnly)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            .help(layout == .list ? L10n.tr("切换为卡片") : L10n.tr("切换为列表"))
+            Menu {
+                ForEach(repository.groups) { group in
+                    let selected = viewModel.selectionForContextMenu
+                    let count = selected.values.filter { $0.contains(group.id) }.count
+                    Button { changeGroup(group.id, viewModel.selectedIDs, count != selected.count) } label: {
+                        if count > 0 { Label(group.name, systemImage: count == selected.count ? "checkmark" : "minus") }
+                        else { Text(group.name) }
+                    }
+                }
+                if !repository.groups.isEmpty { Divider() }
+                Button(L10n.tr("新建分组…")) { sheet = .createGroup(viewModel.selectedIDs) }
+            } label: { Label(L10n.tr("分组"), systemImage: "folder.badge.plus") }
+                .menuStyle(.borderlessButton).fixedSize().disabled(viewModel.selectedIDs.isEmpty)
         }
         .font(.system(size: 11))
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 22)
-        .padding(.vertical, 12)
-        .background(Color.primary.opacity(0.025))
+        .frame(height: 24)
+        .padding(.top, 5)
+        .overlay(alignment: .top) { Rectangle().fill(.primary.opacity(0.07)).frame(height: 0.5) }
     }
 
-    private func shortcutHint(_ keys: String, title: String) -> some View {
-        HStack(spacing: 4) {
-            Text(keys)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 1)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
-            Text(title)
+    private func changeGroup(_ groupID: UUID, _ itemIDs: Set<UUID>, _ included: Bool) {
+        Task {
+            do { try await repository.setGroup(groupID, for: itemIDs, included: included) }
+            catch { sheet = .error(error.localizedDescription) }
         }
     }
 }

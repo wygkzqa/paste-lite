@@ -44,7 +44,7 @@ The default signing identity is ad-hoc for local development. Accessibility gran
 | `PasteLite/UI/` | SwiftUI views, presentation state, panel controller, and image loading |
 | `PasteLite/AppIcon.icon/` | Native application icon source |
 | `Tests/` | Standalone regression tests |
-| `docs/` | Logo preview and branding notes |
+| `docs/` | README image assets |
 
 ## Implementation guidelines
 
@@ -67,7 +67,11 @@ sh Tests/run.sh
 
 The tests use a temporary database and named pasteboards. They cover PNG/TIFF/JPEG capture, image-file filtering, search, thumbnails, previews, file paste semantics, persistence reloads, and missing-image handling. They do not modify normal history or the system clipboard, and do not validate live Accessibility authorization or automatic pasting into other apps.
 
+Import tests construct synthetic SQLite/WAL stores and compressed attachments. They cover source immutability, content mapping, original metadata, duplicate handling, persistent capacity expansion, stale previews, cancellation cleanup, and rollback after partial asset writes. Do not use a personal Paste database as a test fixture. Format compatibility is gated by verified entity hashes; changes require new synthetic cases and an explicit compatibility review.
+
 For UI changes, check the affected behavior in light and dark appearance. For paste changes, manually check both authorized automatic pasting and the copy-only fallback using disposable sample content. Do not claim a check passed if it was not run.
+
+Keep the `en.lproj` and `zh-Hans.lproj` strings in sync and check both languages, including longer English labels. `AppSettings` stores the language choice separately from history; `L10n` resolves strings at display time. Preserve content, stable filter values, and the panel's time snapshot when switching languages. Language regression tests cover fallback, preference persistence, translation placeholders, and retained presentation state using isolated data and preferences.
 
 ## Documentation and changelog
 
@@ -81,6 +85,14 @@ Keep each English/Chinese pair in sync:
 
 Put user-visible changes under **Unreleased** in both changelogs. Only add a release version and date when that release is actually published. Explain known limitations and use repository-relative links rather than machine-specific paths.
 
+Keep implementation plans, design notes, validation records, and performance reports under the ignored `.build/` directory. Only assets needed by public documentation belong in `docs/`.
+
 ## Pull requests
 
 Explain the problem, resulting behavior, and checks performed. Include screenshots for visual changes using synthetic content. Keep unrelated cleanup separate. Contributions are made under the project's [MIT License](./LICENSE).
+
+Login item tests use a fake service to cover registration, removal, pending approval, failures, and concurrent toggles without changing real login items. The app uses `SMAppService.mainApp`; manually verify system registration in an isolated, signed test app and restore its original status afterward.
+
+### Performance checks
+
+Run `sh Tests/Performance/run-model.sh` for isolated 1,000 / 10,000 / 50,000 record benchmarks. Build the native scrolling fixture with `sh Tests/Performance/build-scroll.sh`; it uses the real history view and synthetic data, never the system clipboard. Keep local reports and measurement results under the ignored `.build/performance/` directory instead of committing them. Timing and display-link samples are diagnostic measurements, not hard test thresholds or guaranteed frame rates.

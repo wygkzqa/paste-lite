@@ -89,6 +89,12 @@ final class ClipboardMonitor {
         lastChangeCount = pasteboard.changeCount
     }
 
+    func clearHistory() async throws {
+        markCurrentChangeHandled()
+        defer { markCurrentChangeHandled() }
+        try await repository.clearHistory()
+    }
+
     @objc private func checkForChanges() {
         guard pasteboard.changeCount != lastChangeCount else { return }
         lastChangeCount = pasteboard.changeCount
@@ -121,8 +127,7 @@ final class ClipboardMonitor {
             )
         }
 
-        if let imageData = pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff),
-           imageData.count <= 50 * 1_024 * 1_024 {
+        if let imageData = pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff) {
             return ClipboardCapture(
                 type: .image,
                 textContent: nil,
@@ -146,8 +151,7 @@ final class ClipboardMonitor {
             )
         }
 
-        if let text = pasteboard.string(forType: .string), !text.isEmpty,
-           text.utf8.count <= 2 * 1_024 * 1_024 {
+        if let text = pasteboard.string(forType: .string), !text.isEmpty {
             return ClipboardCapture(
                 type: .text,
                 textContent: text,

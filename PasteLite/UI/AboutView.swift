@@ -2,9 +2,17 @@ import AppKit
 import SwiftUI
 
 struct AboutView: View {
-    let icon: NSImage
-    let version: String
-    let build: String
+    @ObservedObject private var settings = AppSettings.shared
+    private let icon: NSImage
+    private let version: String
+    private let build: String
+
+    init() {
+        icon = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
+        icon.size = NSSize(width: 512, height: 512)
+        version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+    }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -12,22 +20,26 @@ struct AboutView: View {
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
-                .frame(width: 144, height: 144)
+                .frame(width: 100, height: 100)
                 .padding(.bottom, 8)
                 .accessibilityLabel("Paste Lite Logo")
 
             Text("Paste Lite")
-                .font(.system(size: 22, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
 
-            Text("版本 \(version)（\(build)）")
+            Text(L10n.tr("版本 %@（%@）", version, build))
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
+
+            Link(destination: URL(string: "https://github.com/wygkzqa/paste-lite")!) {
+                Label("GitHub", systemImage: "arrow.up.right")
+            }
+            .font(.system(size: 13))
+            .padding(.top, 8)
+            .help(L10n.tr("在默认浏览器中打开 Paste Lite 的 GitHub 仓库"))
+            .accessibilityLabel(L10n.tr("在 GitHub 上查看 Paste Lite"))
         }
-        .frame(width: 320, height: 300)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .onExitCommand {
-            NSApp.keyWindow?.performClose(nil)
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

@@ -21,8 +21,8 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
         viewModel = ClipboardViewModel(repository: repository)
 
         panel = ClipboardPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 760, height: 560),
-            styleMask: [.titled, .fullSizeContentView],
+            contentRect: NSRect(x: 0, y: 0, width: AppSettings.shared.clipboardLayout.width, height: AppSettings.shared.clipboardLayout.height),
+            styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
@@ -41,7 +41,12 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.delegate = self
-        panel.contentView = NSHostingView(rootView: ClipboardHistoryView(viewModel: viewModel))
+        let hostingView = NSHostingView(rootView: ClipboardHistoryView(viewModel: viewModel))
+        hostingView.wantsLayer = true
+        // Clip the native surface too, so glass rendering cannot expose square window corners.
+        hostingView.layer?.cornerRadius = ClipboardGlass.panelCornerRadius
+        hostingView.layer?.masksToBounds = true
+        panel.contentView = hostingView
 
         viewModel.onPaste = { [weak self] item in
             self?.paste(item)
@@ -53,7 +58,7 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
             guard let self else { return }
             self.refreshAccessibilityPermission()
             guard !self.viewModel.hasAccessibilityPermission else { return }
-            self.panel.orderOut(nil)
+            self.dismiss(reactivateTarget: false)
             self.pasteService.requestAccessibilityPermission()
         }
 
@@ -63,6 +68,8 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
             name: NSApplication.didBecomeActiveNotification,
             object: NSApp
         )
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidResignActive), name: NSApplication.didResignActiveNotification, object: NSApp)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateLayout), name: .clipboardLayoutDidChange, object: nil)
         installLocalKeyMonitor()
     }
 
@@ -76,45 +83,72 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
         }
     }
 
-    func show() {
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
-            targetApplication = frontmost
-        }
+    func showImportedHistory() {
+        viewModel.query = ""
+        viewModel.sourceFilter = ""
+        viewModel.contentFilter = .all
+        viewModel.groupFilter = .all
+        show()
+    }
 
-        viewModel.prepareForPresentation(
-            hasAccessibilityPermission: pasteService.hasAccessibilityPermission
-        )
-        positionPanel()
+    func show() {
+        if !panel.isVisible {
+            let frontmost = NSWorkspace.shared.frontmostApplication
+            if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+                targetApplication = frontmost
+            }
+
+            viewModel.prepareForPresentation(
+                hasAccessibilityPermission: pasteService.hasAccessibilityPermission
+            )
+            positionPanel()
+        }
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
+        panel.attachedSheet?.makeKeyAndOrderFront(nil)
+        panel.invalidateShadow()
     }
 
     func dismiss(reactivateTarget: Bool) {
+        viewModel.cancelPendingPaste()
         panel.orderOut(nil)
         guard reactivateTarget else { return }
         targetApplication?.activate(options: [])
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        guard !isCompletingPaste, panel.isVisible else { return }
-        panel.orderOut(nil)
+        guard !isCompletingPaste, !viewModel.isPresentingOverlay, !viewModel.isPresentingContextMenu,
+              panel.attachedSheet == nil, panel.isVisible else { return }
+        dismiss(reactivateTarget: false)
+    }
+
+    @objc private func applicationDidResignActive() {
+        // A popover may already hold key focus, so clicking another app does not make the panel resign key again.
+        guard !isCompletingPaste, panel.attachedSheet == nil else { return }
+        dismiss(reactivateTarget: false)
     }
 
     @objc private func refreshAccessibilityPermission() {
         viewModel.hasAccessibilityPermission = pasteService.hasAccessibilityPermission
     }
 
+    @objc private func updateLayout() {
+        let layout = AppSettings.shared.clipboardLayout
+        let previous = panel.frame
+        panel.setContentSize(NSSize(width: layout.width, height: layout.height))
+        panel.setFrameOrigin(NSPoint(x: previous.midX - panel.frame.width / 2, y: previous.maxY - panel.frame.height))
+        panel.invalidateShadow()
+    }
+
     private func paste(_ item: ClipboardItem) {
+        guard panel.isVisible else { return }
         guard pasteService.writeToPasteboard(item) else {
             NSSound.beep()
             return
         }
 
         isCompletingPaste = true
-        panel.orderOut(nil)
-        let target = targetApplication
-        target?.activate(options: [])
+        dismiss(reactivateTarget: true)
 
         guard pasteService.hasAccessibilityPermission else {
             isCompletingPaste = false
@@ -143,7 +177,23 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
 
     private func installLocalKeyMonitor() {
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.panel.isVisible else { return event }
+            guard let self, let window = event.window, window.isKeyWindow,
+                  window === self.panel || window.sheetParent === self.panel else { return event }
+
+            let selectsAll = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command
+                && event.charactersIgnoringModifiers?.lowercased() == "a"
+            // The menu-bar app has no standard Edit menu to dispatch this text command.
+            if selectsAll, let editor = window.firstResponder as? NSTextView {
+                editor.selectAll(nil)
+                return nil
+            }
+            guard window === self.panel, !self.viewModel.isPresentingOverlay, !self.viewModel.isPresentingContextMenu,
+                  self.panel.attachedSheet == nil else { return event }
+
+            if selectsAll {
+                self.viewModel.selectAll()
+                return nil
+            }
 
             switch Int(event.keyCode) {
             case 53: // Escape
@@ -153,10 +203,10 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
                 self.viewModel.pasteSelected()
                 return nil
             case 125: // Down
-                self.viewModel.moveSelection(by: 1)
+                self.viewModel.moveSelection(by: 1, extending: event.modifierFlags.contains(.shift))
                 return nil
             case 126: // Up
-                self.viewModel.moveSelection(by: -1)
+                self.viewModel.moveSelection(by: -1, extending: event.modifierFlags.contains(.shift))
                 return nil
             default:
                 break

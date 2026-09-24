@@ -1,4 +1,9 @@
 import Foundation
+
+struct ClipboardGroup: Identifiable, Equatable, Sendable {
+    let id: UUID
+    var name: String
+}
 import UniformTypeIdentifiers
 
 enum ClipboardContentType: String, Codable, CaseIterable, Identifiable {
@@ -11,10 +16,10 @@ enum ClipboardContentType: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .text: "文本"
-        case .url: "链接"
-        case .image: "图片"
-        case .file: "文件"
+        case .text: L10n.tr("文本")
+        case .url: L10n.tr("链接")
+        case .image: L10n.tr("图片")
+        case .file: L10n.tr("文件")
         }
     }
 
@@ -28,7 +33,7 @@ enum ClipboardContentType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct ClipboardItem: Codable, Identifiable, Equatable {
+struct ClipboardItem: Codable, Identifiable, Equatable, Sendable {
     let id: UUID
     let type: ClipboardContentType
     var textContent: String?
@@ -40,6 +45,8 @@ struct ClipboardItem: Codable, Identifiable, Equatable {
     let contentHash: String
     let createdAt: Date
     var lastCopiedAt: Date
+    var groupIDs: [UUID]? = nil
+    var customTitle: String? = nil
 
     var imageFileURL: URL? {
         guard type == .file, filePaths.count == 1, let path = filePaths.first else { return nil }
@@ -52,19 +59,30 @@ struct ClipboardItem: Codable, Identifiable, Equatable {
         type == .image || imageFileURL != nil
     }
 
+    var displaySourceAppName: String {
+        if sourceAppName == "未知应用", sourceBundleID.isEmpty { return L10n.tr("未知应用") }
+        if sourceAppName == "Paste（导入）", sourceBundleID == "com.wiheads.paste" { return L10n.tr("Paste（导入）") }
+        return sourceAppName
+    }
+
     var displayTitle: String {
+        if let customTitle, !customTitle.isEmpty { return customTitle }
+        return automaticTitle
+    }
+
+    var automaticTitle: String {
         switch type {
         case .text:
-            return textContent?.trimmingCharacters(in: .whitespacesAndNewlines).firstLine ?? "空文本"
+            return textContent?.firstLine ?? L10n.tr("空文本")
         case .url:
-            return textContent ?? "链接"
+            return textContent.map { String($0.prefix(200)) } ?? L10n.tr("链接")
         case .image:
-            return "图片"
+            return L10n.tr("图片")
         case .file:
             if filePaths.count == 1, let path = filePaths.first {
                 return URL(fileURLWithPath: path).lastPathComponent
             }
-            return "\(filePaths.count) 个文件"
+            return L10n.tr("%d 个文件", filePaths.count)
         }
     }
 
@@ -85,6 +103,7 @@ struct ClipboardItem: Codable, Identifiable, Equatable {
 
 extension String {
     fileprivate var firstLine: String {
-        components(separatedBy: .newlines).first(where: { !$0.isEmpty }) ?? self
+        let start = drop(while: { $0.isWhitespace })
+        return String(start.prefix(200).prefix(while: { !$0.isNewline }))
     }
 }

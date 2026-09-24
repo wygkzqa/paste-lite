@@ -21,16 +21,21 @@
 
 Paste Lite keeps your clipboard history within reach from the macOS menu bar. Open it with **⇧⌘V**, find something you copied, and reuse it in your current app.
 
-Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without an account, cloud sync, or telemetry. The app currently uses a Simplified Chinese interface; project documentation is available in English and Chinese.
+Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without an account, cloud sync, or telemetry. The app and project documentation are available in English and Simplified Chinese.
 
 ## Features
 
 - **Clipboard history** — save plain text, links, images, and file references; repeated content is deduplicated.
+- **Import from Paste** — scan local Paste history, review counts and capacity, then import supported records and Pinboards with original times and source apps.
 - **Quick search** — search content, filenames, and source apps, with filters for content type and application.
-- **Image previews** — browse thumbnails and expand a side panel for images, text, links, or file paths.
+- **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
 - **Keyboard access** — open history with ⇧⌘V, navigate with arrow keys, and reuse the first nine results with ⌘1–9.
 - **Return to your app** — double-click a result or press Return to copy it and attempt a paste into the previous application. Automatic pasting requires Accessibility permission.
-- **Native presentation** — a menu bar app with no Dock icon, system light/dark appearance, date groups, and time labels calculated when the panel opens.
+- **Native presentation** — a menu bar app with no Dock icon, system light/dark appearance and cached time labels based on when the panel opens.
+- **Two compact layouts** — switch between List and Cards in Settings, with native Liquid Glass on macOS 26 and translucent materials on earlier versions.
+- **Groups** — create and rename groups, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
+- **Launch at login** — an optional switch in Settings, managed by macOS Login Items.
+- **Language settings** — follow the system by default, or choose Simplified Chinese or English; changes apply immediately and persist across launches.
 - **Local storage** — history and captured images stay on disk; clipboard monitoring pauses during sleep and inactive user sessions.
 
 Single image files also appear under the image filter, while retaining their file format when copied back to the clipboard.
@@ -64,13 +69,81 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | Action | Shortcut or interaction |
 | --- | --- |
 | Open / close history | ⇧⌘V or the menu bar menu |
+| Open the main panel | Launch Paste Lite from Spotlight or Finder |
 | Select a result | Click or ↑ / ↓ |
+| Select multiple entries | ⌘-click toggles entries; ⇧-click or ⇧↑ / ⇧↓ extends a range |
+| Select all matching entries | ⌘A when focus is on history, or right-click → Select All |
+| Delete selected entries | Right-click → Delete…, then confirm |
 | Copy and attempt to paste a result | Double-click or Return |
 | Reuse one of the first nine filtered results | ⌘1–9 |
 | Close the panel | Esc |
-| Toggle the preview panel | Sidebar button next to the source filter |
+| Preview selected content | Right-click an entry → Preview |
+| Switch layout | Layout button in the footer, or Settings → General → Clipboard Layout |
+| Create or manage groups | Group menu → New Group… / Manage Groups |
+| Open settings | Menu bar → Settings… or ⌘, while Paste Lite is active |
 
-Selecting a row does not paste or automatically scroll the list. Without Accessibility permission, a paste action still copies the result to the clipboard; return to the destination app and press **⌘V** manually.
+Opening Paste Lite from Spotlight or Finder shows the main panel, including when the app is already running. Login-item launches stay in the menu bar without opening the panel.
+
+Selecting a row does not paste. Arrow-key navigation keeps the selected row visible; clicking a row does not automatically scroll the list. Without Accessibility permission, a paste action still copies the result to the clipboard; return to the destination app and press **⌘V** manually.
+
+### Layouts and groups
+
+Open **Settings… → General → Clipboard Layout** to choose **List** (default) or **Cards**. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance follows system light/dark mode and Reduce Transparency.
+
+Turn on **Gradient Background** in **General** to add a soft gradient inside either panel layout. It is off by default, applies immediately, and remembers your choice. The colors adapt to light/dark mode; Reduce Transparency uses an opaque gradient.
+
+With the gradient off, selected entries use a blue background and white text. With it on, selections retain the translucent glass highlight. This applies to both layouts.
+
+Use the group menu to create groups or open **Manage Groups** to rename or delete them. Use the **Add to Groups** context submenu or the footer’s **Groups** menu to add or remove selected entries directly. A checkmark means all selected entries belong to the group; a dash means only some do. Choosing an unchecked or mixed group adds the selection; choosing a checked group removes that membership. **New Group…** creates a group and adds the selected entries. An entry can belong to multiple groups without duplicating its content. **All History** and **Ungrouped** remain available; search and type/source filters apply within the selected group. Deleting a group removes only its memberships. Grouped entries follow the same retention and entry-count rules as other history.
+
+### Settings categories
+
+Settings uses a sidebar with **General, History, Data, and About**, with the selected options on the right. General contains language, clipboard layout, gradient background, launch at login, and a Capture section for entry size limits. History controls retention and cleanup; Data contains Paste import and clear history. About shows the app logo, version, build number, and GitHub link. The menu bar’s **About Paste Lite** opens this page in the same Settings window.
+
+### Language
+
+Open **Settings… → General → Language** and choose **System Default**, **简体中文**, or **English**. System Default uses Simplified Chinese when the system's preferred language is Chinese (including Traditional Chinese regions), and English otherwise. Switching updates the app interface immediately without restarting or changing clipboard content, file names, source app names, or history. Settings are saved automatically.
+
+### Launch at login
+
+Turn on **Settings… → General → Launch at Login** to open Paste Lite when you log in to your Mac. It is off by default. The app reads the macOS login item status and refreshes it when Settings opens or the app becomes active. If approval is needed, use **Open Login Items Settings…** to allow it; failed changes show an error and retain the system status. Install Paste Lite in Applications before enabling this.
+
+### Capture and history limits
+
+**Settings… → General → Capture** controls the maximum text and image size. An entry equal to the limit is accepted; larger entries are skipped. Changes apply to future captures and imports, without removing existing content.
+
+**Settings… → History** controls retention in days, maximum entry count, and cleanup interval in hours. Each defaults to 0: keep forever, unlimited entries, and no periodic cleanup. Startup still checks retention rules once. Changing a setting does not immediately delete entries, and history may temporarily exceed its count limit between cleanups. Cleanup uses creation date rather than last use, removes expired entries first, then keeps the newest entries within the count limit.
+
+History is queried in the database, with 200 summaries per page and full text loaded for preview or paste. Search covers all stored history, including unloaded pages. It uses substring queries, not a full-text index, so large text collections can still take longer to search.
+
+### Clear history
+
+Choose **Settings… → Data → Clear History…** and confirm to permanently remove all Paste Lite history, including grouped records, images, thumbnails, and legacy migration backups. Groups and settings are kept. The current system clipboard and original files referenced by file records are unchanged. This cannot be undone. New copies are still recorded afterward. Image cleanup failures are reported, and you can clear again to retry.
+
+### Selection and deletion
+
+⌘-click adds or removes an entry, and ⇧-click selects a continuous range. Right-clicking a selected entry keeps the multi-selection; right-clicking an unselected entry selects only that entry. ⌘A selects all results under the current search, type, source, and group filters, including unloaded pages, without loading full bodies. When a text field or editor has focus, ⌘A keeps its native text-selection behavior. Changing filters clears the previous selection.
+
+Choose **Delete…** from the context menu and confirm the entry count. Deletion removes the entries from history and all groups, and cleans up images and thumbnails that no remaining entry uses. It keeps group definitions, settings, the system clipboard, and original external files. Deletion cannot be undone. Edit and Preview are available for one selected entry.
+
+### Edit and preview entries
+
+Right-click a list entry or card to select it and open the context menu. **Edit…** and **Preview** use the same title-and-content form; Preview is read-only. Text and link entries support body editing, while images and files support title editing and retain their original content. ⌘Return saves, Return inserts a line break in text, and Esc cancels. Saving updates history only; the system clipboard changes when you copy or paste the entry.
+
+Enter up to 100 characters on one line for a new title; clear it to restore the automatic title. Existing long titles imported from Paste can be preserved when editing only the body. Titles appear in both layouts and previews and participate in full-library search. Edits preserve identity, timestamps, order, source, and groups; body changes update the search summary and content deduplication. Empty text, invalid links, text above the configured size limit, and content that duplicates another entry are rejected without discarding the draft. Recopying the edited content keeps its title.
+
+### Import from Paste
+
+1. Let Paste finish downloading the history you want, then quit Paste.
+2. Open **Settings… → Data → Import from Paste → Import…**. If needed, select the Paste data folder containing `db.sqlite` and its `.db_SUPPORT` attachments.
+3. Click **Scan data** (`扫描数据`) and review new records, duplicates, skipped items, and required capacity.
+4. Click **Import N records**. History is unlimited by default. If you configured an entry limit, choose **Increase entry limit and import all**, or import only recent records that fit the remaining count.
+
+The importer recognizes the local data structure verified against **Paste 6.0.3**; other structures are rejected. It reads a database snapshot and leaves the source database and attachments unchanged. Import runs locally without Accessibility permission, network access, or writing to the system clipboard. It does not synchronize the two apps.
+
+Text, links, PNG/TIFF/JPEG images, and accessible file references are supported. RTF is reduced to plain text; HTML requires an accompanying plain-text representation. Titles, Pinboard names (including empty boards), and record memberships are retained. For duplicate content in Paste, the most recent nonempty title is used. Imported titles are preserved in full, including those longer than the manual editor’s 100-character limit. Groups with matching names are merged case-insensitively. Content found in multiple Pinboards keeps all memberships without storing duplicate payloads. Group and item ordering, pinned status, sharing, and rich-text styles are not retained. Missing cloud content, unavailable attachments, invalid file references, and unsupported formats are counted as skipped; previews are never substituted for original images.
+
+Existing duplicates keep their IDs, timestamps, source apps, and local group memberships; missing memberships and titles are added. Existing local titles take priority. You can use **Import groups and titles** even when all records already exist or the history entry limit is full. Groups are matched by name on each import, so renaming a destination group may create a group with the original name when importing again. Import never removes existing history to make room. An increased entry limit persists across restarts. Imported entries remain subject to the configured retention period, using their original creation dates. Capture-size changes require a fresh scan. You can cancel scanning before the final save. Repeating an import adds no duplicates.
 
 ## Accessibility permission
 
@@ -83,8 +156,8 @@ Use **Open Settings** (`打开设置`) in the history panel, or go to **System S
 History is stored in `~/Library/Application Support/PasteLite/`. Files are stored as references to their original paths, not as backups; moving or deleting an original file can make that entry unavailable.
 
 - The clipboard is checked every two seconds, so very rapid consecutive copies may not all be captured.
-- History is limited to 1,000 entries and 500 MiB of recorded payload. This is not a total disk-usage cap; database overhead and thumbnails are additional.
-- Plain text is limited to 2 MiB and stored PNG images to 25 MiB each.
+- History defaults to unlimited entries and permanent retention, without a total storage quota. Capture and retention settings are saved in `history-settings.json`. Old `limits.json` quotas no longer apply; upgrading preserves existing entries.
+- Text and links default to 4 MB per entry; saved PNG images default to 100 MB. Both limits are adjustable, and 0 means unlimited. MB uses 1,024 × 1,024 bytes. File references do not copy or limit the referenced file size.
 - Clipboard entries marked concealed, transient, or automatically generated are skipped. Unmarked passwords or other sensitive text are not automatically detected.
 - Storage is local, but is not encrypted by the app. Protect it as you would other personal files.
 
