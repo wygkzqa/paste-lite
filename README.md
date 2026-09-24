@@ -29,7 +29,7 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 - **Import from Paste** — scan local Paste history, review counts and capacity, then import supported records and Pinboards with original times and source apps.
 - **Quick search** — search content, filenames, and source apps, with filters for content type and application.
 - **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
-- **Keyboard access** — open history with ⇧⌘V, navigate with arrow keys, and reuse the first nine results with ⌘1–9.
+- **Keyboard access** — open history with ⇧⌘V, navigate with arrow keys, and paste the selected item with Return.
 - **Return to your app** — double-click a result or press Return to copy it and attempt a paste into the previous application. Automatic pasting requires Accessibility permission.
 - **Native presentation** — a menu bar app with no Dock icon, system light/dark appearance and cached time labels based on when the panel opens.
 - **Two compact layouts** — switch between List and Cards in Settings, with native Liquid Glass on macOS 26 and translucent materials on earlier versions.
@@ -75,7 +75,6 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | Select all matching entries | ⌘A when focus is on history, or right-click → Select All |
 | Delete selected entries | Right-click → Delete…, then confirm |
 | Copy and attempt to paste a result | Double-click or Return |
-| Reuse one of the first nine filtered results | ⌘1–9 |
 | Close the panel | Esc |
 | Preview selected content | Right-click an entry → Preview |
 | Switch layout | Layout button in the footer, or Settings → General → Clipboard Layout |

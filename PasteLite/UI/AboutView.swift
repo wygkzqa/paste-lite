@@ -40,6 +40,7 @@ struct AboutView: View {
             .help(L10n.tr("在默认浏览器中打开 Paste Lite 的 GitHub 仓库"))
             .accessibilityLabel(L10n.tr("在 GitHub 上查看 Paste Lite"))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }

@@ -188,7 +188,7 @@ struct ClipboardHistoryView: View {
                 Button(L10n.tr("重试")) { viewModel.retrySearch() }
             }
         } else if viewModel.filteredItems.isEmpty {
-            if viewModel.isLoading { ProgressView().controlSize(.small) }
+            if viewModel.showsInitialLoading { ProgressView().controlSize(.small) }
             else {
                 VStack(spacing: 8) {
                     Image(systemName: "clipboard").font(.system(size: 25, weight: .light)).foregroundStyle(.secondary)
@@ -221,7 +221,7 @@ struct ClipboardHistoryView: View {
         ForEach(viewModel.filteredItems) { item in
             ClipboardRowView(item: item, timeLabel: viewModel.timeLabel(for: item),
                 previewURL: repository.previewURL(for: item), assetURL: repository.assetURL(for: item),
-                quickIndex: viewModel.quickIndex(for: item), isSelected: viewModel.selectedIDs.contains(item.id),
+                isSelected: viewModel.selectedIDs.contains(item.id),
                 isCard: layout == .cards)
                 .onTapGesture(count: 2) {
                     searchIsFocused = false

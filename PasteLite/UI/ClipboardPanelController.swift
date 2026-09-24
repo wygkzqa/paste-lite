@@ -212,12 +212,6 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
                 break
             }
 
-            if event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command),
-               let value = Int(event.charactersIgnoringModifiers ?? ""),
-               (1...9).contains(value) {
-                self.viewModel.pasteItem(at: value - 1)
-                return nil
-            }
             return event
         }
     }

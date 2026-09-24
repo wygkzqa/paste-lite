@@ -124,6 +124,14 @@ xcrun swiftc -parse-as-library -module-name PasteLiteSelectionTests -swift-versi
   Tests/ClipboardSelectionTests.swift -o .build/tests/clipboard-selection
 .build/tests/clipboard-selection
 
+xcrun swiftc -parse-as-library -module-name PasteLiteSearchTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
+  Tests/ClipboardSearchTests.swift -o .build/tests/clipboard-search
+.build/tests/clipboard-search
+
 xcrun swiftc -parse-as-library -module-name PasteLitePanelTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/*.swift PasteLite/UI/*.swift \

@@ -65,6 +65,8 @@ final class ClipboardViewModel: ObservableObject {
     private var filterTask: Task<Void, Never>?
     private let dateFormatter = DateFormatter()
     private var activeQuery = ClipboardQuery()
+    private var displayedQuery: ClipboardQuery?
+    private var selectionQuery = ClipboardQuery()
     private var queryGeneration = 0
     private var keyboardAdvance = 0
     private var pasteTask: Task<Void, Never>?
@@ -139,16 +141,14 @@ final class ClipboardViewModel: ObservableObject {
         if nextQuery != activeQuery {
             selectAllTask?.cancel()
             isSelectingAll = false
-            selectedIDs = []
-            selectedGroups = [:]
-            selectedID = nil
-            selectionAnchorID = nil
         }
         activeQuery = nextQuery
         fetchPage(reset: true, limit: limit)
     }
 
     func retrySearch() { Task { await repository.reload() } }
+
+    var showsInitialLoading: Bool { isLoading && displayedQuery == nil }
 
     func loadMoreIfNeeded(_ item: ClipboardItem) {
         if item.id == filteredItems.last?.id { loadNextPage() }
@@ -170,14 +170,24 @@ final class ClipboardViewModel: ObservableObject {
             do {
                 let page = try await repository.query(query, offset: offset, limit: limit)
                 guard !Task.isCancelled, generation == queryGeneration else { return }
-                if reset, !selectedIDs.isSubset(of: Set(page.items.map(\.id))) {
+                // Keep the displayed rows and highlight together until the new result is ready.
+                // Select All may already have selected IDs for this query while its page was loading.
+                if reset, selectionQuery != query {
+                    selectedIDs = []
+                    selectedGroups = [:]
+                    selectedID = nil
+                    selectionAnchorID = nil
+                    selectionQuery = query
+                } else if reset, !selectedIDs.isSubset(of: Set(page.items.map(\.id))) {
                     let matches = try await repository.selection(for: query)
                     guard !Task.isCancelled, generation == queryGeneration else { return }
                     selectedIDs.formIntersection(matches.keys)
                     selectedGroups = matches.filter { self.selectedIDs.contains($0.key) }
                 }
-                if reset { filteredItems = page.items }
-                else { filteredItems.append(contentsOf: page.items) }
+                if reset {
+                    if filteredItems != page.items { filteredItems = page.items }
+                    displayedQuery = query
+                } else { filteredItems.append(contentsOf: page.items) }
                 resultCount = page.total
                 isLoading = false
                 normalizeSelection()
@@ -211,6 +221,7 @@ final class ClipboardViewModel: ObservableObject {
         selectedIDs = Set(filteredItems.prefix(1).map(\.id))
         selectedGroups = Dictionary(uniqueKeysWithValues: filteredItems.prefix(1).map { ($0.id, Set($0.groupIDs ?? [])) })
         selectionAnchorID = selectedID
+        selectionQuery = displayedQuery ?? activeQuery
     }
 
     private func resetTimeLabels() {
@@ -218,10 +229,6 @@ final class ClipboardViewModel: ObservableObject {
         dateFormatter.locale = L10n.locale
         dateFormatter.calendar = calendar
         dateFormatter.timeZone = calendar.timeZone
-    }
-
-    func quickIndex(for item: ClipboardItem) -> Int? {
-        filteredItems.prefix(9).firstIndex(where: { $0.id == item.id }).map { $0 + 1 }
     }
 
     // Compute only displayed rows, always against the last opening time, never the scrolling time.
@@ -255,12 +262,14 @@ final class ClipboardViewModel: ObservableObject {
         selectedIDs = [item.id]
         selectedGroups = [item.id: Set(item.groupIDs ?? [])]
         selectionAnchorID = item.id
+        selectionQuery = displayedQuery ?? activeQuery
     }
 
     func selectForClick(_ item: ClipboardItem, toggling: Bool = false, extending: Bool = false) {
         keyboardAdvance = 0
         selectAllTask?.cancel()
         isSelectingAll = false
+        selectionQuery = displayedQuery ?? activeQuery
         if extending,
            let anchor = filteredItems.firstIndex(where: { $0.id == selectionAnchorID }),
            let target = filteredItems.firstIndex(where: { $0.id == item.id }) {
@@ -299,6 +308,7 @@ final class ClipboardViewModel: ObservableObject {
                 guard !Task.isCancelled else { return }
                 selectedGroups = matches
                 selectedIDs = Set(matches.keys)
+                selectionQuery = query
                 if selectedID == nil { selectedID = filteredItems.first?.id }
                 selectionAnchorID = selectedID
                 isSelectingAll = false
@@ -315,14 +325,10 @@ final class ClipboardViewModel: ObservableObject {
         paste(item)
     }
 
-    func pasteItem(at index: Int) {
-        let items = filteredItems
-        guard items.indices.contains(index) else { return }
-        paste(items[index])
-    }
-
     func paste(_ item: ClipboardItem) {
-        guard pasteTask == nil else { return }
+        guard displayedQuery == activeQuery,
+              query.trimmingCharacters(in: .whitespacesAndNewlines) == activeQuery.text,
+              pasteTask == nil else { return }
         pasteTask = Task { [weak self] in
             guard let self, !Task.isCancelled else { return }
             // A cancelled read may finish after a new presentation has started another paste.

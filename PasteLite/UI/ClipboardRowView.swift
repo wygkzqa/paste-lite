@@ -9,7 +9,6 @@ struct ClipboardRowView: View {
     let timeLabel: String?
     let previewURL: URL?
     let assetURL: URL?
-    let quickIndex: Int?
     let isSelected: Bool
     var isCard = false
     @State private var isHovered = false
@@ -70,9 +69,6 @@ struct ClipboardRowView: View {
                 metadata
             }
             Spacer(minLength: 4)
-            if let quickIndex {
-                Text("⌘\(quickIndex)").font(.system(size: 11)).foregroundStyle(secondaryForeground)
-            }
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
         .frame(height: 54)
@@ -82,13 +78,9 @@ struct ClipboardRowView: View {
         VStack(alignment: .leading, spacing: 7) {
             if item.hasImage {
                 preview.frame(height: 70)
-                    .overlay(alignment: .topTrailing) { shortcut.padding(5) }
             } else {
-                HStack {
-                    Image(systemName: item.type.systemImage).foregroundStyle(secondaryForeground)
-                    Spacer()
-                    shortcut
-                }.font(.system(size: 12))
+                Image(systemName: item.type.systemImage)
+                    .font(.system(size: 12)).foregroundStyle(secondaryForeground)
             }
             Text(item.displayTitle).font(.system(size: 12, weight: .medium)).lineLimit(1)
                 .help(item.displayTitle)
@@ -100,22 +92,6 @@ struct ClipboardRowView: View {
         }
         .padding(11)
         .frame(width: 184, height: 148, alignment: .topLeading)
-    }
-
-    private var shortcut: some View {
-        Group {
-            if let quickIndex {
-                Text("⌘\(quickIndex)").font(.system(size: 11)).foregroundStyle(secondaryForeground)
-                    .padding(.horizontal, 4).padding(.vertical, 2)
-                    .background {
-                        if usesBlueSelection {
-                            RoundedRectangle(cornerRadius: 4).fill(selectionBlue)
-                        } else {
-                            RoundedRectangle(cornerRadius: 4).fill(.regularMaterial)
-                        }
-                    }
-            }
-        }
     }
 
     private var metadata: some View {
