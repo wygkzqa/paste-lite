@@ -336,6 +336,10 @@ private final class ClipboardStorage {
         }
     }
 
+    func waitForPendingOperations(completion: @escaping () -> Void) {
+        queue.async { DispatchQueue.main.async(execute: completion) }
+    }
+
     private static let summaryProperties: [PartialKeyPath<ClipboardRecord>] = [
         \.id, \.typeRawValue, \.summaryText, \.filePathsData, \.sourceAppName,
         \.sourceBundleID, \.contentHash, \.createdAt, \.lastCopiedAt,
@@ -1131,6 +1135,7 @@ final class ClipboardRepository: ObservableObject {
     private var cleanupTimer: Timer?
     private var lastCleanup = Date()
     private var cleaning = false
+    private(set) var isPreparingToTerminate = false
 
     init(fileManager: FileManager = .default) {
         do {
@@ -1160,7 +1165,7 @@ final class ClipboardRepository: ObservableObject {
     private func scheduleCleanup() {
         cleanupTimer?.invalidate()
         cleanupTimer = nil
-        guard limits.cleanupIntervalHours > 0 else { return }
+        guard !isPreparingToTerminate, limits.cleanupIntervalHours > 0 else { return }
         cleanupTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in await self?.checkCleanup() }
         }
@@ -1180,6 +1185,7 @@ final class ClipboardRepository: ObservableObject {
 
     @discardableResult
     func cleanHistory(now: Date = Date()) async throws -> Int {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard !isClearingHistory else { return 0 }
         guard let storage else { throw PasteImportError.storage }
         let count: Int = try await withCheckedThrowingContinuation { continuation in
@@ -1190,6 +1196,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func clearHistory() async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage, isReady, !isSavingLimits, !isClearingHistory, !isDeletingItems else { throw ClipboardHistoryClearError.busy }
         isClearingHistory = true
         defer { isClearingHistory = false }
@@ -1206,6 +1213,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func updateLimits(_ limits: ClipboardLimits) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage, !isSavingLimits, !isClearingHistory else { throw PasteImportError.storage }
         isSavingLimits = true
         defer { isSavingLimits = false }
@@ -1247,6 +1255,7 @@ final class ClipboardRepository: ObservableObject {
 
     @discardableResult
     func saveGroup(id: UUID? = nil, name: String) async throws -> ClipboardGroup {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage else { throw PasteImportError.storage }
         let group: ClipboardGroup = try await withCheckedThrowingContinuation { continuation in
             storage.saveGroup(id: id, name: name) { continuation.resume(with: $0) }
@@ -1260,6 +1269,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func editItem(id: UUID, title: String, textContent: String?) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage, isReady, !isClearingHistory else { throw ClipboardHistoryClearError.busy }
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             storage.editItem(id: id, title: title, textContent: textContent) { continuation.resume(with: $0) }
@@ -1268,6 +1278,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func deleteGroup(id: UUID) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage else { throw PasteImportError.storage }
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             storage.deleteGroup(id: id) { continuation.resume(with: $0) }
@@ -1276,6 +1287,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func setGroups(_ groupIDs: Set<UUID>, for itemID: UUID) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage else { throw PasteImportError.storage }
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             storage.setGroups(groupIDs, for: itemID) { continuation.resume(with: $0) }
@@ -1284,6 +1296,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func setGroup(_ groupID: UUID, for itemIDs: Set<UUID>, included: Bool) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard !itemIDs.isEmpty else { return }
         guard let storage, isReady, !isClearingHistory, !isDeletingItems else { throw ClipboardHistoryClearError.busy }
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -1293,6 +1306,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func deleteItems(_ itemIDs: Set<UUID>) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard !itemIDs.isEmpty else { return }
         guard let storage, isReady, !isClearingHistory, !isDeletingItems, !isSavingLimits else { throw ClipboardHistoryClearError.busy }
         isDeletingItems = true
@@ -1329,7 +1343,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func record(_ capture: ClipboardCapture) {
-        guard !isClearingHistory else { return }
+        guard !isPreparingToTerminate, !isClearingHistory else { return }
         storage?.record(capture) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -1353,6 +1367,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func importBatch(_ batch: PasteImportBatch, preview: PasteImportPreview, expand: Bool) async throws -> PasteImportResult {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
         guard let storage, !isSavingLimits, !isClearingHistory, !isDeletingItems else { throw PasteImportError.storage }
         isSavingLimits = true
         defer { isSavingLimits = false }
@@ -1365,6 +1380,7 @@ final class ClipboardRepository: ObservableObject {
     }
 
     func markUsed(_ item: ClipboardItem) {
+        guard !isPreparingToTerminate else { return }
         storage?.markUsed(id: item.id, at: Date()) { [weak self] error in
             guard let self else { return }
             if error != nil { self.errorMessage = "无法保存剪贴板记录。" }
@@ -1374,4 +1390,15 @@ final class ClipboardRepository: ObservableObject {
 
     func assetURL(for item: ClipboardItem) -> URL? { storage?.assetURL(for: item) }
     func previewURL(for item: ClipboardItem) -> URL? { storage?.previewURL(for: item) }
+
+    func prepareForTermination() async {
+        isPreparingToTerminate = true
+        cleanupTimer?.invalidate()
+        cleanupTimer = nil
+        guard let storage else { return }
+        // All writes use the storage queue. Stop accepting new writes before draining it.
+        await withCheckedContinuation { continuation in
+            storage.waitForPendingOperations { continuation.resume() }
+        }
+    }
 }

@@ -59,6 +59,14 @@ Single image files also appear under the image filter, while retaining their fil
 
 The release includes `SHA256SUMS.txt`. To check the download, place both files in the same folder and run `shasum -a 256 -c SHA256SUMS.txt` there. Validation covers Apple silicon and the Intel build under Rosetta; physical Intel hardware has not been verified.
 
+### Online updates (unreleased)
+
+In builds configured for online updates, use **Check for Updates…** in the menu bar or **Settings → About**. Review the release notes, download the update, then choose **Install and Relaunch**. Finish and close editing or import windows first. Cancelling a prepared update keeps the current version. History, groups and settings remain in place; normal retention rules still apply after restarting.
+
+**Automatically check for updates** is off by default. When enabled, Sparkle checks about once a day and shows availability in the menu and About page without stealing focus. Downloads and installation require your action. Errors leave the current app available, and **Downloads** opens the GitHub release page.
+
+Version 1.0.0 does not include the updater: install a version containing it manually once. The update signing key and first signed feed must be configured before production online updates become available. Source builds without that key show an explicit unavailable message. Updating does not resolve the known Accessibility authorization issue.
+
 ### Build from source
 
 Download or clone this repository, then run the following from its root directory:
@@ -174,6 +182,7 @@ History is stored in `~/Library/Application Support/PasteLite/`. Files are store
 - Text and links default to 4 MB per entry; saved PNG images default to 100 MB. Both limits are adjustable, and 0 means unlimited. MB uses 1,024 × 1,024 bytes. File references do not copy or limit the referenced file size.
 - Clipboard entries marked concealed, transient, or automatically generated are skipped. Unmarked passwords or other sensitive text are not automatically detected.
 - Storage is local, but is not encrypted by the app. Protect it as you would other personal files.
+- Online update checks and downloads connect to GitHub and its download infrastructure. These requests do not include clipboard content. System profiling is disabled; GitHub still receives ordinary network request metadata. The updater uses [Sparkle](https://sparkle-project.org/); its [license notices](./PasteLite/Resources/Sparkle-LICENSE.txt) are bundled with the app.
 
 ## Contributing
 

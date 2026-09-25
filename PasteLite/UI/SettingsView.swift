@@ -32,6 +32,7 @@ struct SettingsView: View {
     @StateObject private var loginItem = LoginItemManager()
     @ObservedObject var repository: ClipboardRepository
     @ObservedObject var navigation: SettingsNavigation
+    @ObservedObject var updates: AppUpdateManager
     let onImport: () -> Void
     let onClearHistory: () async throws -> Void
     @State private var confirmsClearHistory = false
@@ -71,7 +72,7 @@ struct SettingsView: View {
                     case .general: Form { generalSettings }
                     case .history: Form { historySettings }
                     case .data: Form { dataSettings }
-                    case .about: AboutView()
+                    case .about: AboutView(updates: updates)
                     }
                 }
                 .formStyle(.grouped)

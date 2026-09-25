@@ -19,8 +19,9 @@ jobs:
   draft:
     name: Prepare release draft
     needs: verify
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    runs-on: macos-26
+    timeout-minutes: 20
+    environment: release
     permissions:
       contents: write
     steps:
@@ -36,7 +37,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          (cd .build/package && sha256sum --check SHA256SUMS.txt)
+          (cd .build/package && shasum -a 256 -c SHA256SUMS.txt)
           python3 - <<'PY'
           import os
           import re
@@ -75,6 +76,58 @@ jobs:
       - name: Verify release commit is on main
         if: github.event_name == 'push'
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Resolve pinned update tools
+        if: github.event_name == 'push'
+        run: |
+          xcodebuild -resolvePackageDependencies -project PasteLite.xcodeproj -scheme PasteLite \
+            -clonedSourcePackagesDirPath .build/SourcePackages -onlyUsePackageVersionsFromResolvedFile
+      - name: Locate previous stable update feed
+        if: github.event_name == 'push'
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          INITIALIZE_FROM: ${{ vars.SPARKLE_INITIALIZE_FROM }}
+        run: |
+          # Network errors and missing releases are errors, never an implicit bootstrap.
+          gh api "repos/$GH_REPO/releases/latest" > .build/previous-release.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          release = json.loads(Path('.build/previous-release.json').read_text())
+          if release['draft'] or release['prerelease']:
+              raise SystemExit('Expected a published stable release.')
+          has_feed = any(asset['name'] == 'appcast.xml' for asset in release['assets'])
+          if not has_feed and release['tag_name'] != os.environ.get('INITIALIZE_FROM'):
+              raise SystemExit('Previous appcast is missing. First setup requires SPARKLE_INITIALIZE_FROM to match the legacy release tag.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"has_feed={str(has_feed).lower()}\n")
+              output.write(f"tag={release['tag_name']}\n")
+          PY
+      - name: Download previous appcast
+        if: github.event_name == 'push' && steps.previous.outputs.has_feed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREVIOUS_TAG: ${{ steps.previous.outputs.tag }}
+        run: gh release download "$PREVIOUS_TAG" --pattern appcast.xml --dir .build/previous
+      - name: Sign and verify online update
+        if: github.event_name == 'push'
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          HAS_PREVIOUS_FEED: ${{ steps.previous.outputs.has_feed }}
+        run: |
+          if [ "$HAS_PREVIOUS_FEED" = true ]; then
+            set -- --previous-appcast .build/previous/appcast.xml
+          else
+            set -- --initialize
+          fi
+          python3 scripts/prepare-update.py --package-directory .build/package \
+            --sparkle-bin .build/SourcePackages/artifacts/sparkle/Sparkle/bin \
+            --repository "$GH_REPO" --tag "$RELEASE_TAG" "$@"
       - name: Create draft and upload assets
         if: github.event_name == 'push'
         env:
@@ -85,11 +138,11 @@ jobs:
           # Fails rather than modifying any existing draft or published release.
           gh release create "$RELEASE_TAG" --verify-tag --draft \
             --title "Paste Lite $RELEASE_TAG" --notes-file .build/release-notes.md \
-            .build/package/*.dmg .build/package/SHA256SUMS.txt
+            .build/package/*.dmg .build/package/appcast.xml .build/package/SHA256SUMS.txt
           gh release download "$RELEASE_TAG" --dir .build/uploaded \
-            --pattern '*.dmg' --pattern SHA256SUMS.txt
+            --pattern '*.dmg' --pattern appcast.xml --pattern SHA256SUMS.txt
           cmp .build/package/SHA256SUMS.txt .build/uploaded/SHA256SUMS.txt
-          (cd .build/uploaded && sha256sum --check SHA256SUMS.txt)
+          (cd .build/uploaded && shasum -a 256 -c SHA256SUMS.txt)
       - name: Summarize result
         env:
           RELEASE_TAG: ${{ github.ref_name }}

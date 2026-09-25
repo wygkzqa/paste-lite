@@ -34,6 +34,10 @@
 		B0000000000000000000001C /* ClipboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001C /* ClipboardGlass.swift */; };
 		B0000000000000000000001D /* ClipboardGroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001D /* ClipboardGroupViews.swift */; };
 		B0000000000000000000001E /* ClipboardItemContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001E /* ClipboardItemContextMenu.swift */; };
+		B0000000000000000000001F /* AppUpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001F /* AppUpdateManager.swift */; };
+		B00000000000000000000020 /* AppUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000020 /* AppUpdateView.swift */; };
+		B00000000000000000000021 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D00000000000000000000001 /* Sparkle */; };
+		B00000000000000000000022 /* Sparkle-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* Sparkle-LICENSE.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +71,9 @@
 		F0000000000000000000001C /* ClipboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGlass.swift; sourceTree = "<group>"; };
 		F0000000000000000000001D /* ClipboardGroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGroupViews.swift; sourceTree = "<group>"; };
 		F0000000000000000000001E /* ClipboardItemContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItemContextMenu.swift; sourceTree = "<group>"; };
+		F0000000000000000000001F /* AppUpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateManager.swift; sourceTree = "<group>"; };
+		F00000000000000000000020 /* AppUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateView.swift; sourceTree = "<group>"; };
+		F00000000000000000000022 /* Sparkle-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Sparkle-LICENSE.txt"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +81,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B00000000000000000000021 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000017 /* AppSettings.swift */,
+				F0000000000000000000001F /* AppUpdateManager.swift */,
 				F0000000000000000000001B /* LoginItemManager.swift */,
 				F00000000000000000000015 /* PasteImportService.swift */,
 				F00000000000000000000005 /* ClipboardRepository.swift */,
@@ -158,6 +167,7 @@
 				F0000000000000000000000F /* ClipboardItemForm.swift */,
 				F00000000000000000000011 /* ClipboardImageLoader.swift */,
 				F00000000000000000000013 /* AboutView.swift */,
+				F00000000000000000000020 /* AppUpdateView.swift */,
 				F0000000000000000000000C /* ClipboardPanelController.swift */,
 			);
 			path = UI;
@@ -165,7 +175,7 @@
 		};
 		G00000000000000000000008 /* Resources */ = {
 			isa = PBXGroup;
-			children = (V00000000000000000000001 /* Localizable.strings */,);
+			children = (V00000000000000000000001 /* Localizable.strings */, F00000000000000000000022 /* Sparkle-LICENSE.txt */,);
 			path = Resources;
 			sourceTree = "<group>";
 		};
@@ -194,6 +204,7 @@
 			dependencies = (
 			);
 			name = PasteLite;
+			packageProductDependencies = (D00000000000000000000001 /* Sparkle */,);
 			productName = PasteLite;
 			productReference = F0000000000000000000000E /* Paste Lite.app */;
 			productType = "com.apple.product-type.application";
@@ -224,6 +235,7 @@
 			);
 			mainGroup = G00000000000000000000001;
 			productRefGroup = G00000000000000000000002 /* Products */;
+			packageReferences = (D00000000000000000000002 /* Sparkle */,);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -238,6 +250,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B00000000000000000000010 /* Assets.xcassets in Resources */,
+				B00000000000000000000022 /* Sparkle-LICENSE.txt in Resources */,
 				B00000000000000000000012 /* AppIcon.icon in Resources */,
 				B00000000000000000000019 /* Localizable.strings in Resources */,
 			);
@@ -261,6 +274,8 @@
 				B00000000000000000000014 /* PasteImport.swift in Sources */,
 				B00000000000000000000001 /* PasteLiteApp.swift in Sources */,
 				B00000000000000000000002 /* AppDelegate.swift in Sources */,
+				B00000000000000000000020 /* AppUpdateView.swift in Sources */,
+				B0000000000000000000001F /* AppUpdateManager.swift in Sources */,
 				B00000000000000000000003 /* ClipboardItem.swift in Sources */,
 				B00000000000000000000004 /* ClipboardCapture.swift in Sources */,
 				B00000000000000000000005 /* ClipboardRepository.swift in Sources */,
@@ -345,6 +360,8 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME)";
 				PRODUCT_NAME = "Paste Lite";
 				SUPPORTED_PLATFORMS = macosx;
+				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_FEED_URL = "https://github.com/wygkzqa/paste-lite/releases/latest/download/appcast.xml";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = minimal;
 				SWIFT_VERSION = 5.0;
@@ -374,6 +391,8 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME)";
 				PRODUCT_NAME = "Paste Lite";
 				SUPPORTED_PLATFORMS = macosx;
+				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_FEED_URL = "https://github.com/wygkzqa/paste-lite/releases/latest/download/appcast.xml";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = minimal;
 				SWIFT_VERSION = 5.0;
@@ -381,6 +400,22 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D00000000000000000000002 /* Sparkle */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {kind = exactVersion; version = 2.10.0;};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D00000000000000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D00000000000000000000002 /* Sparkle */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCConfigurationList section */
 		L00000000000000000000001 /* Build configuration list for PBXProject "PasteLite" */ = {

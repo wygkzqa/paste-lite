@@ -1,9 +1,10 @@
 import AppKit
 import Carbon.HIToolbox
+import Combine
 import SwiftUI
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private var repository: ClipboardRepository!
     private var monitor: ClipboardMonitor!
     private var pasteService: PasteService!
@@ -13,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private let settingsNavigation = SettingsNavigation()
     private var importWindowController: PasteImportWindowController?
+    private let updates = AppUpdateManager()
+    private var updateSubscription: AnyCancellable?
+    private var isWaitingToTerminate = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -27,6 +31,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         configureStatusItem()
+        updates.installationBlockReason = { [weak self] in self?.updateInstallationBlockReason() }
+        updateSubscription = updates.$availableVersion.sink { [weak self] version in
+            self?.statusItem.menu?.items.first(where: { $0.action == #selector(AppDelegate.checkForUpdates) })?.title =
+                version.map { L10n.tr("发现新版本 %@…", $0) } ?? L10n.tr("检查更新…")
+        }
         configureHotKey()
         monitor.start()
         Task.detached(priority: .utility) { PasteImportService.removeExpiredTemporaryFiles() }
@@ -75,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             window.title = L10n.tr("设置")
             window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: SettingsView(repository: repository, navigation: settingsNavigation, onImport: { [weak self] in
+            window.contentView = NSHostingView(rootView: SettingsView(repository: repository, navigation: settingsNavigation, updates: updates, onImport: { [weak self] in
                 self?.showImport()
             }, onClearHistory: { [weak self] in
                 guard let self else { throw ClipboardHistoryClearError.failed }
@@ -106,7 +115,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        importWindowController?.viewModel.isSaving == true || repository.isClearingHistory || repository.isDeletingItems ? .terminateCancel : .terminateNow
+        if isWaitingToTerminate { return .terminateLater }
+        guard let repository else { return .terminateNow }
+        if !updates.installationRequested, updates.phase != .idle && updates.phase != .message {
+            if updates.canClose {
+                updates.cancelBeforeTermination { NSApp.terminate(nil) }
+            } else {
+                updates.showUpdateInFocus()
+            }
+            return .terminateCancel
+        }
+        if updates.installationRequested, updateInstallationBlockReason() != nil { return .terminateCancel }
+        if importWindowController?.viewModel.isSaving == true || repository.isSavingLimits || repository.isClearingHistory || repository.isDeletingItems {
+            return .terminateCancel
+        }
+        isWaitingToTerminate = true
+        monitor.stop()
+        hotKeyManager.unregister()
+        Task {
+            await repository.prepareForTermination()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+
+    private func updateInstallationBlockReason() -> String? {
+        if panelController?.hasAttachedSheet == true || importWindowController?.window?.isVisible == true || settingsWindow?.attachedSheet != nil {
+            return "请先完成并关闭编辑、预览或导入窗口，再安装更新。"
+        }
+        if repository?.isReady != true || repository.isSavingLimits || repository.isClearingHistory || repository.isDeletingItems {
+            return "正在处理数据，请稍后再安装更新。"
+        }
+        return nil
+    }
+
+    @objc private func checkForUpdates() { updates.checkForUpdates() }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        menuItem.action != #selector(checkForUpdates) || updates.canOpenUpdate
     }
 
     @objc private func showAbout() {
@@ -155,6 +201,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         aboutItem.target = self
         menu.addItem(aboutItem)
+
+        let updateItem = NSMenuItem(
+            title: updates.availableVersion.map { L10n.tr("发现新版本 %@…", $0) } ?? L10n.tr("检查更新…"),
+            action: #selector(checkForUpdates), keyEquivalent: ""
+        )
+        updateItem.target = self
+        menu.addItem(updateItem)
 
         let quitItem = NSMenuItem(
             title: L10n.tr("退出"),
