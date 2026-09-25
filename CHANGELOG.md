@@ -6,6 +6,11 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Features
+
+- Add in-app update checks from the menu and About page, optional daily background checks, localized update windows, signed downloads, and user-confirmed installation and relaunch. Production availability requires an update signing key and a published signed feed; 1.0.0 users must install an updater-enabled version manually once.
+- Preserve pending history writes before quitting and prevent update restarts while editors or data operations are active. Cancelling a prepared update cancels installation on quit.
+
 ### Build and release
 
 - Add GitHub Actions checks on Apple Silicon and Intel, Universal DMG artifacts, and tag-triggered Release drafts with bilingual notes and verified checksums. Manual runs build without publishing.

@@ -243,3 +243,33 @@
 "已选 %d 条" = "Selected: %d";
 "全选" = "Select All";
 "正在全选…" = "Selecting…";
+
+// Software updates
+"软件更新" = "Software Update";
+"检查更新…" = "Check for Updates…";
+"发现新版本 %@…" = "Version %@ Available…";
+"发现新版本 %@" = "Version %@ Available";
+"自动检查更新" = "Automatically check for updates";
+"检查时会连接 GitHub。新版本需你确认后安装。" = "Update checks connect to GitHub. You choose when to install new versions.";
+"此构建尚未配置在线更新，请从 GitHub 下载新版本。" = "Online updates are not configured for this build. Download new versions from GitHub.";
+"正在检查更新…" = "Checking for Updates…";
+"正在下载更新…" = "Downloading Update…";
+"正在验证并准备更新…" = "Verifying and Preparing Update…";
+"更新已准备好" = "Update Ready to Install";
+"正在等待应用退出…" = "Waiting for Paste Lite to Quit…";
+"此版本需手动下载，请在 GitHub 查看说明。" = "This version requires a manual download. See GitHub for instructions.";
+"可在 GitHub 查看完整更新说明。" = "Full release notes are available on GitHub.";
+"无法读取更新说明，可在 GitHub 查看。" = "Release notes could not be loaded. You can read them on GitHub.";
+"新版本不支持当前 macOS 或 Mac 机型，可在 GitHub 查看系统要求。" = "The new version does not support this macOS version or Mac. See GitHub for system requirements.";
+"当前已是最新可用版本。" = "You are running the latest available version.";
+"更新未完成。请检查网络和安装权限后重试，或从 GitHub 手动下载。" = "The update could not be completed. Check your network and installation permissions, then try again or download from GitHub.";
+"安装将退出并重新打开 Paste Lite。请先完成正在进行的编辑。" = "Installation will quit and reopen Paste Lite. Finish any ongoing edits first.";
+"如果退出被阻止，请先关闭编辑窗口或等待数据处理完成，再重试。" = "If quitting was blocked, close editing windows or wait for data processing to finish, then try again.";
+"请先完成并关闭编辑、预览或导入窗口，再安装更新。" = "Finish and close editing, preview, or import windows before installing the update.";
+"正在处理数据，请稍后再安装更新。" = "Data is being processed. Try installing the update again shortly.";
+"错误详情" = "Error Details";
+"查看下载页面" = "Downloads";
+"跳过此版本" = "Skip This Version";
+"下载更新" = "Download Update";
+"安装并重新启动" = "Install and Relaunch";
+"重试退出" = "Retry Quitting";

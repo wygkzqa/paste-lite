@@ -74,6 +74,7 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
     }
 
     var isVisible: Bool { panel.isVisible }
+    var hasAttachedSheet: Bool { panel.attachedSheet != nil }
 
     func toggle() {
         if panel.isVisible {

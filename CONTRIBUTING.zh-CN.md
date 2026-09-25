@@ -12,7 +12,7 @@
 
 ## 开发环境
 
-需要配备 Xcode 26 或更新版本的 Mac。应用支持 macOS 14 及以上版本，没有第三方包依赖。
+需要配备 Xcode 26 或更新版本的 Mac。应用支持 macOS 14 及以上版本，Xcode 通过 Swift Package Manager 解析固定版本的 Sparkle 更新框架。
 
 1. Fork 并克隆仓库。
 2. 为本次修改创建分支。
@@ -46,11 +46,38 @@ xcodebuild \
 
 [CI](./.github/workflows/ci.yml) 在每个 PR 和 `main` 推送时，使用标准 Apple Silicon 与 Intel macOS 云端机器运行隔离回归测试，固定 Xcode 26.6，并复用现有打包脚本构建 Universal DMG。在工作流运行详情的 **Artifacts** 中下载 `paste-lite-universal`；临时产物保留 7 天。云端测试不能替代实际安装、辅助功能授权和跨应用粘贴检查。
 
-[Release](./.github/workflows/release.yml) 在推送 `v*` 标签时复用上述检查，要求标签格式为稳定版本 `vX.Y.Z`、与应用版本一致、提交已合入 `main`，且两份更新日志均包含该版本说明。随后创建带有 DMG、校验文件和双语说明的 Release **草稿**，并重新下载校验已上传附件。检查最终 DMG 和说明后，再正式发布并设为 Latest。不会覆盖已有 Release；若创建草稿后上传失败，先检查并仅删除该未完成草稿，再重新运行，保持原标签不变。
+[Release](./.github/workflows/release.yml) 在推送 `v*` 标签时复用上述检查，要求标签格式为稳定版本 `vX.Y.Z`、与应用版本一致、提交已合入 `main`，且两份更新日志均包含该版本说明。随后创建带有 DMG、已签名的 `appcast.xml`、校验文件和双语说明的 Release **草稿**，并重新下载校验已上传附件。检查最终 DMG 和说明后，再正式发布并设为 Latest。不会覆盖已有 Release；若创建草稿后上传失败，先检查并仅删除该未完成草稿，再重新运行，保持原标签不变。
 
 只需要构建时，打开 **Actions → Release → Run workflow**，选择 `main` 并运行。它会验证安装包和说明，上传相同的临时产物，但不会创建标签或 Release，也不会递增应用版本，可用于验证云端流水线。
 
-发布任务单独使用具有 `contents: write` 的 `GITHUB_TOKEN`；PR 检查只有仓库读取权限，不接收发布凭证。当前临时签名构建不需要个人 Token 或签名证书。版本标签创建应限制给维护者，已发布标签禁止修改和删除，`main` 要求通过 PR 及两项 CI 检查后合并。这些限制需在仓库 Settings 中配置，工作流文件本身不会设置仓库规则。任何受 Git 管理的文件如需修正，仍先通过另一个 PR 合并，再确定最终发布提交。
+发布任务单独使用具有 `contents: write` 的 `GITHUB_TOKEN`；PR 检查只有仓库读取权限，不接收发布凭证。当前临时签名构建不需要个人 Token 或 Apple 签名证书；发布在线更新需要另外配置下文的 Sparkle 签名密钥。版本标签创建应限制给维护者，已发布标签禁止修改和删除，`main` 要求通过 PR 及两项 CI 检查后合并。这些限制需在仓库 Settings 中配置，工作流文件本身不会设置仓库规则。任何受 Git 管理的文件如需修正，仍先通过另一个 PR 合并，再确定最终发布提交。
+
+### 配置在线更新发布
+
+Sparkle 2.10.0 通过 Swift Package Manager 与 `Package.resolved` 固定版本。Xcode 会解析框架及其 `bin/generate_keys`、`bin/sign_update`、`bin/generate_appcast` 工具，应用内包含上游许可证。启用更新时不要更改模块名、应用身份或数据目录。
+
+首个带更新器的版本发布前：
+
+1. 使用 Sparkle 的 `generate_keys --account paste-lite-updates` 生成专用 Ed25519 密钥并安全备份私钥。将输出的**公钥**填入仓库 Actions 变量 `SPARKLE_PUBLIC_ED_KEY`；普通构建可不配置，此时会明确禁用在线更新。
+2. 创建受保护的 Actions environment，名称为 `release`，限制部署引用为版本标签（手动构建时可允许 `main`），并设置审核者。将导出的私钥种子保存为该环境的 `SPARKLE_PRIVATE_KEY` secret。遵循官方[密钥生成与备份说明](https://sparkle-project.org/documentation/#3-segue-for-security-concerns)，不提交私钥或通过命令行参数传入。临时导出文件仅放在已忽略的位置，限制文件权限，配置 Secret 后删除。
+3. 仅首次建立清单时，将仓库变量 `SPARKLE_INITIALIZE_FROM` 设为没有 appcast 的上一已发布旧版本标签，目前为 `v1.0.0`；首份签名清单发布后删除该变量。其他情况下，清单缺失与网络错误都必须中止发布。
+4. 沿用发布 PR 与标签流程，CI 将配置的公钥嵌入应用。macOS 发布任务校验最终 DMG，用包内公钥验证签名，保留上一份签名清单中的版本，拒绝未递增构建号，再签署新清单。只有标签签名步骤接收私钥；PR 与手动构建不签署或发布在线更新。
+5. 核对草稿后发布并设为 Latest。以后每个 Latest 都必须包含 `appcast.xml`，固定地址为 `https://github.com/wygkzqa/paste-lite/releases/latest/download/appcast.xml`；清单内 DMG 地址使用明确的版本标签。不修改已发布签名附件，也不将缺少清单的旧版设为 Latest。
+
+本地构建带公钥的包可运行 `SPARKLE_PUBLIC_ED_KEY='<公钥>' sh scripts/package-release.sh`。本地清单准备参数见 `scripts/prepare-update.py --help`，它要求环境变量 `SPARKLE_PRIVATE_KEY`，并显式指定上一清单或初始化选项；不要对已发布包执行。当前流程要求使用相同签名密钥延续清单，密钥轮换需另行设计迁移。Developer ID 签名与公证仍与 Sparkle 更新签名相互独立。
+
+### 更新集成测试
+
+解析依赖后，在具有图形会话的 Mac 上运行隔离升级测试：
+
+```bash
+xcodebuild -resolvePackageDependencies -project PasteLite.xcodeproj -scheme PasteLite \
+  -clonedSourcePackagesDirPath .build/SourcePackages -onlyUsePackageVersionsFromResolvedFile
+python3 Tests/run-updates.py \
+  --sparkle-directory .build/SourcePackages/artifacts/sparkle/Sparkle
+```
+
+测试使用 `UPDATE_TESTING` 编译独立身份的原生应用，在 Keychain 之外生成临时密钥，通过本机地址提供签名清单，验证真实 DMG 替换重启、偏好保留、取消、准备好更新后退出、无新版本、安装包篡改和清单篡改，结束后清理测试应用、偏好和权限记录。正式 target 不得启用 `UPDATE_TESTING`；仅该测试构建允许本机 HTTP 清单，普通构建要求 HTTPS。主回归测试还验证退出时等待已排队写入、重新打开后数据完整。真实界面交互、辅助功能权限与最低系统版本仍需对应环境验证。
 
 ## 项目结构
 

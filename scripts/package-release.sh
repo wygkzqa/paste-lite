@@ -5,7 +5,8 @@ cd "$(dirname "$0")/.."
 # Build both slices regardless of the Mac running this script.
 xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
   -configuration Release -destination 'generic/platform=macOS' \
-  -derivedDataPath .build/release-build build
+  -derivedDataPath .build/release-build \
+  SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-}" build
 
 app='.build/release-build/Build/Products/Release/Paste Lite.app'
 version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
@@ -14,6 +15,7 @@ case "$version" in
 esac
 lipo "$app/Contents/MacOS/PasteLite" -verify_arch arm64 x86_64
 codesign --verify --deep --strict "$app"
+test -f "$app/Contents/Resources/Sparkle-LICENSE.txt"
 
 output=".build/releases/$version"
 mkdir -p "$output"

@@ -12,7 +12,7 @@ Use sample clipboard content and remove personal information from screenshots an
 
 ## Development setup
 
-Use a Mac with Xcode 26 or later. The application targets macOS 14 and later and has no third-party package dependencies.
+Use a Mac with Xcode 26 or later. The application targets macOS 14 and later. Xcode resolves the pinned Sparkle update framework through Swift Package Manager.
 
 1. Fork and clone the repository.
 2. Create a branch for your change.
@@ -46,11 +46,38 @@ On the selected release commit, run `sh Tests/run.sh`. On an Apple silicon Mac w
 
 [CI](./.github/workflows/ci.yml) runs isolated regression tests on standard Apple Silicon and Intel macOS runners for every PR and `main` push. It uses Xcode 26.6 and builds a Universal DMG with the existing packaging script. Download `paste-lite-universal` from the workflow run's **Artifacts** section; temporary artifacts expire after 7 days. Hosted tests do not replace manual installation, Accessibility, or cross-app paste checks.
 
-[Release](./.github/workflows/release.yml) reuses these checks when a `v*` tag is pushed. It requires a stable `vX.Y.Z` tag matching the app version, a commit already merged into `main`, and notes for that version in both changelogs. It creates a **draft** Release with the DMG, checksum file, and bilingual notes, then downloads and verifies the uploaded assets. Review the final DMG and notes before publishing and marking the release Latest. Existing releases are never overwritten; if an upload fails after draft creation, inspect and remove only that incomplete draft before rerunning, keeping the original tag unchanged.
+[Release](./.github/workflows/release.yml) reuses these checks when a `v*` tag is pushed. It requires a stable `vX.Y.Z` tag matching the app version, a commit already merged into `main`, and notes for that version in both changelogs. It creates a **draft** Release with the DMG, signed `appcast.xml`, checksum file, and bilingual notes, then downloads and verifies the uploaded assets. Review the final DMG and notes before publishing and marking the release Latest. Existing releases are never overwritten; if an upload fails after draft creation, inspect and remove only that incomplete draft before rerunning, keeping the original tag unchanged.
 
 For a build without a release, open **Actions → Release → Run workflow**, select `main`, and run it. This validates the package and notes and uploads the same temporary artifact, without creating a tag or Release. This is suitable for testing the cloud pipeline; it does not increment the app version.
 
-Publishing uses the job-scoped `GITHUB_TOKEN` with `contents: write`; PR checks have read-only repository permissions and do not receive publishing credentials. No personal token or signing certificate is needed for the current ad-hoc build. Keep version tag creation restricted to maintainers, protect published tags from updates/deletion, and require PRs plus both CI checks on `main`. Configure these controls in repository Settings; workflow files alone do not apply repository rules. Any tracked corrections must go through another PR before selecting the final release commit.
+Publishing uses the job-scoped `GITHUB_TOKEN` with `contents: write`; PR checks have read-only repository permissions and do not receive publishing credentials. No personal token or Apple signing certificate is needed for the current ad-hoc build. Online update publishing requires the separate Sparkle signing key described below. Keep version tag creation restricted to maintainers, protect published tags from updates/deletion, and require PRs plus both CI checks on `main`. Configure these controls in repository Settings; workflow files alone do not apply repository rules. Any tracked corrections must go through another PR before selecting the final release commit.
+
+### Configure online update publishing
+
+Sparkle 2.10.0 is pinned through Swift Package Manager and `Package.resolved`. Xcode resolves the framework and its `bin/generate_keys`, `bin/sign_update`, and `bin/generate_appcast` tools. The app bundles the upstream license. Do not modify the module name, app identity or data directory when enabling updates.
+
+Before the first updater-enabled release:
+
+1. Generate a dedicated Ed25519 key with Sparkle's `generate_keys --account paste-lite-updates`. Back up the private key securely. Put the printed **public** key in the repository Actions variable `SPARKLE_PUBLIC_ED_KEY`; normal builds may omit it and explicitly disable updates.
+2. Create a protected Actions environment named `release`, restrict its deployment refs to release tags (and allow `main` if using manual build runs), and configure required reviewers. Store the exported private seed as its `SPARKLE_PRIVATE_KEY` secret. Follow the official [key generation and backup instructions](https://sparkle-project.org/documentation/#3-segue-for-security-concerns); never commit the private key or put it in a command-line argument. Export temporary key files only to an ignored location with restrictive permissions, and remove them after configuring the secret.
+3. For the first feed only, set repository variable `SPARKLE_INITIALIZE_FROM` to the exact previously published legacy tag without an appcast, currently `v1.0.0`. Remove it after the first signed feed is published. Missing feeds and network errors are otherwise fatal.
+4. Use the existing release PR and tag process. Tag builds embed the public key supplied to CI. The macOS release job verifies the final DMG, validates its signature against that embedded key, preserves the previous signed feed entries, rejects non-increasing build numbers, and signs the new feed. Only the tag signing step receives the private key. PRs and manual builds do not sign or publish online updates.
+5. Verify the draft and publish it as Latest. Every subsequent Latest release must include `appcast.xml`; it is served from `https://github.com/wygkzqa/paste-lite/releases/latest/download/appcast.xml`. DMG links inside the feed always use fixed version tags. Do not edit signed assets after publication or promote a legacy release without a feed to Latest.
+
+For a local package configured with a public key, use `SPARKLE_PUBLIC_ED_KEY='<public key>' sh scripts/package-release.sh`. `scripts/prepare-update.py --help` describes local feed preparation. It requires a `SPARKLE_PRIVATE_KEY` environment value and an explicit previous feed or initialization flag; do not run it on an already published package. The same signing key is required to extend the feed with this workflow; key rotation needs a separate migration plan. Developer ID signing and notarization remain separate from Sparkle's update signatures.
+
+### Update integration tests
+
+After resolving dependencies, run the isolated upgrade suite on a Mac with a graphical session:
+
+```bash
+xcodebuild -resolvePackageDependencies -project PasteLite.xcodeproj -scheme PasteLite \
+  -clonedSourcePackagesDirPath .build/SourcePackages -onlyUsePackageVersionsFromResolvedFile
+python3 Tests/run-updates.py \
+  --sparkle-directory .build/SourcePackages/artifacts/sparkle/Sparkle
+```
+
+The suite compiles a separately identified native fixture with `UPDATE_TESTING`, generates disposable keys outside Keychain, and serves a signed feed on loopback. It tests actual DMG replacement/relaunch, preference preservation, cancellation, quitting with a prepared update, no newer build, archive tampering and feed tampering. It cleans up its apps, test preferences and test permission records. Never set `UPDATE_TESTING` in a production target; only that fixture permits a loopback HTTP feed. Ordinary builds require HTTPS. The main regression suite also verifies that quitting drains pending storage writes before reopening. GUI/Accessibility and minimum-supported-OS checks still require the corresponding real environment.
 
 ## Project structure
 
