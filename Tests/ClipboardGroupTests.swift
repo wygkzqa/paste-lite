@@ -67,7 +67,9 @@ struct ClipboardGroupTests {
         precondition(nowUngrouped.total == 1_204 && (singleGroupItem?.groupIDs ?? []).isEmpty,
                      "Deleting a group must leave its exclusive records ungrouped, without deleting history")
         let afterDeletion = ClipboardRepository(fileManager: PerformanceFileManager(root: root))
-        try await waitUntil { afterDeletion.isReady }
+        // isReady marks storage readiness; groups and counts arrive in the first reload.
+        try await waitUntil { afterDeletion.revision > 0 || afterDeletion.errorMessage != nil }
+        precondition(afterDeletion.errorMessage == nil)
         let persistedUngrouped = try await afterDeletion.query(ClipboardQuery(group: .ungrouped))
         let persistedShared = try await afterDeletion.item(id: target.id)
         precondition(afterDeletion.groups == [snippets] && afterDeletion.totalCount == 1_205 && persistedUngrouped.total == 1_204)
