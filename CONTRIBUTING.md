@@ -36,9 +36,15 @@ The default signing identity is ad-hoc for local development. Accessibility gran
 
 ## Package a release
 
+Normal pull requests accumulate changes on `main`; merging one does not publish a release. Keep user-visible changes under **Unreleased** until a release is requested. Use patch versions for fixes (for example, `1.0.1`), minor versions for compatible features (`1.1.0`), and major versions for incompatible changes (`2.0.0`).
+
+Prepare a separate release PR that updates the app version, increments the build number, and updates the bilingual changelogs and download documentation. After that PR is merged, tag its exact merge commit as `vX.Y.Z` and build from that commit, even if newer PRs have since landed on `main`. Never move or reuse an already published version tag.
+
 Run `sh scripts/package-release.sh` to build the Universal Release app, verify both architectures and its signature, and create a DMG plus `SHA256SUMS.txt` under `.build/releases/<version>/`. The script does not overwrite an existing DMG and does not publish or notarize the app. The current project uses ad-hoc signing.
 
-Before publishing, set the app version/build number, update both READMEs and changelogs, and run `sh Tests/run.sh`. On an Apple silicon Mac with Rosetta installed, also run `TEST_ARCH=x86_64 sh Tests/run.sh`; run these suites sequentially because they share `.build/tests/`. A Rosetta pass does not replace physical Intel testing. Test installation from the final DMG, record limitations accurately, then tag the exact commit used to build it and upload the DMG and checksum file as Release assets. Keep binaries and verification logs out of Git.
+On the selected release commit, run `sh Tests/run.sh`. On an Apple silicon Mac with Rosetta installed, also run `TEST_ARCH=x86_64 sh Tests/run.sh`; run these suites sequentially because they share `.build/tests/`. A Rosetta pass does not replace physical Intel testing. Test installation from the final DMG, record limitations accurately, and upload the DMG and checksum file as Release assets. Keep binaries and verification logs out of Git.
+
+There is currently no GitHub Actions release workflow: creating a tag alone does not build or upload anything. Release preparation, package verification, and publishing remain explicit steps. Upload the verified assets and bilingual notes to a draft Release, verify the uploaded files, then publish and mark it Latest. Any tracked corrections must go through another PR before selecting the final release commit.
 
 ## Project structure
 
@@ -94,6 +100,8 @@ Put user-visible changes under **Unreleased** in both changelogs. Only add a rel
 Keep implementation plans, design notes, validation records, and performance reports under the ignored `.build/` directory. Only assets needed by public documentation belong in `docs/`.
 
 ## Pull requests
+
+All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Codex-created branches use the `codex/` prefix. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
 
 Explain the problem, resulting behavior, and checks performed. Include screenshots for visual changes using synthetic content. Keep unrelated cleanup separate. Contributions are made under the project's [MIT License](./LICENSE).
 

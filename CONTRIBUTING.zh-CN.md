@@ -36,9 +36,15 @@ xcodebuild \
 
 ## 打包发布
 
+日常 PR 的改动累积在 `main`，合并单个 PR 不会发布新版本；用户可见变化先写入两份 CHANGELOG 的「未发布」部分，等待发版要求。修复问题使用补丁版本（例如 `1.0.1`），兼容的新功能使用次版本（`1.1.0`），不兼容改动使用主版本（`2.0.0`）。
+
+发版时单独创建发布 PR，统一更新应用版本、递增构建号，并同步双语更新日志和下载文档。合并后，为该 PR 的确切合并提交创建 `vX.Y.Z` 标签并从该提交构建，即使此后已有其他 PR 合入 `main`。不移动或复用已发布版本的标签。
+
 运行 `sh scripts/package-release.sh`，构建 Universal Release 应用，检查双架构及签名，在 `.build/releases/<version>/` 中生成 DMG 和 `SHA256SUMS.txt`。脚本不会覆盖已有 DMG，也不会执行发布或公证。当前项目采用临时签名。
 
-发布前设置应用版本与构建号，同步两份 README 和 CHANGELOG，并运行 `sh Tests/run.sh`。在已安装 Rosetta 的 Apple Silicon Mac 上，再运行 `TEST_ARCH=x86_64 sh Tests/run.sh`；两套测试共用 `.build/tests/`，需顺序执行。Rosetta 测试通过不能替代 Intel 实机验证。使用最终 DMG 验证安装并如实记录限制，再为构建所用的确切提交打标签，将 DMG 与校验文件作为 Release 附件上传。二进制文件和验证日志不提交到 Git。
+在选定的发布提交上运行 `sh Tests/run.sh`。在已安装 Rosetta 的 Apple Silicon Mac 上，再运行 `TEST_ARCH=x86_64 sh Tests/run.sh`；两套测试共用 `.build/tests/`，需顺序执行。Rosetta 测试通过不能替代 Intel 实机验证。使用最终 DMG 验证安装并如实记录限制，将 DMG 与校验文件作为 Release 附件上传。二进制文件和验证日志不提交到 Git。
+
+当前没有 GitHub Actions 发布工作流，单独创建标签不会自动构建或上传；版本准备、包验证与发布仍需明确执行。先将已验证的附件和双语说明上传到 Release 草稿，核对远程文件后再正式发布并设为 Latest。任何受 Git 管理的文件如需修正，仍先通过另一个 PR 合并，再确定最终发布提交。
 
 ## 项目结构
 
@@ -94,6 +100,8 @@ sh Tests/run.sh
 功能方案、设计过程、验证记录和性能报告保存在已忽略的 `.build/` 目录下，`docs/` 仅保留公开文档需要的资源。
 
 ## Pull Request
+
+所有仓库改动（包括代码、文档、配置和版本准备）通过独立分支创建 PR 并合并到 `main`，不直接向 `main` 提交或推送改动。Codex 创建的分支使用 `codex/` 前缀。合并前完成适用验证与评审，遵守仓库规则，不绕过检查或强推 `main`。优先使用 Squash merge，让一个 PR 对应一个主分支提交。
 
 说明解决的问题、修改后的行为和已执行的检查。视觉改动请提供使用示例内容的截图，无关清理单独提交。贡献遵循项目的 [MIT 许可证](./LICENSE)。
 
