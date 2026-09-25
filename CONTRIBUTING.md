@@ -109,7 +109,11 @@ Keep implementation plans, design notes, validation records, and performance rep
 
 All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Codex-created branches use the `codex/` prefix. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
 
-Explain the problem, resulting behavior, and checks performed. Include screenshots for visual changes using synthetic content. Keep unrelated cleanup separate. Contributions are made under the project's [MIT License](./LICENSE).
+Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Write in English or Chinese without duplicating the body in both languages, and keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
+
+Use `type: short description` for the title, with a suitable prefix such as `feat:`, `fix:`, `docs:`, `ci:`, or `chore:`. Release preparation PRs use `chore: release vX.Y.Z`. GitHub fills in the template for web submissions after it is merged into the default branch. When creating a PR with `gh pr create --body-file`, prepare the body using the same template; do not assume it will be inserted automatically. The template guides the format; there is no automated PR-format check.
+
+Keep unrelated cleanup separate. Contributions are made under the project's [MIT License](./LICENSE).
 
 Login item tests use a fake service to cover registration, removal, pending approval, failures, and concurrent toggles without changing real login items. The app uses `SMAppService.mainApp`; manually verify system registration in an isolated, signed test app and restore its original status afterward.
 
