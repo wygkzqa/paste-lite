@@ -62,6 +62,16 @@ struct ClipboardGroupTests {
         precondition(kept?.groupIDs == [snippets.id] && repository.totalCount == 1_205)
         let absent = try await repository.query(ClipboardQuery(group: .group(work.id)))
         precondition(absent.total == 0)
+        let nowUngrouped = try await repository.query(ClipboardQuery(group: .ungrouped))
+        let singleGroupItem = try await repository.item(id: all.items[1].id)
+        precondition(nowUngrouped.total == 1_204 && (singleGroupItem?.groupIDs ?? []).isEmpty,
+                     "Deleting a group must leave its exclusive records ungrouped, without deleting history")
+        let afterDeletion = ClipboardRepository(fileManager: PerformanceFileManager(root: root))
+        try await waitUntil { afterDeletion.isReady }
+        let persistedUngrouped = try await afterDeletion.query(ClipboardQuery(group: .ungrouped))
+        let persistedShared = try await afterDeletion.item(id: target.id)
+        precondition(afterDeletion.groups == [snippets] && afterDeletion.totalCount == 1_205 && persistedUngrouped.total == 1_204)
+        precondition(persistedShared?.groupIDs == [snippets.id], "Deleting one group must preserve other memberships across restart")
         print("PASS: memberships persist; renaming retains identity; deleting a group preserves entries and other memberships; keyboard navigation crosses group pages")
 
         let capture = ClipboardCapture(type: .text, textContent: "group duplicate fixture", imageData: nil,

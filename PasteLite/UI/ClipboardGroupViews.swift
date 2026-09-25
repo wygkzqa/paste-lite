@@ -1,8 +1,48 @@
+import AppKit
 import SwiftUI
+
+struct ClipboardGroupContextMenu: NSViewRepresentable {
+    let onOpen: () -> Void
+    let onClose: () -> Void
+    let onRename: () -> Void
+    let onDelete: () -> Void
+
+    func makeNSView(context: Context) -> MenuView { MenuView() }
+    func updateNSView(_ view: MenuView, context: Context) { view.actions = self }
+
+    final class MenuView: NSView {
+        var actions: ClipboardGroupContextMenu?
+
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            guard let event = NSApp.currentEvent,
+                  event.type == .rightMouseDown || (event.type == .leftMouseDown && event.modifierFlags.contains(.control)) else { return nil }
+            return super.hitTest(point)
+        }
+
+        override func menu(for event: NSEvent) -> NSMenu? {
+            guard let actions else { return nil }
+            actions.onOpen()
+            let menu = NSMenu()
+            let rename = NSMenuItem(title: L10n.tr("重命名"), action: #selector(renameGroup), keyEquivalent: "")
+            rename.target = self
+            menu.addItem(rename)
+            menu.addItem(.separator())
+            let delete = NSMenuItem(title: L10n.tr("删除分组"), action: #selector(deleteGroup), keyEquivalent: "")
+            delete.target = self
+            menu.addItem(delete)
+            return menu
+        }
+
+        override func didCloseMenu(_ menu: NSMenu, with event: NSEvent?) { actions?.onClose() }
+        @objc private func renameGroup() { actions?.onRename() }
+        @objc private func deleteGroup() { actions?.onDelete() }
+    }
+}
 
 enum ClipboardSheet: Identifiable {
     case editGroup(ClipboardGroup?)
     case createGroup(Set<UUID>)
+    case deleteGroup(ClipboardGroup)
     case deleteItems(Set<UUID>)
     case error(String)
     case preview(ClipboardItem)
@@ -12,6 +52,7 @@ enum ClipboardSheet: Identifiable {
         switch self {
         case .editGroup(let group): "group-\(group?.id.uuidString ?? "new")"
         case .createGroup: "create-group-for-items"
+        case .deleteGroup(let group): "delete-group-\(group.id)"
         case .deleteItems: "delete-items"
         case .error: "action-error"
         case .preview(let item): "preview-\(item.id)"
@@ -82,6 +123,37 @@ struct ClipboardGroupEditor: View {
                 dismiss()
             } catch { self.error = error.localizedDescription }
         }
+    }
+}
+
+struct ClipboardGroupDeleteConfirmation: View {
+    let repository: ClipboardRepository
+    let group: ClipboardGroup
+    @Environment(\.dismiss) private var dismiss
+    @State private var deleting = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(L10n.tr("删除分组“%@”？", group.name)).font(.headline)
+            Text(L10n.tr("记录会保留在全部历史中。没有其他分组的记录将变为未分组，其他分组归属不受影响。"))
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let error { Text(error).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+            HStack {
+                Spacer()
+                Button(L10n.tr("取消")) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(L10n.tr("删除分组"), role: .destructive) {
+                    guard !deleting else { return }
+                    deleting = true
+                    error = nil
+                    Task {
+                        defer { deleting = false }
+                        do { try await repository.deleteGroup(id: group.id); dismiss() }
+                        catch { self.error = error.localizedDescription }
+                    }
+                }
+            }
+        }.padding(20).frame(width: 340).disabled(deleting)
     }
 }
 

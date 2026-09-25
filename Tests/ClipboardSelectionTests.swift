@@ -67,6 +67,17 @@ struct ClipboardSelectionTests {
         precondition(model.selectedIDs == [model.filteredItems[199].id])
         print("PASS: shift-arrow selection crosses page boundaries and only keyboard selection scrolls")
 
+        model.selectForClick(visible[20])
+        model.selectForClick(visible[22], extending: true)
+        let scrollsBeforeReopen = scrolls
+        model.prepareForPresentation(hasAccessibilityPermission: false)
+        precondition(model.selectedID == visible[22].id && model.selectedIDs == Set(visible[20...22].map(\.id)))
+        precondition(scrolls == scrollsBeforeReopen, "Reopening must preserve selection without requesting a keyboard scroll")
+        model.moveSelection(by: 1, extending: true)
+        precondition(model.selectedIDs == Set(visible[20...23].map(\.id)) && scrolls == scrollsBeforeReopen + 1,
+                     "Keyboard navigation after reopening must continue from the previous selection and range anchor")
+        print("PASS: reopening retains multiple selection and its range anchor; keyboard navigation continues from that position")
+
         for action in ["click", "command-click", "shift-click", "context menu", "reopen"] {
             let pagingModel = ClipboardViewModel(repository: repository)
             try await waitUntil { pagingModel.filteredItems.count == 200 && !pagingModel.isLoading }

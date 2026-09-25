@@ -1,8 +1,10 @@
 import AppKit
 import SwiftUI
 
-// Native menu timing selects the row before the menu opens, without changing left-click gestures.
+// Handle selection on mouse-down without waiting for SwiftUI tap recognition.
 struct ClipboardItemContextMenu: NSViewRepresentable {
+    let onSelect: (NSEvent.ModifierFlags) -> Void
+    let onDoubleClick: () -> Void
     let onOpen: () -> Void
     let onClose: () -> Void
     let onEdit: () -> Void
@@ -21,11 +23,34 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
     final class MenuView: NSView {
         var actions: ClipboardItemContextMenu?
         private var itemIDs = Set<UUID>()
+        private var doubleClickPending = false
 
         override func hitTest(_ point: NSPoint) -> NSView? {
             guard let event = NSApp.currentEvent,
-                  event.type == .rightMouseDown || (event.type == .leftMouseDown && event.modifierFlags.contains(.control)) else { return nil }
+                  event.type == .rightMouseDown || event.type == .leftMouseDown else { return nil }
             return super.hitTest(point)
+        }
+
+        override func mouseDown(with event: NSEvent) {
+            doubleClickPending = false
+            guard !event.modifierFlags.contains(.control) else {
+                super.mouseDown(with: event)
+                return
+            }
+            actions?.onSelect(event.modifierFlags)
+            doubleClickPending = event.clickCount == 2 && event.modifierFlags.intersection([.command, .shift]).isEmpty
+        }
+
+        override func mouseDragged(with event: NSEvent) {
+            doubleClickPending = false
+        }
+
+        override func mouseUp(with event: NSEvent) {
+            defer { doubleClickPending = false }
+            guard doubleClickPending,
+                  event.modifierFlags.intersection([.command, .shift, .control]).isEmpty,
+                  bounds.contains(convert(event.locationInWindow, from: nil)) else { return }
+            actions?.onDoubleClick()
         }
 
         override func menu(for event: NSEvent) -> NSMenu? {

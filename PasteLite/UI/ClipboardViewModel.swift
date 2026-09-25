@@ -217,11 +217,7 @@ final class ClipboardViewModel: ObservableObject {
         today = calendar.startOfDay(for: presentationDate)
         resetTimeLabels()
         presentationToken += 1
-        selectedID = filteredItems.first?.id
-        selectedIDs = Set(filteredItems.prefix(1).map(\.id))
-        selectedGroups = Dictionary(uniqueKeysWithValues: filteredItems.prefix(1).map { ($0.id, Set($0.groupIDs ?? [])) })
-        selectionAnchorID = selectedID
-        selectionQuery = displayedQuery ?? activeQuery
+        normalizeSelection()
     }
 
     private func resetTimeLabels() {

@@ -274,6 +274,7 @@ struct PasteImportTests {
 
         try await testGroups(root: root, png: png)
         try await testTitles(root: root, png: png)
+        try await testTextURLs(root: root)
 
         fixture.invalidateSchema()
         do { _ = try PasteImportService.scan(directory: fixture.directory) { _, _ in }; preconditionFailure("Unknown schema accepted") }
@@ -306,6 +307,37 @@ struct PasteImportTests {
         }.value
         precondition(unlimitedBatch.entries.count == 4 && unlimitedBatch.skipped.isEmpty)
         print("PASS: import uses final UTF-8/PNG limits, accepts a larger TIFF container, skips oversized URL/PNG, and supports unlimited capture")
+    }
+
+    private static func testTextURLs(root: URL) async throws {
+        let fixture = try PasteImportFixture(directory: root.appendingPathComponent("text-urls"))
+        let link = "http://clipboard.account.qa.internal.example.com"
+        let mixed = "Visit \(link) for details"
+        fixture.addGroup(id: 1, name: "Saved links")
+        try fixture.add([["public.url": Data(link.utf8)]])
+        try fixture.add([["public.utf8-plain-text": Data(link.utf8)]], groupID: 1, title: "Saved link")
+        try fixture.add([["public.utf8-plain-text": Data(mixed.utf8)]])
+        let batch = try await Task.detached { try PasteImportService.scan(directory: fixture.directory) { _, _ in } }.value
+        precondition(batch.entries.count == 2 && batch.duplicates == 1)
+        let url = batch.entries.first { $0.item.type == .url }!
+        precondition(url.item.textContent == link && url.item.customTitle == "Saved link" && url.groupIDs == [1])
+        precondition(batch.entries.first { $0.item.type == .text }?.item.textContent == mixed)
+        let repository = ClipboardRepository(fileManager: ImportFileManager(root: root.appendingPathComponent("url-destination")))
+        try await waitUntil { repository.isReady }
+        let preview = try await repository.previewImport(batch)
+        _ = try await repository.importBatch(batch, preview: preview, expand: false)
+        let links = try await repository.query(ClipboardQuery(type: "url"))
+        precondition(links.items.map(\.id) == [url.item.id])
+        precondition(repository.groups.map(\.name) == ["Saved links"])
+        let memberships = [repository.groups[0].id]
+        precondition(links.items[0].groupIDs == memberships && links.items[0].customTitle == "Saved link")
+        repository.record(ClipboardCapture(type: .text, textContent: link, imageData: nil, filePaths: [],
+            sourceAppName: "Fixture", sourceBundleID: "example.fixture", capturedAt: Date()))
+        try await waitUntil { repository.items.first?.id == url.item.id && repository.items.first!.lastCopiedAt > url.item.lastCopiedAt }
+        let copied = try await repository.item(id: url.item.id)!
+        precondition(repository.totalCount == 2 && copied.type == .url && copied.textContent == link)
+        precondition(copied.customTitle == "Saved link" && copied.groupIDs == memberships)
+        print("PASS: Paste plain-text and native URLs deduplicate as links with titles/groups, prose stays text, and recopying an imported link preserves its record and metadata")
     }
 
     private static func testTitles(root: URL, png: Data) async throws {

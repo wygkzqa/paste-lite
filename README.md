@@ -31,7 +31,7 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 - **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
 - **Keyboard access** — open history with ⇧⌘V, navigate with arrow keys, and paste the selected item with Return.
 - **Return to your app** — double-click a result or press Return to copy it and attempt a paste into the previous application. Automatic pasting requires Accessibility permission.
-- **Native presentation** — a menu bar app with no Dock icon, system light/dark appearance and cached time labels based on when the panel opens.
+- **Native presentation** — a menu bar app with no Dock icon, system, light, or dark appearance and cached time labels based on when the panel opens.
 - **Two compact layouts** — switch between List and Cards in Settings, with native Liquid Glass on macOS 26 and translucent materials on earlier versions.
 - **Groups** — create and rename groups, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
 - **Launch at login** — an optional switch in Settings, managed by macOS Login Items.
@@ -78,7 +78,7 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | Close the panel | Esc |
 | Preview selected content | Right-click an entry → Preview |
 | Switch layout | Layout button in the footer, or Settings → General → Clipboard Layout |
-| Create or manage groups | Group menu → New Group… / Manage Groups |
+| Create or manage groups | Top `+` button / right-click a group tab → Rename or Delete Group |
 | Open settings | Menu bar → Settings… or ⌘, while Paste Lite is active |
 
 Opening Paste Lite from Spotlight or Finder shows the main panel, including when the app is already running. Login-item launches stay in the menu bar without opening the panel.
@@ -87,17 +87,19 @@ Selecting a row does not paste. Arrow-key navigation keeps the selected row visi
 
 ### Layouts and groups
 
-Open **Settings… → General → Clipboard Layout** to choose **List** (default) or **Cards**. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance follows system light/dark mode and Reduce Transparency.
+Closing and reopening the panel during the same app session preserves the scroll position and selection in both layouts. New captures keep the record you were reading in place, and arrow-key navigation continues from your previous selection. This browsing state is kept in memory and resets when the app quits.
 
-Turn on **Gradient Background** in **General** to add a soft gradient inside either panel layout. It is off by default, applies immediately, and remembers your choice. The colors adapt to light/dark mode; Reduce Transparency uses an opaque gradient.
+Open **Settings… → General → Clipboard Layout** to choose **List** (default) or **Cards**. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance respects your chosen appearance and Reduce Transparency.
 
-With the gradient off, selected entries use a blue background and white text. With it on, selections retain the translucent glass highlight. This applies to both layouts.
+Choose **Settings… → General → Appearance** to use **System Default**, **Dark**, or **Light**. The default follows macOS. Changes apply immediately across the history panel, Settings, and app dialogs, and your choice is remembered after restarting.
 
-Use the group menu to create groups or open **Manage Groups** to rename or delete them. Use the **Add to Groups** context submenu or the footer’s **Groups** menu to add or remove selected entries directly. A checkmark means all selected entries belong to the group; a dash means only some do. Choosing an unchecked or mixed group adds the selection; choosing a checked group removes that membership. **New Group…** creates a group and adds the selected entries. An entry can belong to multiple groups without duplicating its content. **All History** and **Ungrouped** remain available; search and type/source filters apply within the selected group. Deleting a group removes only its memberships. Grouped entries follow the same retention and entry-count rules as other history.
+Both layouts use native glass materials, with a solid fallback when Reduce Transparency is enabled. Selected entries use a blue background and white text.
+
+Use the top **+** button to create a group. Custom groups appear as horizontally scrollable tabs alongside **All**, with a stronger selected background. There is no Ungrouped tab. Right-click a custom group tab to **Rename** or **Delete Group**; deletion requires confirmation and renaming keeps the current group filter. Use the **Add to Groups** context submenu to add or remove selected entries directly. A checkmark means all selected entries belong to the group; a dash means only some do. Choosing an unchecked or mixed group adds the selection; choosing a checked group removes that membership. **New Group…** in the context submenu creates a group and adds the selected entries. An entry can belong to multiple groups without duplicating its content. Search and type/source filters apply within the selected group. Deleting a group keeps all entries and removes only its memberships: entries without another group become ungrouped and remain visible under **All**, while other group memberships are kept. Deleting the currently selected group switches to **All**. Grouped entries follow the same retention and entry-count rules as other history.
 
 ### Settings categories
 
-Settings uses a sidebar with **General, History, Data, and About**, with the selected options on the right. General contains language, clipboard layout, gradient background, launch at login, and a Capture section for entry size limits. History controls retention and cleanup; Data contains Paste import and clear history. About shows the app logo, version, build number, and GitHub link. The menu bar’s **About Paste Lite** opens this page in the same Settings window.
+Settings uses a sidebar with **General, History, Data, and About**, with the selected options on the right. General contains language, appearance, clipboard layout, launch at login, and a Capture section for entry size limits. History controls retention and cleanup; Data contains Paste import and clear history. About shows the app logo, version, build number, a brief introduction, and the GitHub link. The menu bar’s **About Paste Lite** opens this page in the same Settings window.
 
 ### Language
 

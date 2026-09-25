@@ -14,6 +14,15 @@ enum ClipboardContentType: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    static func forText(_ text: String) -> ClipboardContentType {
+        let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.rangeOfCharacter(from: .whitespacesAndNewlines.union(.controlCharacters)) == nil,
+              let url = URLComponents(string: value),
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = url.host, !host.isEmpty, url.url != nil else { return .text }
+        return .url
+    }
+
     var title: String {
         switch self {
         case .text: L10n.tr("文本")

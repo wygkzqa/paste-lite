@@ -2,8 +2,6 @@ import AppKit
 import SwiftUI
 
 struct ClipboardRowView: View {
-    @ObservedObject private var settings = AppSettings.shared
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let item: ClipboardItem
     let timeLabel: String?
@@ -15,13 +13,12 @@ struct ClipboardRowView: View {
     @State private var previewImage: CGImage?
     @State private var filesStillExist: Bool?
 
-    private let selectionBlue = Color(red: 0.20, green: 0.43, blue: 0.82)
-    private var usesBlueSelection: Bool { isSelected && !settings.usesGradientBackground }
-    private var secondaryForeground: Color { usesBlueSelection ? .white.opacity(0.88) : .secondary }
+    private let selectionBlue = Color(red: 90 / 255.0, green: 143 / 255.0, blue: 237 / 255.0) // #5A8FED
+    private var secondaryForeground: Color { isSelected ? .white.opacity(0.88) : .secondary }
     private var backgroundColor: Color {
-        if usesBlueSelection { return selectionBlue }
-        if reduceTransparency { return .primary.opacity(isSelected ? 0.1 : 0.025) }
-        return .white.opacity(isSelected ? (colorScheme == .dark ? 0.12 : 0.55) : (isHovered ? 0.09 : (isCard ? 0.04 : 0)))
+        if isSelected { return selectionBlue }
+        if reduceTransparency { return .primary.opacity(0.025) }
+        return .white.opacity(isHovered ? 0.09 : (isCard ? 0.04 : 0))
     }
 
     var body: some View {
@@ -29,14 +26,14 @@ struct ClipboardRowView: View {
             if isCard { cardContent }
             else { rowContent }
         }
-        .foregroundStyle(usesBlueSelection ? Color.white : Color.primary)
+        .foregroundStyle(isSelected ? Color.white : Color.primary)
         .background(
             RoundedRectangle(cornerRadius: isCard ? 13 : 12)
                 .fill(backgroundColor)
         )
         .overlay {
             RoundedRectangle(cornerRadius: isCard ? 13 : 12)
-                .strokeBorder(Color.white.opacity(isSelected ? 0.55 : (isCard ? 0.2 : 0)), lineWidth: 0.5)
+                .strokeBorder(isSelected ? selectionBlue : Color.white.opacity(isCard ? 0.2 : 0), lineWidth: 0.5)
                 .allowsHitTesting(false)
         }
         .contentShape(RoundedRectangle(cornerRadius: 12))
@@ -99,7 +96,7 @@ struct ClipboardRowView: View {
             Text(item.displaySourceAppName)
             if item.type == .file, filesStillExist == false {
                 Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(usesBlueSelection ? Color.white : Color.orange)
+                    .foregroundStyle(isSelected ? Color.white : Color.orange)
                     .help(L10n.tr("文件已不存在"))
             }
             if let timeLabel { Text("·"); Text(timeLabel) }

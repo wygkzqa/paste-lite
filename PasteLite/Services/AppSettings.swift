@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -19,6 +20,19 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     func resolved(preferredLanguages: [String] = Locale.preferredLanguages) -> AppLanguage {
         guard self == .system else { return self }
         return preferredLanguages.first?.lowercased().hasPrefix("zh") == true ? .chinese : .english
+    }
+}
+
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system, dark, light
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .system: L10n.tr("跟随系统")
+        case .dark: L10n.tr("深色")
+        case .light: L10n.tr("浅色")
+        }
     }
 }
 
@@ -59,19 +73,28 @@ final class AppSettings: ObservableObject {
         }
     }
 
-    @Published var usesGradientBackground: Bool {
+    @Published var appearance: AppAppearance {
         didSet {
-            guard usesGradientBackground != oldValue else { return }
-            defaults.set(usesGradientBackground, forKey: "usesGradientBackground")
+            guard appearance != oldValue else { return }
+            defaults.set(appearance.rawValue, forKey: "appAppearance")
+            applyAppearance()
         }
     }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         clipboardLayout = ClipboardLayout(rawValue: defaults.string(forKey: "clipboardLayout") ?? "") ?? .list
-        usesGradientBackground = defaults.bool(forKey: "usesGradientBackground")
+        appearance = AppAppearance(rawValue: defaults.string(forKey: "appAppearance") ?? "") ?? .system
         language = AppLanguage(rawValue: defaults.string(forKey: L10n.languageDefaultsKey) ?? "") ?? .system
         systemLanguage = AppLanguage.system.resolved()
+    }
+
+    func applyAppearance() {
+        switch appearance {
+        case .system: NSApp?.appearance = nil
+        case .dark: NSApp?.appearance = NSAppearance(named: .darkAqua)
+        case .light: NSApp?.appearance = NSAppearance(named: .aqua)
+        }
     }
 
     func refreshSystemLanguage() {

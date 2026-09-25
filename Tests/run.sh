@@ -17,6 +17,14 @@ xcrun swiftc -parse-as-library -module-name PasteLiteImageTests -swift-version 5
   -o .build/tests/clipboard-images
 .build/tests/clipboard-images
 
+xcrun swiftc -parse-as-library -module-name PasteLiteURLTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardMonitor.swift PasteLite/Services/PasteService.swift \
+  Tests/ClipboardURLTests.swift -o .build/tests/clipboard-urls
+.build/tests/clipboard-urls
+
 xcrun swiftc -parse-as-library -module-name PasteLiteImportTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift \

@@ -161,16 +161,16 @@
 "条数限制而跳过" = "Skipped due to entry limit";
 
 /* Layouts and groups */
-"渐变背景" = "Gradient Background";
 "两种布局均使用液态玻璃风格，切换立即生效。旧版 macOS 使用半透明材质。" = "Both layouts use Liquid Glass and switch immediately. Earlier macOS versions use translucent materials.";
 "保存" = "Save";
 "全部历史" = "All History";
 "分组" = "Groups";
 "分组名称" = "Group name";
 "分组名称须为 1–40 个字符。" = "Use 1–40 characters for the group name.";
-"切换分组" = "Switch group";
 "创建" = "Create";
 "删除分组" = "Delete Group";
+"删除分组“%@”？" = "Delete group “%@”?";
+"记录会保留在全部历史中。没有其他分组的记录将变为未分组，其他分组归属不受影响。" = "Entries remain in All History. Entries with no other groups become ungrouped; other group memberships are kept.";
 "删除分组？" = "Delete this group?";
 "剪贴板布局" = "Clipboard Layout";
 "加入分组" = "Add to Groups";
@@ -180,6 +180,9 @@
 "只移除分组及归属关系，历史记录会保留。" = "Only the group and its memberships are removed. History entries are kept.";
 "在全部历史中选择记录，即可加入分组。" = "Select an entry in All History to add it to a group.";
 "外观" = "Appearance";
+"深色" = "Dark";
+"浅色" = "Light";
+"Paste Lite 是一款轻量的 macOS 剪贴板管理工具，支持文本、链接、图片和文件记录。通过搜索、分组和快捷粘贴，快速找回并复用复制过的内容。" = "Paste Lite is a lightweight clipboard manager for macOS. Keep text, links, images, and file references close at hand, with search, groups, and quick paste to reuse what you copy.";
 "已有同名分组。" = "A group with that name already exists.";
 "搜索剪贴板…" = "Search clipboard…";
 "文件已不存在" = "File no longer exists";
@@ -189,9 +192,9 @@
 "清除筛选" = "Clear Filters";
 "筛选" = "Filters";
 "筛选类型和来源" = "Filter by type and source";
-"管理分组" = "Manage Groups";
 "类型" = "Type";
 "列表" = "List";
+"重命名" = "Rename";
 "编辑分组" = "Edit Group";
 "记录或分组已不存在，请刷新后重试。" = "The entry or group no longer exists. Refresh and try again.";
 "辅助功能权限" = "Accessibility Permission";

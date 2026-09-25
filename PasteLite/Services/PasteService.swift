@@ -49,8 +49,11 @@ final class PasteService {
             succeeded = item.textContent.map { pasteboard.setString($0, forType: .string) } ?? false
 
         case .url:
-            if let text = item.textContent, let url = URL(string: text) {
-                succeeded = pasteboard.writeObjects([url as NSURL])
+            if let text = item.textContent, let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                let entry = NSPasteboardItem()
+                entry.setString(text, forType: .string)
+                entry.setString(url.absoluteString, forType: .URL)
+                succeeded = pasteboard.writeObjects([entry])
             } else {
                 succeeded = false
             }

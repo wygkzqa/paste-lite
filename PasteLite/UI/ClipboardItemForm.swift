@@ -69,6 +69,7 @@ struct ClipboardItemForm: View {
                     .keyboardShortcut(.cancelAction)
                 if isEditing {
                     Button(L10n.tr("保存"), action: save)
+                        .buttonStyle(.borderedProminent)
                         .keyboardShortcut(.return, modifiers: .command)
                         .disabled(fullItem == nil)
                 } else {

@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        AppSettings.shared.applyAppearance()
 
         repository = ClipboardRepository()
         monitor = ClipboardMonitor(repository: repository)

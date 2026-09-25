@@ -123,6 +123,12 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Section {
+                Picker(L10n.tr("外观"), selection: $settings.appearance) {
+                    ForEach(AppAppearance.allCases) { appearance in
+                        Text(appearance.title).tag(appearance)
+                    }
+                    .id(L10n.language)
+                }
                 Picker(L10n.tr("剪贴板布局"), selection: $settings.clipboardLayout) {
                     ForEach(ClipboardLayout.allCases) { layout in
                         Text(layout.title).tag(layout)
@@ -132,8 +138,6 @@ struct SettingsView: View {
                 Text(L10n.tr("两种布局均使用液态玻璃风格，切换立即生效。旧版 macOS 使用半透明材质。"))
                     .font(.callout).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Toggle(L10n.tr("渐变背景"), isOn: $settings.usesGradientBackground)
-                    .toggleStyle(.switch)
             }
             Section {
                 Toggle(L10n.tr("开机启动"), isOn: Binding(

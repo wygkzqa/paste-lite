@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 private final class LanguageTestFileManager: FileManager, @unchecked Sendable {
     let root: URL
@@ -12,17 +12,36 @@ private final class LanguageTestFileManager: FileManager, @unchecked Sendable {
 @MainActor
 struct LanguageSettingsTests {
     static func main() throws {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+        let initialAppearance = app.appearance
+        defer { app.appearance = initialAppearance }
         let suiteName = "PasteLite-language-tests-\(UUID())"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let settings = AppSettings(defaults: defaults)
         precondition(settings.language == .system)
         precondition(settings.clipboardLayout == .list)
-        precondition(!settings.usesGradientBackground)
-        settings.usesGradientBackground = true
-        precondition(AppSettings(defaults: defaults).usesGradientBackground)
-        settings.usesGradientBackground = false
-        precondition(!AppSettings(defaults: defaults).usesGradientBackground)
+        precondition(settings.appearance == .system)
+        let window = NSWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: false)
+        for (appearance, name) in [(AppAppearance.dark, NSAppearance.Name.darkAqua), (.light, .aqua)] {
+            settings.appearance = appearance
+            precondition(AppSettings(defaults: defaults).appearance == appearance)
+            precondition(app.appearance?.name == name)
+            precondition(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == name,
+                         "Existing windows must inherit the selected app appearance")
+            app.appearance = nil
+            AppSettings(defaults: defaults).applyAppearance()
+            precondition(app.appearance?.name == name, "Startup must restore the saved appearance")
+        }
+        settings.appearance = .system
+        precondition(app.appearance == nil && AppSettings(defaults: defaults).appearance == .system)
+        defaults.set("unsupported", forKey: "appAppearance")
+        let fallback = AppSettings(defaults: defaults)
+        precondition(fallback.appearance == .system)
+        fallback.applyAppearance()
+        precondition(app.appearance == nil, "System mode must clear the override so future system changes can propagate")
+        print("PASS: appearance defaults to system, persists both overrides, updates existing windows, restores on startup, and falls back to system")
         settings.clipboardLayout = .cards
         precondition(AppSettings(defaults: defaults).clipboardLayout == .cards)
         settings.clipboardLayout = .list
@@ -64,9 +83,11 @@ struct LanguageSettingsTests {
         precondition(L10n.tr("已处理 %d / %d 条", 7, 30) == "Processed 7 of 30")
         precondition(PasteImportError.insufficientSpace.localizedDescription.hasPrefix("Not enough disk space"))
         precondition(L10n.tr("附件缺失或过大") == "Missing or oversized attachment")
+        precondition(AppAppearance.allCases.map(\.title) == ["System Default", "Dark", "Light"])
         setLanguage(.chinese)
         precondition(L10n.tr("设置…") == "设置…")
         precondition(L10n.tr("已处理 %d / %d 条", 7, 30) == "已处理 7 / 30 条")
+        precondition(AppAppearance.allCases.map(\.title) == ["跟随系统", "深色", "浅色"])
         print("PASS: bundled translation coverage, format arguments, and import errors in both languages")
 
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("PasteLite-language-tests-\(UUID())")

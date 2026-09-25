@@ -10,6 +10,7 @@ struct ClipboardHistoryView: View {
     @State private var sheet: ClipboardSheet?
     @State private var showsFilters = false
     @State private var showsPermission = false
+    @State private var visibleItemID: UUID?
 
     init(viewModel: ClipboardViewModel) {
         self.viewModel = viewModel
@@ -17,25 +18,18 @@ struct ClipboardHistoryView: View {
     }
 
     private var layout: ClipboardLayout { settings.clipboardLayout }
-    private var groupTitle: String {
-        switch viewModel.groupFilter {
-        case .all: L10n.tr("全部")
-        case .ungrouped: L10n.tr("未分组")
-        case .group(let id): repository.groups.first(where: { $0.id == id })?.name ?? L10n.tr("全部")
-        }
-    }
 
     var body: some View {
         VStack(spacing: 8) {
             searchHeader
-            if layout == .cards { groupTabs }
+            groupTabs
             historyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             footer
         }
         .padding(12)
         .frame(width: layout.width, height: layout.height)
-        .modifier(ClipboardGlass(cornerRadius: ClipboardGlass.panelCornerRadius, usesGradientBackground: settings.usesGradientBackground))
+        .modifier(ClipboardGlass(cornerRadius: ClipboardGlass.panelCornerRadius))
         .ignoresSafeArea()
         .sheet(item: $sheet) { destination in
             switch destination {
@@ -44,10 +38,12 @@ struct ClipboardHistoryView: View {
                     timeLabel: viewModel.timeLabel(for: item), isEditing: true, onPaste: {})
             case .editGroup(let group):
                 ClipboardGroupEditor(repository: repository, group: group) { saved in
-                    viewModel.groupFilter = .group(saved.id)
+                    if group == nil { viewModel.groupFilter = .group(saved.id) }
                 }
             case .createGroup(let ids):
                 ClipboardGroupEditor(repository: repository, group: nil, itemIDs: ids, onSave: { _ in })
+            case .deleteGroup(let group):
+                ClipboardGroupDeleteConfirmation(repository: repository, group: group)
             case .deleteItems(let ids):
                 ClipboardDeleteConfirmation(repository: repository, itemIDs: ids)
             case .error(let message):
@@ -96,7 +92,6 @@ struct ClipboardHistoryView: View {
             .background(.white.opacity(colorScheme == .dark ? 0.06 : 0.2), in: Capsule())
             .overlay { Capsule().strokeBorder(.white.opacity(colorScheme == .dark ? 0.12 : 0.4), lineWidth: 0.5).allowsHitTesting(false) }
 
-            if layout == .list { groupMenu }
             Button { showsFilters.toggle() } label: {
                 Image(systemName: "line.3.horizontal.decrease")
                     .foregroundStyle(viewModel.contentFilter != .all || !viewModel.sourceFilter.isEmpty ? Color.accentColor : Color.secondary)
@@ -119,50 +114,34 @@ struct ClipboardHistoryView: View {
                         viewModel.contentFilter = .all
                         viewModel.sourceFilter = ""
                     }
-                }.padding(18).frame(width: 280)
+                }.padding(18).frame(width: 280, alignment: .leading)
             }
         }
-    }
-
-    private var groupMenu: some View {
-        Menu {
-            Button(L10n.tr("全部历史")) { viewModel.groupFilter = .all }
-            Button(L10n.tr("未分组")) { viewModel.groupFilter = .ungrouped }
-            Divider()
-            ForEach(repository.groups) { group in
-                Button { viewModel.groupFilter = .group(group.id) } label: {
-                    if viewModel.groupFilter == .group(group.id) { Label(group.name, systemImage: "checkmark") }
-                    else { Text(group.name) }
-                }
-            }
-            Divider()
-            Button(L10n.tr("新建分组…")) { sheet = .editGroup(nil) }
-            if !repository.groups.isEmpty {
-                Menu(L10n.tr("管理分组")) {
-                    ForEach(repository.groups) { group in
-                        Button(group.name) { sheet = .editGroup(group) }
-                    }
-                }
-            }
-        } label: {
-            Text(groupTitle).font(.system(size: 12)).lineLimit(1).frame(maxWidth: 95)
-        }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
-        .padding(.horizontal, 9)
-        .frame(height: 30)
-        .background(.primary.opacity(0.045), in: Capsule())
-        .accessibilityLabel(L10n.tr("切换分组"))
     }
 
     private var groupTabs: some View {
         HStack(spacing: 5) {
-            groupTab(L10n.tr("全部"), filter: .all)
-            ForEach(repository.groups.prefix(2)) { group in
-                groupTab(group.name, filter: .group(group.id))
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 5) {
+                        groupTab(L10n.tr("全部"), filter: .all)
+                        ForEach(repository.groups) { group in
+                            groupTab(group.name, filter: .group(group.id))
+                                .overlay {
+                                    ClipboardGroupContextMenu(
+                                        onOpen: { viewModel.isPresentingContextMenu = true },
+                                        onClose: { viewModel.isPresentingContextMenu = false },
+                                        onRename: { sheet = .editGroup(group) },
+                                        onDelete: { sheet = .deleteGroup(group) })
+                                }
+                        }
+                    }
+                }
+                .scrollIndicators(.never)
+                .onChange(of: viewModel.groupFilter) {
+                    proxy.scrollTo(viewModel.groupFilter)
+                }
             }
-            Spacer(minLength: 4)
-            groupMenu
             Button { sheet = .editGroup(nil) } label: {
                 Image(systemName: "plus").frame(width: 24, height: 24)
             }.buttonStyle(.plain).accessibilityLabel(L10n.tr("新建分组…"))
@@ -172,11 +151,13 @@ struct ClipboardHistoryView: View {
 
     private func groupTab(_ title: String, filter: ClipboardGroupFilter) -> some View {
         Button { viewModel.groupFilter = filter } label: {
-            Text(title).font(.system(size: 12)).lineLimit(1)
+            Text(title).font(.system(size: 12)).lineLimit(1).frame(maxWidth: 160)
                 .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(.primary.opacity(viewModel.groupFilter == filter ? 0.08 : 0), in: Capsule())
+                .background(.primary.opacity(viewModel.groupFilter == filter ? 0.16 : 0), in: Capsule())
         }
         .buttonStyle(.plain)
+        .help(title)
+        .id(filter)
         .accessibilityAddTraits(viewModel.groupFilter == filter ? .isSelected : [])
     }
 
@@ -203,12 +184,16 @@ struct ClipboardHistoryView: View {
                 ScrollView(layout == .cards ? .horizontal : .vertical) {
                     if layout == .cards {
                         LazyHStack(spacing: 8) { historyItems }
+                            .scrollTargetLayout()
                             .padding(.horizontal, 1)
                     } else {
                         LazyVStack(spacing: 2) { historyItems }
+                            .scrollTargetLayout()
                     }
                 }
                 .scrollIndicators(.never)
+                // Track the visible record so new captures do not displace the content being read.
+                .scrollPosition(id: $visibleItemID)
                 .id(layout)
                 .onReceive(viewModel.keyboardScrollRequests) { id in
                     proxy.scrollTo(id)
@@ -223,17 +208,13 @@ struct ClipboardHistoryView: View {
                 previewURL: repository.previewURL(for: item), assetURL: repository.assetURL(for: item),
                 isSelected: viewModel.selectedIDs.contains(item.id),
                 isCard: layout == .cards)
-                .onTapGesture(count: 2) {
-                    searchIsFocused = false
-                    guard NSEvent.modifierFlags.intersection([.command, .shift]).isEmpty else { return }
-                    viewModel.select(item); viewModel.pasteSelected()
-                }
-                .simultaneousGesture(TapGesture().onEnded {
-                    searchIsFocused = false
-                    viewModel.selectForClick(item, toggling: NSEvent.modifierFlags.contains(.command), extending: NSEvent.modifierFlags.contains(.shift))
-                })
                 .overlay {
                     ClipboardItemContextMenu(
+                        onSelect: { modifiers in
+                            searchIsFocused = false
+                            viewModel.selectForClick(item, toggling: modifiers.contains(.command), extending: modifiers.contains(.shift))
+                        },
+                        onDoubleClick: { viewModel.select(item); viewModel.pasteSelected() },
                         onOpen: { searchIsFocused = false; viewModel.selectForContextMenu(item); viewModel.isPresentingContextMenu = true },
                         onClose: { viewModel.isPresentingContextMenu = false },
                         onEdit: { sheet = .edit(item) },
@@ -283,19 +264,6 @@ struct ClipboardHistoryView: View {
             }
             .buttonStyle(.plain)
             .help(layout == .list ? L10n.tr("切换为卡片") : L10n.tr("切换为列表"))
-            Menu {
-                ForEach(repository.groups) { group in
-                    let selected = viewModel.selectionForContextMenu
-                    let count = selected.values.filter { $0.contains(group.id) }.count
-                    Button { changeGroup(group.id, viewModel.selectedIDs, count != selected.count) } label: {
-                        if count > 0 { Label(group.name, systemImage: count == selected.count ? "checkmark" : "minus") }
-                        else { Text(group.name) }
-                    }
-                }
-                if !repository.groups.isEmpty { Divider() }
-                Button(L10n.tr("新建分组…")) { sheet = .createGroup(viewModel.selectedIDs) }
-            } label: { Label(L10n.tr("分组"), systemImage: "folder.badge.plus") }
-                .menuStyle(.borderlessButton).fixedSize().disabled(viewModel.selectedIDs.isEmpty)
         }
         .font(.system(size: 11))
         .frame(height: 24)

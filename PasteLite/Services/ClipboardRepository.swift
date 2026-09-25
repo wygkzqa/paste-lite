@@ -66,7 +66,7 @@ final class ClipboardRecord {
     }
 }
 
-enum ClipboardGroupFilter: Equatable, Sendable {
+enum ClipboardGroupFilter: Hashable, Sendable {
     case all
     case ungrouped
     case group(UUID)
@@ -159,13 +159,15 @@ struct PreparedCapture {
     let byteCount: Int64
 
     static func prepare(_ capture: ClipboardCapture, limits: ClipboardLimits = .default) -> PreparedCapture? {
+        var type = capture.type
         let payload: Data
         var imageData: Data?
         var thumbnailData: Data?
 
-        switch capture.type {
+        switch type {
         case .text, .url:
             guard let text = capture.textContent, limits.allowsText(bytes: text.utf8.count) else { return nil }
+            if type == .text { type = ClipboardContentType.forText(text) }
             payload = Data(text.utf8)
 
         case .file:
@@ -182,9 +184,9 @@ struct PreparedCapture {
             thumbnailData = makeThumbnailData(sourceData)
         }
 
-        let contentHash = hash(type: capture.type, data: payload)
+        let contentHash = hash(type: type, data: payload)
         return PreparedCapture(
-            type: capture.type,
+            type: type,
             textContent: capture.textContent,
             imageData: imageData,
             thumbnailData: thumbnailData,
@@ -788,6 +790,7 @@ private final class ClipboardStorage {
                     let duplicate = FetchDescriptor<ClipboardRecord>(predicate: #Predicate { $0.contentHash == hash && $0.id != id })
                     guard try context.fetchCount(duplicate) == 0 else { throw ClipboardEditError.duplicateContent }
                     record.textContent = textContent
+                    record.typeRawValue = prepared.type.rawValue
                     record.summaryText = String(textContent.drop(while: { $0.isWhitespace }).prefix(200))
                     record.contentHash = hash
                     record.byteCount = prepared.byteCount
