@@ -20,8 +20,9 @@ struct ClipboardTitleTests {
         precondition(process.terminationStatus == 0)
         let manager = PerformanceFileManager(root: root)
         let repository = ClipboardRepository(fileManager: manager)
-        try await waitUntil { repository.totalCount == 205 || repository.errorMessage != nil }
-        precondition(repository.errorMessage == nil && repository.groups.count == 1)
+        // Counts are published before groups; wait for the complete initial snapshot.
+        try await waitUntil { repository.revision > 0 || repository.errorMessage != nil }
+        precondition(repository.errorMessage == nil && repository.totalCount == 205 && repository.groups.count == 1)
         precondition(repository.items.allSatisfy { $0.customTitle == nil && $0.displayTitle == $0.automaticTitle })
         let groupID = repository.groups[0].id
         let model = ClipboardViewModel(repository: repository)

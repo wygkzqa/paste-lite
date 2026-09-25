@@ -44,7 +44,13 @@ xcodebuild \
 
 在选定的发布提交上运行 `sh Tests/run.sh`。在已安装 Rosetta 的 Apple Silicon Mac 上，再运行 `TEST_ARCH=x86_64 sh Tests/run.sh`；两套测试共用 `.build/tests/`，需顺序执行。Rosetta 测试通过不能替代 Intel 实机验证。使用最终 DMG 验证安装并如实记录限制，将 DMG 与校验文件作为 Release 附件上传。二进制文件和验证日志不提交到 Git。
 
-当前没有 GitHub Actions 发布工作流，单独创建标签不会自动构建或上传；版本准备、包验证与发布仍需明确执行。先将已验证的附件和双语说明上传到 Release 草稿，核对远程文件后再正式发布并设为 Latest。任何受 Git 管理的文件如需修正，仍先通过另一个 PR 合并，再确定最终发布提交。
+[CI](./.github/workflows/ci.yml) 在每个 PR 和 `main` 推送时，使用标准 Apple Silicon 与 Intel macOS 云端机器运行隔离回归测试，固定 Xcode 26.6，并复用现有打包脚本构建 Universal DMG。在工作流运行详情的 **Artifacts** 中下载 `paste-lite-universal`；临时产物保留 7 天。云端测试不能替代实际安装、辅助功能授权和跨应用粘贴检查。
+
+[Release](./.github/workflows/release.yml) 在推送 `v*` 标签时复用上述检查，要求标签格式为稳定版本 `vX.Y.Z`、与应用版本一致、提交已合入 `main`，且两份更新日志均包含该版本说明。随后创建带有 DMG、校验文件和双语说明的 Release **草稿**，并重新下载校验已上传附件。检查最终 DMG 和说明后，再正式发布并设为 Latest。不会覆盖已有 Release；若创建草稿后上传失败，先检查并仅删除该未完成草稿，再重新运行，保持原标签不变。
+
+只需要构建时，打开 **Actions → Release → Run workflow**，选择 `main` 并运行。它会验证安装包和说明，上传相同的临时产物，但不会创建标签或 Release，也不会递增应用版本，可用于验证云端流水线。
+
+发布任务单独使用具有 `contents: write` 的 `GITHUB_TOKEN`；PR 检查只有仓库读取权限，不接收发布凭证。当前临时签名构建不需要个人 Token 或签名证书。版本标签创建应限制给维护者，已发布标签禁止修改和删除，`main` 要求通过 PR 及两项 CI 检查后合并。这些限制需在仓库 Settings 中配置，工作流文件本身不会设置仓库规则。任何受 Git 管理的文件如需修正，仍先通过另一个 PR 合并，再确定最终发布提交。
 
 ## 项目结构
 

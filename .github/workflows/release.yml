@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
+  draft:
+    name: Prepare release draft
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: paste-lite-universal
+          path: .build/package
+      - name: Verify package and prepare bilingual notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          (cd .build/package && sha256sum --check SHA256SUMS.txt)
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          project = Path('PasteLite.xcodeproj/project.pbxproj').read_text()
+          versions = set(re.findall(r'MARKETING_VERSION = ([0-9.]+);', project))
+          if len(versions) != 1:
+              raise SystemExit('Debug and Release must have the same version.')
+          version = versions.pop()
+          if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+              raise SystemExit('Expected a stable X.Y.Z version.')
+          if os.environ['GITHUB_EVENT_NAME'] == 'push':
+              if os.environ['RELEASE_TAG'] != f'v{version}':
+                  raise SystemExit('The tag must match the app version.')
+          if not Path(f'.build/package/Paste-Lite-{version}-universal.dmg').is_file():
+              raise SystemExit('The package must match the app version.')
+
+          repository = os.environ['GITHUB_REPOSITORY']
+          revision = os.environ['GITHUB_SHA']
+          sections = []
+          for filename, language in [('CHANGELOG.md', 'English'), ('CHANGELOG.zh-CN.md', '简体中文')]:
+              changelog = Path(filename).read_text()
+              section = re.search(r'^## \[' + re.escape(version) + r'\][^\n]*\n(.*?)(?=^## |\Z)',
+                                  changelog, re.MULTILINE | re.DOTALL)
+              if not section or not section[1].strip():
+                  raise SystemExit(f'Missing release notes for {version} in {filename}.')
+              content = re.sub(r'\]\(\./([^)]*)\)',
+                               rf'](https://github.com/{repository}/blob/{revision}/\1)', section[1].strip())
+              sections.append(f'## {language}\n\n{content}')
+          notes = '\n\n'.join(sections)
+          notes += '\n\n---\n\nUniversal (arm64 + x86_64), macOS 14+. Ad-hoc signed; not notarized.\n'
+          notes += '\n通用包（Apple Silicon + Intel），要求 macOS 14 及以上。临时签名，未经过 Apple 公证。\n'
+          Path('.build/release-notes.md').write_text(notes)
+          PY
+      - name: Verify release commit is on main
+        if: github.event_name == 'push'
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Create draft and upload assets
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          # Fails rather than modifying any existing draft or published release.
+          gh release create "$RELEASE_TAG" --verify-tag --draft \
+            --title "Paste Lite $RELEASE_TAG" --notes-file .build/release-notes.md \
+            .build/package/*.dmg .build/package/SHA256SUMS.txt
+          gh release download "$RELEASE_TAG" --dir .build/uploaded \
+            --pattern '*.dmg' --pattern SHA256SUMS.txt
+          cmp .build/package/SHA256SUMS.txt .build/uploaded/SHA256SUMS.txt
+          (cd .build/uploaded && sha256sum --check SHA256SUMS.txt)
+      - name: Summarize result
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            echo "Draft created for $RELEASE_TAG. Review the downloaded DMG and notes before publishing." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Build-only run completed. Download paste-lite-universal from this run; no tag or Release was created.' >> "$GITHUB_STEP_SUMMARY"
+          fi

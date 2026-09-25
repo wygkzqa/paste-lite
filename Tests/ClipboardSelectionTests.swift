@@ -188,7 +188,9 @@ struct ClipboardSelectionTests {
         let remaining = try await repository.selection(for: ClipboardQuery())
         try await repository.deleteItems(Set(remaining.keys))
         let reopened = ClipboardRepository(fileManager: manager)
-        try await waitUntil { reopened.isReady }
+        // Group snapshots are published by the reload after storage becomes ready.
+        try await waitUntil { reopened.revision > 0 || reopened.errorMessage != nil }
+        precondition(reopened.errorMessage == nil)
         precondition(reopened.totalCount == 0 && reopened.groups.count == 2)
         await repository.reload()
         try await waitUntil { !model.isLoading }

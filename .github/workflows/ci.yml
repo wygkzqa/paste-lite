@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and test (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            arch: arm64
+          - runner: macos-26-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      TEST_ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check build environment
+        run: |
+          test "$(uname -m)" = "$TEST_ARCH"
+          xcodebuild -version
+      - name: Run isolated regression tests
+        run: sh Tests/run.sh
+      - name: Build and verify Universal DMG
+        if: matrix.arch == 'arm64'
+        id: package
+        run: |
+          sh scripts/package-release.sh
+          version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+            '.build/release-build/Build/Products/Release/Paste Lite.app/Contents/Info.plist')
+          echo "directory=.build/releases/$version" >> "$GITHUB_OUTPUT"
+      - name: Upload Universal package
+        if: matrix.arch == 'arm64'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paste-lite-universal
+          path: |
+            ${{ steps.package.outputs.directory }}/*.dmg
+            ${{ steps.package.outputs.directory }}/SHA256SUMS.txt
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          overwrite: true
