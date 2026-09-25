@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- Preserve the current search and full selection when history or group metadata refreshes before the latest search text finishes debouncing.
+
 ## [1.1.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.0)
 
 Build 12. The first version with in-app updates; users of 1.0.0 need to install 1.1.0 manually once before receiving later updates in the app.

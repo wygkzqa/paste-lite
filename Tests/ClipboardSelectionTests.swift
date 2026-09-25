@@ -20,7 +20,37 @@ struct ClipboardSelectionTests {
     static func main() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("PasteLite-selection-tests-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
+        try await preservesPendingSearchSelection(root: root.appendingPathComponent("pending-search"))
         try await run(root: root)
+    }
+
+    private static func preservesPendingSearchSelection(root: URL) async throws {
+        let repository = ClipboardRepository(fileManager: SelectionFileManager(root: root.appendingPathComponent("destination")))
+        try await waitUntil { repository.isReady }
+        let fixture = try PerformanceFixtures.makeBatch(count: 60, root: root)
+        let batch = PasteImportBatch(directory: fixture.directory, entries: fixture.entries,
+                                    total: fixture.entries.count, duplicates: 0, skipped: [:])
+        let preview = try await repository.previewImport(batch)
+        _ = try await repository.importBatch(batch, preview: preview, expand: false)
+        let group = try await repository.saveGroup(name: "Pending search group")
+        let model = ClipboardViewModel(repository: repository)
+        try await waitUntil { model.filteredItems.count == 60 && !model.isLoading }
+        let expected = Set(try await repository.selection(for: ClipboardQuery(text: "Record")).keys)
+        precondition(expected.count > 1 && expected.count < 60)
+
+        model.query = "Record"
+        model.selectAll()
+        try await waitUntil { !model.isSelectingAll && model.selectedIDs == expected }
+        try await repository.setGroup(group.id, for: model.selectedIDs, included: true)
+        try await waitUntil {
+            !model.isLoading && !model.selectionForContextMenu.isEmpty
+                && model.selectionForContextMenu.values.allSatisfy { $0.contains(group.id) }
+        }
+        precondition(model.selectedIDs == expected,
+                     "A group refresh before search debounce must preserve the full selection")
+        precondition(Set(model.filteredItems.map(\.id)) == expected,
+                     "A group refresh must not restore the previous search results")
+        print("PASS: immediate select-all and group edits preserve the latest pending search and every selected ID")
     }
 
     private static func run(root: URL) async throws {
