@@ -13,8 +13,8 @@ struct ClipboardGroupTests {
         process.waitUntilExit()
         precondition(process.terminationStatus == 0)
         let repository = ClipboardRepository(fileManager: PerformanceFileManager(root: root))
-        try await waitUntil { repository.totalCount == 1_205 || repository.errorMessage != nil }
-        precondition(repository.errorMessage == nil && repository.groups.isEmpty)
+        try await waitUntil { repository.revision > 0 || repository.errorMessage != nil }
+        precondition(repository.errorMessage == nil && repository.totalCount == 1_205 && repository.groups.isEmpty)
         precondition(repository.items.allSatisfy { ($0.groupIDs ?? []).isEmpty })
         let all = try await repository.query(limit: 210)
         precondition(all.total == 1_205)
