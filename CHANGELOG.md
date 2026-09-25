@@ -2,9 +2,13 @@
 
 English | [简体中文](./CHANGELOG.zh-CN.md)
 
-Paste Lite has not been officially released. This section lists the features currently supported.
+Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
+
+## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
+
+First stable release. Universal app for Apple silicon and Intel, requiring macOS 14 or later. The downloadable app is ad-hoc signed and not notarized; see the installation guidance in [README](./README.md).
 
 ### Fixed
 

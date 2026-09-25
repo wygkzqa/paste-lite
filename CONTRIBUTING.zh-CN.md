@@ -30,9 +30,15 @@ xcodebuild \
   build
 ```
 
-构建 Release 时，将 `Debug` 替换为 `Release`。产物名为 `Paste Lite.app`，scheme、模块和可执行文件名为 `PasteLite`。
+构建 Universal Release 时，将 `Debug` 替换为 `Release`，并添加 `-destination 'generic/platform=macOS'`。产物名为 `Paste Lite.app`，scheme、模块和可执行文件名为 `PasteLite`。
 
 默认使用临时签名，便于本地开发；重新构建后辅助功能授权可能失效。请避免同时运行开发版本和已安装版本：它们共用 bundle identifier 和数据目录。下文的隔离回归测试不会使用正式历史库。
+
+## 打包发布
+
+运行 `sh scripts/package-release.sh`，构建 Universal Release 应用，检查双架构及签名，在 `.build/releases/<version>/` 中生成 DMG 和 `SHA256SUMS.txt`。脚本不会覆盖已有 DMG，也不会执行发布或公证。当前项目采用临时签名。
+
+发布前设置应用版本与构建号，同步两份 README 和 CHANGELOG，并运行 `sh Tests/run.sh`。在已安装 Rosetta 的 Apple Silicon Mac 上，再运行 `TEST_ARCH=x86_64 sh Tests/run.sh`；两套测试共用 `.build/tests/`，需顺序执行。Rosetta 测试通过不能替代 Intel 实机验证。使用最终 DMG 验证安装并如实记录限制，再为构建所用的确切提交打标签，将 DMG 与校验文件作为 Release 附件上传。二进制文件和验证日志不提交到 Git。
 
 ## 项目结构
 

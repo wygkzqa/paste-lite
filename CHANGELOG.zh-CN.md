@@ -2,9 +2,13 @@
 
 [English](./CHANGELOG.md) | 简体中文
 
-Paste Lite 尚未正式发布，此处汇总当前已支持的功能。
+此处记录 Paste Lite 的主要更新。
 
 ## 未发布
+
+## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
+
+首个正式版本，提供同时包含 Apple Silicon 与 Intel 架构的 Universal 应用，要求 macOS 14 及以上。下载包采用临时签名，未经过 Apple 公证；安装说明见 [README](./README.zh-CN.md)。
 
 ### 修复
 

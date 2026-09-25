@@ -30,9 +30,15 @@ xcodebuild \
   build
 ```
 
-For a Release build, replace `Debug` with `Release`. The product is named `Paste Lite.app`; the scheme, module, and executable are named `PasteLite`.
+For a Universal Release build, replace `Debug` with `Release` and add `-destination 'generic/platform=macOS'`. The product is named `Paste Lite.app`; the scheme, module, and executable are named `PasteLite`.
 
 The default signing identity is ad-hoc for local development. Accessibility grants may become invalid after a rebuild. Avoid running the development and installed copies together: both use the same bundle identifier and data directory. The isolated regression tests described below avoid the normal history store.
+
+## Package a release
+
+Run `sh scripts/package-release.sh` to build the Universal Release app, verify both architectures and its signature, and create a DMG plus `SHA256SUMS.txt` under `.build/releases/<version>/`. The script does not overwrite an existing DMG and does not publish or notarize the app. The current project uses ad-hoc signing.
+
+Before publishing, set the app version/build number, update both READMEs and changelogs, and run `sh Tests/run.sh`. On an Apple silicon Mac with Rosetta installed, also run `TEST_ARCH=x86_64 sh Tests/run.sh`; run these suites sequentially because they share `.build/tests/`. A Rosetta pass does not replace physical Intel testing. Test installation from the final DMG, record limitations accurately, then tag the exact commit used to build it and upload the DMG and checksum file as Release assets. Keep binaries and verification logs out of Git.
 
 ## Project structure
 

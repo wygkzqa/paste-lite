@@ -44,8 +44,20 @@ Paste Lite 常驻 macOS 菜单栏，让复制过的内容随时可用。按下 *
 
 ### 环境要求
 
-- 运行应用需要 macOS 14 或更新版本。
+- 运行应用需要 macOS 14 或更新版本，支持 Apple Silicon 和 Intel。
 - 构建需要 Xcode 26 或更新版本，用于编译原生 `.icon` 图标资源。
+
+### 下载与安装
+
+[下载 Paste Lite 1.0.0 — macOS Universal 通用包](https://github.com/wygkzqa/paste-lite/releases/download/v1.0.0/Paste-Lite-1.0.0-universal.dmg) · [发布说明与校验文件](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0)
+
+1. 下载 `Paste-Lite-1.0.0-universal.dmg`，一个包同时包含 Apple Silicon（`arm64`）和 Intel（`x86_64`）版本，无需安装 Xcode。
+2. 退出已运行的 Paste Lite，打开磁盘映像，将 **Paste Lite** 拖入 **Applications（应用程序）**。
+3. 推出磁盘映像，从应用程序中打开 Paste Lite，按 **⇧⌘V** 显示历史。
+
+**签名说明：**1.0.0 使用临时签名，尚未经过 Apple 公证，首次打开可能被 Gatekeeper 阻止。确认信任本仓库并核对下载后，可参考 [Apple 关于打开身份未验证应用的说明](https://support.apple.com/zh-cn/102445)。本地构建成功不代表通过 Gatekeeper 验证。自动粘贴另有[辅助功能授权已知问题](#辅助功能权限)。
+
+Release 附带 `SHA256SUMS.txt`。将它与安装包放在同一文件夹，在该目录运行 `shasum -a 256 -c SHA256SUMS.txt` 即可校验。已验证 Apple Silicon 以及 Rosetta 下的 Intel 构建，尚未在 Intel 实机上验证。
 
 ### 从源码构建
 
@@ -56,6 +68,7 @@ xcodebuild \
   -project PasteLite.xcodeproj \
   -scheme PasteLite \
   -configuration Release \
+  -destination 'generic/platform=macOS' \
   -derivedDataPath .build \
   build
 

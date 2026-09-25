@@ -46,7 +46,7 @@ docs/                   README 图片资源
 
 - `ClipboardMonitor` 负责监测剪贴板变化、识别内容、跳过特定标记类型，以及睡眠和会话切换时的暂停与恢复。
 - `ClipboardRepository` 对外提供历史数据；其内部 `ClipboardStorage` 负责 SwiftData、去重、分页查询、保留清理、图片资源和旧数据迁移。
-- `PreparedCapture` 将仅含完整 HTTP(S) 网址的文本识别为链接，采集、Paste 导入及正文编辑共用此规则；说明文字、Markdown 和多个网址仍为文本。当前未发布版本不为旧文本网址执行启动分类回填。链接写回剪贴板时同时提供 URL 与原始纯文本。
+- `PreparedCapture` 将仅含完整 HTTP(S) 网址的文本识别为链接，采集、Paste 导入及正文编辑共用此规则；说明文字、Markdown 和多个网址仍为文本。不为早期开发版本的旧文本网址执行启动分类回填。链接写回剪贴板时同时提供 URL 与原始纯文本。
 - `PasteImportService` 只读解析已验证结构的 Paste 数据，通过 `ClipboardRepository` 批量合并。导入不能删除已有历史；条数与单条大小统一读取持久化限制，解析与测试不得依赖个人数据库。
 - `PasteService` 负责写回剪贴板、检查辅助功能权限、打开授权设置和发送粘贴快捷键。写回成功后保留监听回环抑制，避免把自身复制重复采集为新记录。
 - `GlobalHotKeyManager` 管理全局快捷键的注册与释放。
@@ -79,9 +79,9 @@ docs/                   README 图片资源
 xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
   -configuration Debug -derivedDataPath .build build
 
-# Release 构建
+# Universal Release 构建
 xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
-  -configuration Release -derivedDataPath .build build
+  -configuration Release -destination 'generic/platform=macOS' -derivedDataPath .build build
 
 # 图片、剪贴板、导入、语言设置与登录项回归测试
 sh Tests/run.sh
@@ -89,6 +89,8 @@ sh Tests/run.sh
 # 检查修改中的空白问题
 git diff --check
 ```
+
+`sh scripts/package-release.sh` 构建并验证双架构应用，在 `.build/releases/<version>/` 生成 DMG 和 SHA-256 校验文件；不自动发布或公证。`TEST_ARCH=x86_64 sh Tests/run.sh` 在 Intel 或 Rosetta 下验证 Intel 架构，与默认测试顺序执行。
 
 Release 产物为 `.build/Build/Products/Release/Paste Lite.app`。构建验证与安装是不同操作；仅在任务包含安装或更新应用时替换安装版本，复制前退出正在运行的应用。
 

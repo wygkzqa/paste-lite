@@ -44,8 +44,20 @@ Single image files also appear under the image filter, while retaining their fil
 
 ### Requirements
 
-- macOS 14 or later to run the app.
+- macOS 14 or later on Apple silicon or Intel to run the app.
 - Xcode 26 or later to build it, including the native `.icon` asset.
+
+### Download and install
+
+[Download Paste Lite 1.0.0 for macOS — Universal DMG](https://github.com/wygkzqa/paste-lite/releases/download/v1.0.0/Paste-Lite-1.0.0-universal.dmg) · [Release notes and checksums](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0)
+
+1. Download `Paste-Lite-1.0.0-universal.dmg`. It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
+2. Quit an existing copy of Paste Lite, open the disk image, and drag **Paste Lite** into **Applications**.
+3. Eject the disk image, then open Paste Lite from Applications. Press **⇧⌘V** to show history.
+
+**Signing:** version 1.0.0 uses ad-hoc signing and has not been notarized by Apple. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval. Automatic pasting also has a separate [known Accessibility issue](#accessibility-permission).
+
+The release includes `SHA256SUMS.txt`. To check the download, place both files in the same folder and run `shasum -a 256 -c SHA256SUMS.txt` there. Validation covers Apple silicon and the Intel build under Rosetta; physical Intel hardware has not been verified.
 
 ### Build from source
 
@@ -56,6 +68,7 @@ xcodebuild \
   -project PasteLite.xcodeproj \
   -scheme PasteLite \
   -configuration Release \
+  -destination 'generic/platform=macOS' \
   -derivedDataPath .build \
   build
 
