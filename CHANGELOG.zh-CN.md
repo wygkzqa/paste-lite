@@ -6,6 +6,10 @@
 
 ## 未发布
 
+### 构建与发布
+
+- 增加 Apple Silicon 与 Intel 的 GitHub Actions 检查、Universal DMG 构建产物，以及由版本标签触发的 Release 草稿，包含双语说明和经过校验的附件；手动运行仅构建，不发布。
+
 ## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
 
 首个正式版本，提供同时包含 Apple Silicon 与 Intel 架构的 Universal 应用，要求 macOS 14 及以上。下载包采用临时签名，未经过 Apple 公证；安装说明见 [README](./README.zh-CN.md)。

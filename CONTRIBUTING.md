@@ -44,7 +44,13 @@ Run `sh scripts/package-release.sh` to build the Universal Release app, verify b
 
 On the selected release commit, run `sh Tests/run.sh`. On an Apple silicon Mac with Rosetta installed, also run `TEST_ARCH=x86_64 sh Tests/run.sh`; run these suites sequentially because they share `.build/tests/`. A Rosetta pass does not replace physical Intel testing. Test installation from the final DMG, record limitations accurately, and upload the DMG and checksum file as Release assets. Keep binaries and verification logs out of Git.
 
-There is currently no GitHub Actions release workflow: creating a tag alone does not build or upload anything. Release preparation, package verification, and publishing remain explicit steps. Upload the verified assets and bilingual notes to a draft Release, verify the uploaded files, then publish and mark it Latest. Any tracked corrections must go through another PR before selecting the final release commit.
+[CI](./.github/workflows/ci.yml) runs isolated regression tests on standard Apple Silicon and Intel macOS runners for every PR and `main` push. It uses Xcode 26.6 and builds a Universal DMG with the existing packaging script. Download `paste-lite-universal` from the workflow run's **Artifacts** section; temporary artifacts expire after 7 days. Hosted tests do not replace manual installation, Accessibility, or cross-app paste checks.
+
+[Release](./.github/workflows/release.yml) reuses these checks when a `v*` tag is pushed. It requires a stable `vX.Y.Z` tag matching the app version, a commit already merged into `main`, and notes for that version in both changelogs. It creates a **draft** Release with the DMG, checksum file, and bilingual notes, then downloads and verifies the uploaded assets. Review the final DMG and notes before publishing and marking the release Latest. Existing releases are never overwritten; if an upload fails after draft creation, inspect and remove only that incomplete draft before rerunning, keeping the original tag unchanged.
+
+For a build without a release, open **Actions → Release → Run workflow**, select `main`, and run it. This validates the package and notes and uploads the same temporary artifact, without creating a tag or Release. This is suitable for testing the cloud pipeline; it does not increment the app version.
+
+Publishing uses the job-scoped `GITHUB_TOKEN` with `contents: write`; PR checks have read-only repository permissions and do not receive publishing credentials. No personal token or signing certificate is needed for the current ad-hoc build. Keep version tag creation restricted to maintainers, protect published tags from updates/deletion, and require PRs plus both CI checks on `main`. Configure these controls in repository Settings; workflow files alone do not apply repository rules. Any tracked corrections must go through another PR before selecting the final release commit.
 
 ## Project structure
 

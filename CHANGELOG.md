@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Build and release
+
+- Add GitHub Actions checks on Apple Silicon and Intel, Universal DMG artifacts, and tag-triggered Release drafts with bilingual notes and verified checksums. Manual runs build without publishing.
+
 ## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
 
 First stable release. Universal app for Apple silicon and Intel, requiring macOS 14 or later. The downloadable app is ad-hoc signed and not notarized; see the installation guidance in [README](./README.md).
