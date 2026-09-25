@@ -6,14 +6,19 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.1.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.0)
+
+Build 12. The first version with in-app updates; users of 1.0.0 need to install 1.1.0 manually once before receiving later updates in the app.
+
 ### Features
 
-- Add in-app update checks from the menu and About page, optional daily background checks, localized update windows, signed downloads, and user-confirmed installation and relaunch. Production availability requires an update signing key and a published signed feed; 1.0.0 users must install an updater-enabled version manually once.
+- Add in-app update checks from the menu and About page, optional daily background checks, localized update windows, signed downloads, and user-confirmed installation and relaunch. Automatic checks are off by default; downloading and installing require user action.
 - Preserve pending history writes before quitting and prevent update restarts while editors or data operations are active. Cancelling a prepared update cancels installation on quit.
 
 ### Build and release
 
 - Add GitHub Actions checks on Apple Silicon and Intel, Universal DMG artifacts, and tag-triggered Release drafts with bilingual notes and verified checksums. Manual runs build without publishing.
+- Prepare a signed update feed alongside the final DMG, verify signatures against the app's embedded public key, preserve previous feed entries, and reject non-increasing build numbers. Release signing uses the protected publishing environment.
 
 ## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
 

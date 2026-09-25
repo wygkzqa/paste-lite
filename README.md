@@ -36,6 +36,7 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 - **Groups** — create and rename groups, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
 - **Launch at login** — an optional switch in Settings, managed by macOS Login Items.
 - **Language settings** — follow the system by default, or choose Simplified Chinese or English; changes apply immediately and persist across launches.
+- **In-app updates (1.1.0+)** — check from the menu or About page, review release notes, and confirm download and installation; optional automatic checks are off by default.
 - **Local storage** — history and captured images stay on disk; clipboard monitoring pauses during sleep and inactive user sessions.
 
 Single image files also appear under the image filter, while retaining their file format when copied back to the clipboard.
@@ -49,23 +50,25 @@ Single image files also appear under the image filter, while retaining their fil
 
 ### Download and install
 
-[Download Paste Lite 1.0.0 for macOS — Universal DMG](https://github.com/wygkzqa/paste-lite/releases/download/v1.0.0/Paste-Lite-1.0.0-universal.dmg) · [Release notes and checksums](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0)
+[Download the latest published release — macOS Universal DMG, notes and checksums](https://github.com/wygkzqa/paste-lite/releases/latest)
 
-1. Download `Paste-Lite-1.0.0-universal.dmg`. It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
+This source revision prepares **1.1.0 (build 12)**. Its download becomes available when the 1.1.0 Release is published; until then, the link above points to the existing 1.0.0 release.
+
+1. Download the release's Universal DMG (`Paste-Lite-1.1.0-universal.dmg` for 1.1.0). It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
 2. Quit an existing copy of Paste Lite, open the disk image, and drag **Paste Lite** into **Applications**.
 3. Eject the disk image, then open Paste Lite from Applications. Press **⇧⌘V** to show history.
 
-**Signing:** version 1.0.0 uses ad-hoc signing and has not been notarized by Apple. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval. Automatic pasting also has a separate [known Accessibility issue](#accessibility-permission).
+**Signing:** the app uses ad-hoc signing and has not been notarized by Apple. Sparkle update signatures do not replace Apple code signing or notarization. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval. Automatic pasting also has a separate [known Accessibility issue](#accessibility-permission).
 
-The release includes `SHA256SUMS.txt`. To check the download, place both files in the same folder and run `shasum -a 256 -c SHA256SUMS.txt` there. Validation covers Apple silicon and the Intel build under Rosetta; physical Intel hardware has not been verified.
+For 1.1.0 and later, download the DMG, `appcast.xml`, and `SHA256SUMS.txt` from the same Release into one folder, then run `shasum -a 256 -c SHA256SUMS.txt` there. The checksum file covers both the package and update feed; 1.0.0 only needs its DMG and checksum file. CI runs regression tests on Apple Silicon and Intel macOS runners and builds the Universal package. GUI installation and online upgrades on a physical Intel Mac have not been verified.
 
-### Online updates (unreleased)
+### Online updates (1.1.0+)
 
 In builds configured for online updates, use **Check for Updates…** in the menu bar or **Settings → About**. Review the release notes, download the update, then choose **Install and Relaunch**. Finish and close editing or import windows first. Cancelling a prepared update keeps the current version. History, groups and settings remain in place; normal retention rules still apply after restarting.
 
 **Automatically check for updates** is off by default. When enabled, Sparkle checks about once a day and shows availability in the menu and About page without stealing focus. Downloads and installation require your action. Errors leave the current app available, and **Downloads** opens the GitHub release page.
 
-Version 1.0.0 does not include the updater: install a version containing it manually once. The update signing key and first signed feed must be configured before production online updates become available. Source builds without that key show an explicit unavailable message. Updating does not resolve the known Accessibility authorization issue.
+Version 1.0.0 does not include the updater: install 1.1.0 manually once after its Release is published. Later versions can then be installed in the app. The online update source becomes available when the first signed feed is published. Source builds without a configured public update key show an explicit unavailable message; see [Contributing](./CONTRIBUTING.md#configure-online-update-publishing) for configuration. Updating does not resolve the known Accessibility authorization issue.
 
 ### Build from source
 
