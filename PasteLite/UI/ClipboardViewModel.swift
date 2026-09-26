@@ -110,8 +110,10 @@ final class ClipboardViewModel: ObservableObject {
         )
         .combineLatest($groupFilter.removeDuplicates(), NotificationCenter.default.publisher(for: .appLanguageDidChange).map { _ in () }.prepend(()))
         .sink { [weak self] values, groupFilter, _ in
-            let (_, query, contentFilter, sourceFilter) = values
-            self?.filter(query: query, contentFilter: contentFilter, sourceFilter: sourceFilter, groupFilter: groupFilter)
+            guard let self else { return }
+            let (_, _, contentFilter, sourceFilter) = values
+            // A repository refresh may arrive before the latest search text finishes debouncing.
+            self.filter(query: self.query, contentFilter: contentFilter, sourceFilter: sourceFilter, groupFilter: groupFilter)
         }
         .store(in: &cancellables)
     }
