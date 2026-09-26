@@ -6,13 +6,13 @@
 
 ## 未发布
 
+## [1.1.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.1)
+
+构建号 13。首个包含应用内更新器的版本；1.0.0 用户需要先手动安装一次 1.1.1，之后才能在应用内接收后续更新。
+
 ### 修复
 
 - 搜索输入尚在等待生效时，历史或分组信息刷新不再恢复旧搜索条件，保留当前搜索与完整多选结果。
-
-## [1.1.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.0)
-
-构建号 12。首个包含应用内更新器的版本；1.0.0 用户需要先手动安装一次 1.1.0，之后才能在应用内接收后续更新。
 
 ### 功能
 
@@ -23,6 +23,10 @@
 
 - 增加 Apple Silicon 与 Intel 的 GitHub Actions 检查、Universal DMG 构建产物，以及由版本标签触发的 Release 草稿，包含双语说明和经过校验的附件；手动运行仅构建，不发布。
 - 为最终 DMG 生成签名更新清单，使用应用内公钥验证签名，保留历史清单条目并拒绝未递增构建号；正式签名由受保护的发布环境执行。
+
+## [1.1.0](https://github.com/wygkzqa/paste-lite/tree/v1.1.0) — 未发布
+
+原计划的更新已包含在 1.1.1。
 
 ## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
 
