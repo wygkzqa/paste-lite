@@ -6,13 +6,13 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.1.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.1)
+
+Build 13. The first version with in-app updates; users of 1.0.0 need to install 1.1.1 manually once before receiving later updates in the app.
+
 ### Fixed
 
 - Preserve the current search and full selection when history or group metadata refreshes before the latest search text finishes debouncing.
-
-## [1.1.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.0)
-
-Build 12. The first version with in-app updates; users of 1.0.0 need to install 1.1.0 manually once before receiving later updates in the app.
 
 ### Features
 
@@ -23,6 +23,10 @@ Build 12. The first version with in-app updates; users of 1.0.0 need to install 
 
 - Add GitHub Actions checks on Apple Silicon and Intel, Universal DMG artifacts, and tag-triggered Release drafts with bilingual notes and verified checksums. Manual runs build without publishing.
 - Prepare a signed update feed alongside the final DMG, verify signatures against the app's embedded public key, preserve previous feed entries, and reject non-increasing build numbers. Release signing uses the protected publishing environment.
+
+## [1.1.0](https://github.com/wygkzqa/paste-lite/tree/v1.1.0) — Not released
+
+Its planned changes are included in 1.1.1.
 
 ## [1.0.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.0.0) — 2026-09-25
 
