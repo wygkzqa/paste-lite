@@ -32,6 +32,7 @@ struct PasteImportEntry: Sendable {
 struct PasteImportGroup: Sendable {
     let id: Int64
     let name: String
+    var color: ClipboardGroupColor? = nil
 }
 
 /// Owns only this scan's temporary resources. Keeping the batch alive keeps its files alive.
@@ -66,12 +67,13 @@ struct PasteImportPreview: Sendable {
     var groupsToCreate: [ClipboardGroup] = []
     var groupIDsBySource: [Int64: UUID] = [:]
     var groupUpdates: [String: Set<UUID>] = [:]
+    var groupColorUpdates: [UUID: ClipboardGroupColor] = [:]
     var existingGroups: [ClipboardGroup] = []
     var existingMemberships: [String: Set<UUID>] = [:]
     var titleUpdates: [String: String] = [:]
     var existingTitles: [String: String] = [:]
 
-    var hasGroupChanges: Bool { !groupsToCreate.isEmpty || !groupUpdates.isEmpty }
+    var hasGroupChanges: Bool { !groupsToCreate.isEmpty || !groupUpdates.isEmpty || !groupColorUpdates.isEmpty }
     var hasChanges: Bool { !entries.isEmpty || hasGroupChanges || !titleUpdates.isEmpty }
 
     var requiredCount: Int { existingHashes.count + entries.count }
@@ -93,6 +95,7 @@ struct PasteImportResult: Sendable {
     let groupsAdded: Int
     let recordsUpdated: Int
     let titlesUpdated: Int
+    let groupColorsUpdated: Int
 }
 
 enum PasteImportError: LocalizedError {

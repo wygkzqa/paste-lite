@@ -179,7 +179,16 @@ Enter up to 100 characters on one line for a new title; clear it to restore the 
 
 The importer recognizes the local data structure verified against **Paste 6.0.3**; other structures are rejected. It reads a database snapshot and leaves the source database and attachments unchanged. Import runs locally without Accessibility permission, network access, or writing to the system clipboard. It does not synchronize the two apps.
 
-Text, links, PNG/TIFF/JPEG images, and accessible file references are supported. RTF is reduced to plain text; HTML requires an accompanying plain-text representation. Titles, Pinboard names (including empty boards), and record memberships are retained. For duplicate content in Paste, the most recent nonempty title is used. Imported titles are preserved in full, including those longer than the manual editor’s 100-character limit. Groups with matching names are merged case-insensitively. Content found in multiple Pinboards keeps all memberships without storing duplicate payloads. Group and item ordering, pinned status, sharing, and rich-text styles are not retained. Missing cloud content, unavailable attachments, invalid file references, and unsupported formats are counted as skipped; previews are never substituted for original images.
+Text, links, PNG/TIFF/JPEG images, and accessible file references are supported. RTF is reduced to plain text; HTML requires an accompanying plain-text representation. Titles, Pinboard names (including empty boards), supported group colors, and record memberships are retained. For duplicate content in Paste, the most recent nonempty title is used. Imported titles are preserved in full, including those longer than the manual editor’s 100-character limit. Groups with matching names are merged case-insensitively; missing local colors are filled while existing colors are kept. Reimporting can fill colors for previously imported groups. Unknown or missing source colors leave groups uncolored. Content found in multiple Pinboards keeps all memberships without storing duplicate payloads. Group and item ordering, pinned status, sharing, and rich-text styles are not retained. Missing cloud content, unavailable attachments, invalid file references, and unsupported formats are counted as skipped; previews are never substituted for original images.
+
+<details>
+<summary>Imported Pinboard colors (sample groups)</summary>
+
+| Light appearance | Dark appearance |
+| --- | --- |
+| ![Imported Pinboard group colors](./docs/paste-import-colors-light.png) | ![Imported Pinboard group colors](./docs/paste-import-colors-dark.png) |
+
+</details>
 
 Existing duplicates keep their IDs, timestamps, source apps, and local group memberships; missing memberships and titles are added. Existing local titles take priority. You can use **Import groups and titles** even when all records already exist or the history entry limit is full. Groups are matched by name on each import, so renaming a destination group may create a group with the original name when importing again. Import never removes existing history to make room. An increased entry limit persists across restarts. Imported entries remain subject to the configured retention period, using their original creation dates. Capture-size changes require a fresh scan. You can cancel scanning before the final save. Repeating an import adds no duplicates.
 

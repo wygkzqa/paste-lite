@@ -224,7 +224,7 @@
 "记录已不存在，请关闭后重试。" = "This entry no longer exists. Close this dialog and try again.";
 "补充已有记录的标题" = "Titles added to existing entries";
 "搜索标题、文本、链接、文件或来源应用" = "Search titles, text, links, files, or source apps";
-"保留标题、Pinboard 名称及记录归属，同名分组合并。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。" = "Titles, Pinboard names, and memberships are kept. Matching groups are merged. Duplicates gain missing memberships and titles; existing titles are kept. Existing history is kept. Ordering, sharing, and rich-text styles are not retained. Grouped entries follow your retention rules.";
+"保留标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。" = "Titles, Pinboard names, colors, and memberships are preserved. Same-name groups merge and missing colors are filled without replacing existing colors. Duplicates gain memberships and missing titles; existing titles are kept. Existing history is not deleted. Group ordering, sharing, and rich-text styles are not preserved. Grouped records follow existing cleanup rules.";
 "切换为卡片" = "Switch to Cards";
 "切换为列表" = "Switch to List";
 "编辑…" = "Edit…";
@@ -315,3 +315,9 @@
 "登录 Mac 后自动打开 %@。" = "Open %@ automatically after logging in to your Mac.";
 "尚未获准启动，请在系统设置的登录项中允许 %@。" = "Allow %@ in Login Items in System Settings.";
 "找不到登录项，请将 %@ 放入 Applications 后重新打开。" = "Login item not found. Move %@ to Applications and reopen it.";
+
+"粉色" = "Pink";
+
+"灰色" = "Gray";
+
+"补充已有分组的标识色" = "Colors for existing groups";

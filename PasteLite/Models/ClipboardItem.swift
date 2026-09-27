@@ -7,7 +7,7 @@ struct ClipboardGroup: Identifiable, Equatable, Sendable {
 }
 
 enum ClipboardGroupColor: String, CaseIterable, Codable, Sendable {
-    case red, orange, yellow, green, blue, indigo, purple
+    case red, orange, yellow, green, blue, indigo, purple, pink, gray
 
     var title: String {
         switch self {
@@ -18,6 +18,8 @@ enum ClipboardGroupColor: String, CaseIterable, Codable, Sendable {
         case .blue: L10n.tr("蓝色")
         case .indigo: L10n.tr("靛蓝色")
         case .purple: L10n.tr("紫色")
+        case .pink: L10n.tr("粉色")
+        case .gray: L10n.tr("灰色")
         }
     }
 }

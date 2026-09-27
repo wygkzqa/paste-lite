@@ -895,11 +895,20 @@ private final class ClipboardStorage {
         var destinationGroups = preview.existingGroups
         for source in batch.groups {
             let group: ClipboardGroup
-            if let existing = destinationGroups.first(where: { $0.name.localizedCaseInsensitiveCompare(source.name) == .orderedSame }) {
-                group = existing
+            if let index = destinationGroups.firstIndex(where: { $0.name.localizedCaseInsensitiveCompare(source.name) == .orderedSame }) {
+                if destinationGroups[index].color == nil, let color = source.color {
+                    destinationGroups[index].color = color
+                    let id = destinationGroups[index].id
+                    if let newIndex = preview.groupsToCreate.firstIndex(where: { $0.id == id }) {
+                        preview.groupsToCreate[newIndex].color = color
+                    } else {
+                        preview.groupColorUpdates[id] = color
+                    }
+                }
+                group = destinationGroups[index]
             } else {
                 // Imported names are preserved in full, even above the manual name editor's limit.
-                group = ClipboardGroup(id: UUID(), name: source.name)
+                group = ClipboardGroup(id: UUID(), name: source.name, color: source.color)
                 destinationGroups.append(group)
                 preview.groupsToCreate.append(group)
             }
@@ -950,7 +959,13 @@ private final class ClipboardStorage {
                 for group in current.groupsToCreate {
                     let record = ClipboardGroupRecord(name: group.name)
                     record.id = group.id
+                    record.colorRawValue = group.color?.rawValue
                     context.insert(record)
+                }
+                for group in groups {
+                    if let color = current.groupColorUpdates[group.id] {
+                        group.colorRawValue = color.rawValue
+                    }
                 }
                 for record in records {
                     if let title = current.titleUpdates[record.contentHash] {
@@ -990,7 +1005,7 @@ private final class ClipboardStorage {
                     added: selected.count, duplicates: current.duplicates, skipped: batch.skipped,
                     capacitySkipped: current.entries.count - selected.count,
                     groupsAdded: current.groupsToCreate.count, recordsUpdated: current.groupUpdates.count,
-                    titlesUpdated: current.titleUpdates.count
+                    titlesUpdated: current.titleUpdates.count, groupColorsUpdated: current.groupColorUpdates.count
                 )
                 complete(.success((result, limits)), using: completion)
             } catch {
