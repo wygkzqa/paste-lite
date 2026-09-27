@@ -24,6 +24,7 @@ struct ClipboardTitleTests {
         try await waitUntil { repository.revision > 0 || repository.errorMessage != nil }
         precondition(repository.errorMessage == nil && repository.totalCount == 205 && repository.groups.count == 1)
         precondition(repository.items.allSatisfy { $0.customTitle == nil && $0.displayTitle == $0.automaticTitle })
+        precondition(repository.groups[0].color == nil, "Legacy groups start without a marker color")
         let groupID = repository.groups[0].id
         let model = ClipboardViewModel(repository: repository)
         model.groupFilter = .group(groupID)

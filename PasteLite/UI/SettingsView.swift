@@ -33,6 +33,7 @@ struct SettingsView: View {
     @ObservedObject var repository: ClipboardRepository
     @ObservedObject var navigation: SettingsNavigation
     @ObservedObject var updates: AppUpdateManager
+    @ObservedObject var hotKeys: GlobalHotKeyManager
     let onImport: () -> Void
     let onClearHistory: () async throws -> Void
     @State private var confirmsClearHistory = false
@@ -107,7 +108,14 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             loginItem.refresh()
         }
-        .onExitCommand { NSApp.keyWindow?.performClose(nil) }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            hotKeys.cancelRecording()
+        }
+        .onDisappear { hotKeys.cancelRecording() }
+        .onExitCommand {
+            if hotKeys.isRecording { hotKeys.cancelRecording() }
+            else { NSApp.keyWindow?.performClose(nil) }
+        }
     }
 
     private var generalSettings: some View {
@@ -141,21 +149,40 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Section {
+                LabeledContent(L10n.tr("打开主界面快捷键")) {
+                    HStack(spacing: 8) {
+                        ShortcutRecorder(hotKeys: hotKeys, shortcut: settings.panelShortcut)
+                            .id(L10n.language)
+                            .frame(width: 132, height: 26)
+                        Button(L10n.tr("恢复默认")) { hotKeys.updateShortcut(.default) }
+                            .disabled(settings.panelShortcut == .default && !hotKeys.isRecording)
+                    }
+                    .accessibilityElement(children: .contain)
+                }
+                Text(L10n.tr("点击快捷键后按下新的组合键，需包含 ⌘、⌥ 或 ⌃。按 Esc 取消。"))
+                    .font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let error = hotKeys.errorMessage {
+                    Text(error).font(.callout).foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Section {
                 Toggle(L10n.tr("开机启动"), isOn: Binding(
                     get: { loginItem.isRequested },
                     set: { enabled in Task { await loginItem.setEnabled(enabled) } }
                 ))
                 .toggleStyle(.switch)
                 .disabled(loginItem.isUpdating)
-                Text(L10n.tr("登录 Mac 后自动打开 Paste Lite。"))
+                Text(L10n.tr("登录 Mac 后自动打开 %@。", AppVariant.displayName))
                     .font(.callout).foregroundStyle(.secondary)
                 if loginItem.status == .requiresApproval {
-                    Text(L10n.tr("尚未获准启动，请在系统设置的登录项中允许 Paste Lite。"))
+                    Text(L10n.tr("尚未获准启动，请在系统设置的登录项中允许 %@。", AppVariant.displayName))
                         .font(.callout).foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if loginItem.status == .notFound {
-                    Text(L10n.tr("找不到登录项，请将 Paste Lite 放入 Applications 后重新打开。"))
+                    Text(L10n.tr("找不到登录项，请将 %@ 放入 Applications 后重新打开。", AppVariant.displayName))
                         .font(.callout).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

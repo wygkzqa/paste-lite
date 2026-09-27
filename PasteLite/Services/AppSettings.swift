@@ -48,6 +48,7 @@ enum ClipboardLayout: String, CaseIterable, Identifiable {
 
 extension Notification.Name {
     static let clipboardLayoutDidChange = Notification.Name("PasteLite.clipboardLayoutDidChange")
+    static let panelShortcutDidChange = Notification.Name("PasteLite.panelShortcutDidChange")
     static let appLanguageDidChange = Notification.Name("PasteLite.appLanguageDidChange")
 }
 
@@ -73,6 +74,14 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    @Published var panelShortcut: PanelShortcut {
+        didSet {
+            guard panelShortcut != oldValue else { return }
+            defaults.set(try? JSONEncoder().encode(panelShortcut), forKey: "panelShortcut")
+            NotificationCenter.default.post(name: .panelShortcutDidChange, object: self)
+        }
+    }
+
     @Published var appearance: AppAppearance {
         didSet {
             guard appearance != oldValue else { return }
@@ -83,6 +92,10 @@ final class AppSettings: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        if let data = defaults.data(forKey: "panelShortcut"),
+           let shortcut = try? JSONDecoder().decode(PanelShortcut.self, from: data), shortcut.isValid {
+            panelShortcut = shortcut
+        } else { panelShortcut = .default }
         clipboardLayout = ClipboardLayout(rawValue: defaults.string(forKey: "clipboardLayout") ?? "") ?? .list
         appearance = AppAppearance(rawValue: defaults.string(forKey: "appAppearance") ?? "") ?? .system
         language = AppLanguage(rawValue: defaults.string(forKey: L10n.languageDefaultsKey) ?? "") ?? .system

@@ -15,24 +15,30 @@
 需要配备 Xcode 26 或更新版本的 Mac。应用支持 macOS 14 及以上版本，Xcode 通过 Swift Package Manager 解析固定版本的 Sparkle 更新框架。
 
 1. Fork 并克隆仓库。
-2. 为本次修改创建分支。
+2. 按照[分支命名规范](#分支命名)为本次修改创建分支。
 3. 在 Xcode 中打开 `PasteLite.xcodeproj`。
-4. 选择 `PasteLite` scheme 和 **My Mac**，构建并运行。
+4. 选择 `PasteLite Beta` scheme 和 **My Mac**，构建并运行独立 Beta。模块和可执行文件仍名为 `PasteLite`。
 
-也可以在仓库根目录执行：
+本地日常验证使用以下命令，构建通过后会校验并更新长期保留的 Beta：
 
 ```bash
-xcodebuild \
-  -project PasteLite.xcodeproj \
-  -scheme PasteLite \
-  -configuration Debug \
-  -derivedDataPath .build \
-  build
+sh scripts/build-beta.sh
 ```
 
-构建 Universal Release 时，将 `Debug` 替换为 `Release`，并添加 `-destination 'generic/platform=macOS'`。产物名为 `Paste Lite.app`，scheme、模块和可执行文件名为 `PasteLite`。
+脚本把 `Paste Lite Beta.app` 安装到 `~/Applications/`。后续运行只替换此 Beta 应用包，保留历史和设置；如果该 Beta 正在运行，先请求正常退出，替换后重新打开。编辑或导入阻止退出时中止替换，不强制结束进程。首次安装保持未运行状态。直接从 Xcode 构建只更新构建产物；需要更新安装版本时运行上述脚本。
 
-默认使用临时签名，便于本地开发；重新构建后辅助功能授权可能失效。请避免同时运行开发版本和已安装版本：它们共用 bundle identifier 和数据目录。下文的隔离回归测试不会使用正式历史库。
+Beta 使用 `com.local.PasteLite.beta` 和 `~/Library/Application Support/PasteLiteBeta/`，与正式版的 `com.local.PasteLite`、`~/Library/Application Support/PasteLite/` 分开。偏好、登录项和辅助功能授权按独立应用身份管理，不自动导入正式历史。菜单栏图标带 `β`，默认快捷键为 `⇧⌘V`。Beta 不创建在线更新器，由本地构建替换；正式版继续走原有在线更新渠道。
+
+两版可以同时保留和运行，默认快捷键相同；其中一版已注册时，另一版会提示快捷键被占用。如需同时使用两版快捷键，可在通用设置中为其中一版改键。系统剪贴板仍共享，各自按自己的收录设置记录复制内容。默认采用临时签名，替换 Beta 后其辅助功能授权可能需要重新添加；脚本不重置任何权限记录。长期 Beta 及其数据不会在验证完成后删除，临时隔离测试应用仍按测试流程清理。
+
+正式版构建使用原有配置，仅构建不安装：
+
+```bash
+xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
+  -configuration Release -destination 'generic/platform=macOS' -derivedDataPath .build build
+```
+
+`Debug` / `Release` 使用正式身份和数据目录，不作为日常运行的测试版。Release 产物为 `.build/Build/Products/Release/Paste Lite.app`，不覆盖已安装的正式版。
 
 ## 打包发布
 
@@ -110,6 +116,8 @@ AI 编码工具还应遵循 [AGENTS.md](./AGENTS.md) 中的项目约定。
 sh Tests/run.sh
 ```
 
+构建 Beta 后，运行 `python3 Tests/run-beta.py` 验证应用身份、安装保护和在线更新禁用。该测试仅创建可丢弃的应用，不安装到 Applications。
+
 测试使用临时数据库和独立命名的剪贴板，覆盖 PNG/TIFF/JPEG 采集、图片文件分类、搜索、缩略图、预览、文件粘贴语义、持久化重载和图片缺失处理。不会修改正式历史或系统剪贴板，也不会验证真实辅助功能授权和跨应用自动粘贴。
 
 导入测试构造合成 SQLite/WAL 数据库与压缩附件，覆盖源数据不变、内容映射、原始元数据、去重、容量扩展持久化、预览过期、取消清理和附件部分写入后的回滚。不要使用个人 Paste 数据库作为测试样本。格式兼容通过已验证的实体哈希控制，变更需要新增合成用例并明确核对兼容范围。
@@ -132,9 +140,31 @@ sh Tests/run.sh
 
 功能方案、设计过程、验证记录和性能报告保存在已忽略的 `.build/` 目录下，`docs/` 仅保留公开文档需要的资源。
 
+## 分支命名
+
+工作分支统一使用 `<type>/<short-description>`，不添加工具名或作者前缀。按本次改动的主要目的选择类型：
+
+| 类型 | 用途 | 示例 |
+| --- | --- | --- |
+| `feat` | 新功能、功能增强 | `feat/automatic-updates` |
+| `fix` | 修复问题 | `fix/update-check-timing` |
+| `refactor` | 保持功能不变的代码重构 | `refactor/clipboard-storage` |
+| `perf` | 性能优化 | `perf/image-loading` |
+| `docs` | 文档修改 | `docs/branch-naming` |
+| `test` | 测试修改 | `test/update-signature` |
+| `ci` | CI、构建与发布流水线 | `ci/release-workflow` |
+| `chore` | 依赖更新、项目维护 | `chore/update-sparkle` |
+| `release` | 准备正式版本 | `release/v1.2.0` |
+
+- 描述使用小写英文和数字，单词之间用 `-` 分隔。名称保持简短、具体，避免 `changes`、`fix-bug`、`final` 等含糊名字。
+- 有关联 Issue 时，可在描述前加编号，例如 `fix/42-selection-reset`；没有则省略编号。
+- 发布准备使用 `release/vX.Y.Z`，其他工作分支不加日期或版本号。对应 PR 标题仍为 `chore: release vX.Y.Z`，发布标签仍为 `vX.Y.Z`。
+- 一个分支对应一个明确任务或 PR；合并后删除工作分支，后续修改从最新 `main` 创建新分支。
+- 规范从新分支开始执行，已有分支无需改名。目前通过文档约定，尚未添加 CI 强制校验。
+
 ## Pull Request
 
-所有仓库改动（包括代码、文档、配置和版本准备）通过独立分支创建 PR 并合并到 `main`，不直接向 `main` 提交或推送改动。Codex 创建的分支使用 `codex/` 前缀。合并前完成适用验证与评审，遵守仓库规则，不绕过检查或强推 `main`。优先使用 Squash merge，让一个 PR 对应一个主分支提交。
+所有仓库改动（包括代码、文档、配置和版本准备）通过独立分支创建 PR 并合并到 `main`，不直接向 `main` 提交或推送改动。合并前完成适用验证与评审，遵守仓库规则，不绕过检查或强推 `main`。优先使用 Squash merge，让一个 PR 对应一个主分支提交。
 
 网页和命令行创建 PR 时，均使用 [PR 模板](./.github/pull_request_template.md)。保留**变更说明**、**主要改动**、**验证**三个部分，没有关联问题时删除**关联问题**部分。正文使用中文或英文即可，无需重复翻译，篇幅与改动规模相匹配。说明解决的问题、修改后的行为和主要改动，仅填写实际执行的检查及结果，并明确未验证的部分。视觉改动请提供使用示例内容的截图。
 

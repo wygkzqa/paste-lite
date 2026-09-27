@@ -43,15 +43,52 @@ struct ClipboardGroupTests {
         precondition(detail!.textContent!.count > 4_000 && Set(detail!.groupIDs!) == [work.id, snippets.id])
         print("PASS: pre-group store migrates with 1,205 entries; groups combine with database search, type/source filters, and 200-entry pagination")
 
+        try await repository.moveGroup(id: snippets.id, relativeTo: work.id, after: false)
+        try await repository.setGroupColor(id: work.id, color: .purple)
+        precondition(repository.groups.map(\.id) == [snippets.id, work.id])
+        precondition(repository.groups[1].color == .purple)
+        let added = try await repository.saveGroup(name: "New tail")
+        precondition(repository.groups.map(\.id) == [snippets.id, work.id, added.id])
+        try await repository.moveGroup(id: snippets.id, relativeTo: added.id, after: true)
+        precondition(repository.groups.map(\.id) == [work.id, added.id, snippets.id])
+        try await repository.moveGroup(id: snippets.id, relativeTo: work.id, after: false)
+        try await repository.moveGroup(id: work.id, relativeTo: work.id, after: true)
+        precondition(repository.groups.map(\.id) == [snippets.id, work.id, added.id])
+        do {
+            try await repository.moveGroup(id: added.id, relativeTo: UUID(), after: false)
+            preconditionFailure("Unknown drop target accepted")
+        } catch ClipboardGroupError.missingRecord {}
+        do {
+            try await repository.setGroupColor(id: UUID(), color: .red)
+            preconditionFailure("Missing group recreated")
+        } catch ClipboardGroupError.missingRecord {}
+        try await repository.setGroupColor(id: snippets.id, color: .blue)
+        try await repository.setGroupColor(id: snippets.id, color: nil)
+        try await repository.deleteGroup(id: added.id)
+        precondition(repository.groups.map(\.id) == [snippets.id, work.id])
+        print("PASS: group moves in both directions, new groups append, missing targets fail atomically, colors can be set and cleared")
+
         let reopened = ClipboardRepository(fileManager: PerformanceFileManager(root: root))
         try await waitUntil { reopened.groups.count == 2 }
+        precondition(reopened.groups.map(\.id) == [snippets.id, work.id])
+        precondition(reopened.groups[1].color == .purple && reopened.groups[0].color == nil)
         let reloaded = try await reopened.item(id: target.id)
         precondition(Set(reloaded!.groupIDs!) == [work.id, snippets.id])
         let renamed = try await repository.saveGroup(id: work.id, name: "项目")
-        precondition(renamed.id == work.id)
+        precondition(renamed.id == work.id && renamed.color == .purple)
         let model = ClipboardViewModel(repository: repository)
         model.groupFilter = .group(work.id)
         try await waitUntil { model.resultCount == 210 && !model.isLoading }
+        let selection = model.filteredItems[0].id
+        model.selectedID = selection
+        try await repository.moveGroup(id: work.id, relativeTo: snippets.id, after: false)
+        try await repository.setGroupColor(id: work.id, color: .green)
+        try await waitUntil { !model.isLoading }
+        precondition(model.groupFilter == .group(work.id) && model.selectedID == selection && model.resultCount == 210)
+        let unchanged = try await repository.item(id: target.id)
+        precondition(unchanged?.textContent == detail?.textContent && unchanged?.createdAt == detail?.createdAt
+                     && unchanged?.groupIDs == detail?.groupIDs && unchanged?.contentHash == detail?.contentHash)
+        print("PASS: ordering and colors survive restart and rename without changing filter, selection, history, or memberships")
         model.selectedID = model.filteredItems.last!.id
         model.moveSelection(by: 1)
         try await waitUntil { model.filteredItems.count == 210 && !model.isLoading }

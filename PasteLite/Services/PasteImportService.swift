@@ -31,10 +31,9 @@ enum PasteImportService {
         ].filter { FileManager.default.isReadableFile(atPath: $0.appendingPathComponent("db.sqlite").path) }
     }
 
-    static func removeExpiredTemporaryFiles() {
-        let root = FileManager.default.temporaryDirectory
+    static func removeExpiredTemporaryFiles(in root: URL = FileManager.default.temporaryDirectory) {
         let files = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [.creationDateKey])) ?? []
-        for file in files where file.lastPathComponent.hasPrefix("PasteLite-import-") {
+        for file in files where file.lastPathComponent.hasPrefix(AppVariant.importTemporaryPrefix) {
             if let created = try? file.resourceValues(forKeys: [.creationDateKey]).creationDate,
                created < Date().addingTimeInterval(-86_400) {
                 try? FileManager.default.removeItem(at: file)
@@ -46,7 +45,7 @@ enum PasteImportService {
         let manager = FileManager.default
         let databaseURL = directory.appendingPathComponent("db.sqlite")
         let sourceDates = modificationDates(databaseURL)
-        let temporary = manager.temporaryDirectory.appendingPathComponent("PasteLite-import-\(UUID())", isDirectory: true)
+        let temporary = manager.temporaryDirectory.appendingPathComponent(AppVariant.importTemporaryPrefix + UUID().uuidString, isDirectory: true)
         try manager.createDirectory(at: temporary, withIntermediateDirectories: true)
         var succeeded = false
         defer { if !succeeded { try? manager.removeItem(at: temporary) } }

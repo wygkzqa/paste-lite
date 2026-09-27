@@ -11,6 +11,7 @@ struct ClipboardHistoryView: View {
     @State private var showsFilters = false
     @State private var showsPermission = false
     @State private var visibleItemID: UUID?
+    @State private var pendingGroupOrder: [ClipboardGroup]?
 
     init(viewModel: ClipboardViewModel) {
         self.viewModel = viewModel
@@ -60,6 +61,9 @@ struct ClipboardHistoryView: View {
         .onChange(of: sheet?.id) { updateOverlayState() }
         .onChange(of: showsFilters) { updateOverlayState() }
         .onChange(of: showsPermission) { updateOverlayState() }
+        .onReceive(viewModel.previewRequests) { item in
+            sheet = .preview(item)
+        }
         .onChange(of: viewModel.presentationToken) {
             sheet = nil
             showsFilters = false
@@ -123,17 +127,27 @@ struct ClipboardHistoryView: View {
         HStack(spacing: 5) {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal) {
-                    HStack(spacing: 5) {
+                    HStack(spacing: ClipboardGroupTab.spacing) {
                         groupTab(L10n.tr("全部"), filter: .all)
-                        ForEach(repository.groups) { group in
-                            groupTab(group.name, filter: .group(group.id))
-                                .overlay {
-                                    ClipboardGroupContextMenu(
-                                        onOpen: { viewModel.isPresentingContextMenu = true },
-                                        onClose: { viewModel.isPresentingContextMenu = false },
-                                        onRename: { sheet = .editGroup(group) },
-                                        onDelete: { sheet = .deleteGroup(group) })
-                                }
+                        ForEach(pendingGroupOrder ?? repository.groups) { group in
+                            ClipboardGroupTab(isSelected: viewModel.groupFilter == .group(group.id),
+                                actions: ClipboardGroupActions(
+                                    group: group,
+                                    onSelect: { viewModel.groupFilter = .group(group.id) },
+                                    onOpen: { viewModel.isPresentingContextMenu = true },
+                                    onClose: { viewModel.isPresentingContextMenu = false },
+                                    onRename: { sheet = .editGroup(group) },
+                                    onDelete: { sheet = .deleteGroup(group) },
+                                    onColor: { color in
+                                        Task {
+                                            do { try await repository.setGroupColor(id: group.id, color: color) }
+                                            catch { sheet = .error(error.localizedDescription) }
+                                        }
+                                    },
+                                    onMove: { sourceID, after in
+                                        moveGroup(sourceID, relativeTo: group.id, after: after)
+                                    }))
+                                .id(ClipboardGroupFilter.group(group.id))
                         }
                     }
                 }
@@ -149,11 +163,28 @@ struct ClipboardHistoryView: View {
         .frame(height: 28)
     }
 
+    private func moveGroup(_ sourceID: UUID, relativeTo targetID: UUID, after: Bool) {
+        guard pendingGroupOrder == nil, sourceID != targetID else { return }
+        var groups = repository.groups
+        guard let sourceIndex = groups.firstIndex(where: { $0.id == sourceID }) else { return }
+        let source = groups.remove(at: sourceIndex)
+        guard let targetIndex = groups.firstIndex(where: { $0.id == targetID }) else { return }
+        groups.insert(source, at: targetIndex + (after ? 1 : 0))
+        pendingGroupOrder = groups
+        Task {
+            do { try await repository.moveGroup(id: sourceID, relativeTo: targetID, after: after) }
+            catch { sheet = .error(error.localizedDescription) }
+            withAnimation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .easeInOut(duration: 0.18)) {
+                pendingGroupOrder = nil
+            }
+        }
+    }
+
     private func groupTab(_ title: String, filter: ClipboardGroupFilter) -> some View {
         Button { viewModel.groupFilter = filter } label: {
             Text(title).font(.system(size: 12)).lineLimit(1).frame(maxWidth: 160)
                 .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(.primary.opacity(viewModel.groupFilter == filter ? 0.16 : 0), in: Capsule())
+                .background(.primary.opacity(viewModel.groupFilter == filter ? 0.20 : 0), in: Capsule())
         }
         .buttonStyle(.plain)
         .help(title)
@@ -196,6 +227,7 @@ struct ClipboardHistoryView: View {
                 .scrollPosition(id: $visibleItemID)
                 .id(layout)
                 .onReceive(viewModel.keyboardScrollRequests) { id in
+                    searchIsFocused = false
                     proxy.scrollTo(id)
                 }
             }
@@ -253,7 +285,7 @@ struct ClipboardHistoryView: View {
                 }
             }
             Spacer(minLength: 4)
-            Text("↑↓ \(L10n.tr("选择"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
+            Text("↑↓ \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
             Button {
                 settings.clipboardLayout = layout == .list ? .cards : .list
             } label: {
@@ -264,6 +296,12 @@ struct ClipboardHistoryView: View {
             }
             .buttonStyle(.plain)
             .help(layout == .list ? L10n.tr("切换为卡片") : L10n.tr("切换为列表"))
+            ClipboardMoreMenu(
+                onOpen: { viewModel.isPresentingContextMenu = true },
+                onClose: { viewModel.isPresentingContextMenu = false },
+                onSettings: { viewModel.onShowSettings?() },
+                onQuit: { viewModel.onQuit?() })
+                .frame(width: 20, height: 20)
         }
         .font(.system(size: 11))
         .frame(height: 24)

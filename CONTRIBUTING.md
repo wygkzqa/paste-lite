@@ -15,24 +15,30 @@ Use sample clipboard content and remove personal information from screenshots an
 Use a Mac with Xcode 26 or later. The application targets macOS 14 and later. Xcode resolves the pinned Sparkle update framework through Swift Package Manager.
 
 1. Fork and clone the repository.
-2. Create a branch for your change.
+2. Create a branch for your change using the [branch naming convention](#branch-naming).
 3. Open `PasteLite.xcodeproj` in Xcode.
-4. Choose the `PasteLite` scheme and **My Mac**, then build and run.
+4. Choose the `PasteLite Beta` scheme and **My Mac** to build and run the isolated Beta. The module and executable remain `PasteLite`.
 
-From the repository root, you can also build with:
+For everyday local validation, use this command to build, verify, and refresh the retained Beta installation:
 
 ```bash
-xcodebuild \
-  -project PasteLite.xcodeproj \
-  -scheme PasteLite \
-  -configuration Debug \
-  -derivedDataPath .build \
-  build
+sh scripts/build-beta.sh
 ```
 
-For a Universal Release build, replace `Debug` with `Release` and add `-destination 'generic/platform=macOS'`. The product is named `Paste Lite.app`; the scheme, module, and executable are named `PasteLite`.
+The script installs `Paste Lite Beta.app` in `~/Applications/`. Subsequent runs replace only that Beta app bundle and preserve its history and preferences. If the installed Beta is running, the script requests a normal quit and reopens it after replacement. If editing or importing prevents quitting, replacement stops without forcing termination. A first install is left closed. Building directly in Xcode only updates the build product; run the script to refresh the installed copy.
 
-The default signing identity is ad-hoc for local development. Accessibility grants may become invalid after a rebuild. Avoid running the development and installed copies together: both use the same bundle identifier and data directory. The isolated regression tests described below avoid the normal history store.
+Beta uses `com.local.PasteLite.beta` and `~/Library/Application Support/PasteLiteBeta/`, separate from stable's `com.local.PasteLite` and `~/Library/Application Support/PasteLite/`. Preferences, login items, and Accessibility authorization use the separate app identity; stable history is not imported automatically. Beta's menu bar icon has a `β` label and its default shortcut is `⇧⌘V`. Beta never creates an online updater and is replaced by local builds. Stable keeps its existing online update channel.
+
+Both apps can be retained and run together. They default to the same shortcut; if it is already registered by one app, the other reports a conflict. Set a different shortcut in General settings to use both hotkeys at once. The system clipboard remains shared, and each app records copied content according to its own capture settings. Signing is ad-hoc, so Beta may need Accessibility authorization again after replacement; the script never resets permissions. The retained Beta and its data are not deleted after validation. Disposable isolated test apps are still cleaned up.
+
+Build stable with its original configuration, without installing it:
+
+```bash
+xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
+  -configuration Release -destination 'generic/platform=macOS' -derivedDataPath .build build
+```
+
+`Debug` / `Release` use the stable identity and data directory, so do not use them as everyday test apps. The Release product is `.build/Build/Products/Release/Paste Lite.app`; this command does not replace installed stable copies.
 
 ## Package a release
 
@@ -110,6 +116,8 @@ Build the configuration affected by your change. For changes to clipboard captur
 sh Tests/run.sh
 ```
 
+After building Beta, run `python3 Tests/run-beta.py` to validate its identity, installer safeguards, and disabled online updates. This suite creates disposable apps and does not install into Applications.
+
 The tests use a temporary database and named pasteboards. They cover PNG/TIFF/JPEG capture, image-file filtering, search, thumbnails, previews, file paste semantics, persistence reloads, and missing-image handling. They do not modify normal history or the system clipboard, and do not validate live Accessibility authorization or automatic pasting into other apps.
 
 Import tests construct synthetic SQLite/WAL stores and compressed attachments. They cover source immutability, content mapping, original metadata, duplicate handling, persistent capacity expansion, stale previews, cancellation cleanup, and rollback after partial asset writes. Do not use a personal Paste database as a test fixture. Format compatibility is gated by verified entity hashes; changes require new synthetic cases and an explicit compatibility review.
@@ -132,9 +140,31 @@ Put user-visible changes under **Unreleased** in both changelogs. Only add a rel
 
 Keep implementation plans, design notes, validation records, and performance reports under the ignored `.build/` directory. Only assets needed by public documentation belong in `docs/`.
 
+## Branch naming
+
+Name work branches `<type>/<short-description>`, without a tool or author prefix. Choose the type that best describes the main purpose of the change:
+
+| Type | Purpose | Example |
+| --- | --- | --- |
+| `feat` | New features or enhancements | `feat/automatic-updates` |
+| `fix` | Bug fixes | `fix/update-check-timing` |
+| `refactor` | Code restructuring without behavior changes | `refactor/clipboard-storage` |
+| `perf` | Performance improvements | `perf/image-loading` |
+| `docs` | Documentation changes | `docs/branch-naming` |
+| `test` | Test changes | `test/update-signature` |
+| `ci` | CI, build, and release workflows | `ci/release-workflow` |
+| `chore` | Dependency updates and project maintenance | `chore/update-sparkle` |
+| `release` | Preparing an official release | `release/v1.2.0` |
+
+- Use lowercase English letters and digits in descriptions, with words separated by hyphens. Keep names short and specific; avoid vague names such as `changes`, `fix-bug`, or `final`.
+- If there is a related issue, optionally put its number before the description, for example `fix/42-selection-reset`. Omit the number when there is no issue.
+- Use `release/vX.Y.Z` for release preparation. Do not add dates or version numbers to other work branches. The corresponding PR title remains `chore: release vX.Y.Z`, and the release tag remains `vX.Y.Z`.
+- Keep each branch focused on one task or PR. Delete the work branch after merging, and start subsequent work from the latest `main` on a new branch.
+- Apply this convention to new branches; existing branches do not need to be renamed. This is a documented convention and is not currently enforced by CI.
+
 ## Pull requests
 
-All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Codex-created branches use the `codex/` prefix. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
+All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
 
 Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Write in English or Chinese without duplicating the body in both languages, and keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
 

@@ -29,17 +29,26 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 - **Import from Paste** — scan local Paste history, review counts and capacity, then import supported records and Pinboards with original times and source apps.
 - **Quick search** — search content, filenames, and source apps, with filters for content type and application.
 - **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
-- **Keyboard access** — open history with ⇧⌘V, navigate with arrow keys, and paste the selected item with Return.
+- **Keyboard access** — customize the history shortcut in General settings (default ⇧⌘V), navigate with arrow keys, preview one selected item with Space, and paste with Return.
 - **Return to your app** — double-click a result or press Return to copy it and attempt a paste into the previous application. Automatic pasting requires Accessibility permission.
 - **Native presentation** — a menu bar app with no Dock icon, system, light, or dark appearance and cached time labels based on when the panel opens.
 - **Two compact layouts** — switch between List and Cards in Settings, with native Liquid Glass on macOS 26 and translucent materials on earlier versions.
-- **Groups** — create and rename groups, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
+- **Groups** — drag tabs to reorder groups, choose a colored dot from the group context menu, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
 - **Launch at login** — an optional switch in Settings, managed by macOS Login Items.
 - **Language settings** — follow the system by default, or choose Simplified Chinese or English; changes apply immediately and persist across launches.
 - **In-app updates (1.1.1+)** — check from the menu or About page, review release notes, and confirm download and installation; optional automatic checks are off by default.
 - **Local storage** — history and captured images stay on disk; clipboard monitoring pauses during sleep and inactive user sessions.
 
 Single image files also appear under the image filter, while retaining their file format when copied back to the clipboard.
+
+<details>
+<summary>Group tabs and text preview (sample content)</summary>
+
+| Group tabs in light appearance | Text preview in dark appearance |
+| --- | --- |
+| ![Colored group tabs and the panel's More menu](./docs/group-tabs-light.png) | ![Selectable long text preview](./docs/text-preview-dark.png) |
+
+</details>
 
 ## Getting started
 
@@ -92,7 +101,7 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 
 | Action | Shortcut or interaction |
 | --- | --- |
-| Open / close history | ⇧⌘V or the menu bar menu |
+| Open / close history | ⇧⌘V by default (customizable in General settings), or the menu bar menu |
 | Open the main panel | Launch Paste Lite from Spotlight or Finder |
 | Select a result | Click or ↑ / ↓ |
 | Select multiple entries | ⌘-click toggles entries; ⇧-click or ⇧↑ / ⇧↓ extends a range |
@@ -100,10 +109,10 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | Delete selected entries | Right-click → Delete…, then confirm |
 | Copy and attempt to paste a result | Double-click or Return |
 | Close the panel | Esc |
-| Preview selected content | Right-click an entry → Preview |
+| Preview selected content | Space, or right-click an entry → Preview |
 | Switch layout | Layout button in the footer, or Settings → General → Clipboard Layout |
 | Create or manage groups | Top `+` button / right-click a group tab → Rename or Delete Group |
-| Open settings | Menu bar → Settings… or ⌘, while Paste Lite is active |
+| Open settings | Panel footer → More → Settings…, menu bar → Settings…, or ⌘, while Paste Lite is active |
 
 Opening Paste Lite from Spotlight or Finder shows the main panel, including when the app is already running. Login-item launches stay in the menu bar without opening the panel.
 
@@ -119,7 +128,7 @@ Choose **Settings… → General → Appearance** to use **System Default**, **D
 
 Both layouts use native glass materials, with a solid fallback when Reduce Transparency is enabled. Selected entries use a blue background and white text.
 
-Use the top **+** button to create a group. Custom groups appear as horizontally scrollable tabs alongside **All**, with a stronger selected background. There is no Ungrouped tab. Right-click a custom group tab to **Rename** or **Delete Group**; deletion requires confirmation and renaming keeps the current group filter. Use the **Add to Groups** context submenu to add or remove selected entries directly. A checkmark means all selected entries belong to the group; a dash means only some do. Choosing an unchecked or mixed group adds the selection; choosing a checked group removes that membership. **New Group…** in the context submenu creates a group and adds the selected entries. An entry can belong to multiple groups without duplicating its content. Search and type/source filters apply within the selected group. Deleting a group keeps all entries and removes only its memberships: entries without another group become ungrouped and remain visible under **All**, while other group memberships are kept. Deleting the currently selected group switches to **All**. Grouped entries follow the same retention and entry-count rules as other history.
+Use the top **+** button to create a group. Custom groups appear as horizontally scrollable tabs alongside **All**, with a stronger selected background. There is no Ungrouped tab. Drag custom tabs before or after another custom tab to reorder them; **All** stays first. Choose a color from the row at the bottom of a group’s context menu to display a dot to the left of its name, or choose **No Color** to remove it. Order and colors persist across restarts. Right-click a custom group tab to **Rename** or **Delete Group**; deletion requires confirmation and renaming keeps the current group filter. Use the **Add to Groups** context submenu to add or remove selected entries directly. A checkmark means all selected entries belong to the group; a dash means only some do. Choosing an unchecked or mixed group adds the selection; choosing a checked group removes that membership. **New Group…** in the context submenu creates a group and adds the selected entries. An entry can belong to multiple groups without duplicating its content. Search and type/source filters apply within the selected group. Deleting a group keeps all entries and removes only its memberships: entries without another group become ungrouped and remain visible under **All**, while other group memberships are kept. Deleting the currently selected group switches to **All**. Grouped entries follow the same retention and entry-count rules as other history.
 
 ### Settings categories
 
@@ -128,6 +137,10 @@ Settings uses a sidebar with **General, History, Data, and About**, with the sel
 ### Language
 
 Open **Settings… → General → Language** and choose **System Default**, **简体中文**, or **English**. System Default uses Simplified Chinese when the system's preferred language is Chinese (including Traditional Chinese regions), and English otherwise. Switching updates the app interface immediately without restarting or changing clipboard content, file names, source app names, or history. Settings are saved automatically.
+
+### Main-panel shortcut
+
+In **Settings… → General → Open Main Panel**, click the shortcut and press a new combination containing ⌘, ⌥, or ⌃. Changes apply immediately and are saved. Press Esc or click elsewhere to cancel recording; **Restore Default** restores ⇧⌘V. If registration fails, the previous setting is kept and an error is shown. The menu bar displays the current shortcut.
 
 ### Launch at login
 
@@ -169,6 +182,8 @@ The importer recognizes the local data structure verified against **Paste 6.0.3*
 Text, links, PNG/TIFF/JPEG images, and accessible file references are supported. RTF is reduced to plain text; HTML requires an accompanying plain-text representation. Titles, Pinboard names (including empty boards), and record memberships are retained. For duplicate content in Paste, the most recent nonempty title is used. Imported titles are preserved in full, including those longer than the manual editor’s 100-character limit. Groups with matching names are merged case-insensitively. Content found in multiple Pinboards keeps all memberships without storing duplicate payloads. Group and item ordering, pinned status, sharing, and rich-text styles are not retained. Missing cloud content, unavailable attachments, invalid file references, and unsupported formats are counted as skipped; previews are never substituted for original images.
 
 Existing duplicates keep their IDs, timestamps, source apps, and local group memberships; missing memberships and titles are added. Existing local titles take priority. You can use **Import groups and titles** even when all records already exist or the history entry limit is full. Groups are matched by name on each import, so renaming a destination group may create a group with the original name when importing again. Import never removes existing history to make room. An increased entry limit persists across restarts. Imported entries remain subject to the configured retention period, using their original creation dates. Capture-size changes require a fresh scan. You can cancel scanning before the final save. Repeating an import adds no duplicates.
+
+For local testing, retain a separate **Paste Lite Beta** with `sh scripts/build-beta.sh`. Each successful build refreshes `~/Applications/Paste Lite Beta.app` while preserving Beta data. Beta has its own data, preferences, and app identity, defaults to `⇧⌘V`, and does not use stable online updates. Stable keeps its existing update channel. See [Contributing](./CONTRIBUTING.md#development-setup).
 
 ## Accessibility permission
 

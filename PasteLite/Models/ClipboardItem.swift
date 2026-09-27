@@ -3,6 +3,23 @@ import Foundation
 struct ClipboardGroup: Identifiable, Equatable, Sendable {
     let id: UUID
     var name: String
+    var color: ClipboardGroupColor? = nil
+}
+
+enum ClipboardGroupColor: String, CaseIterable, Codable, Sendable {
+    case red, orange, yellow, green, blue, indigo, purple
+
+    var title: String {
+        switch self {
+        case .red: L10n.tr("红色")
+        case .orange: L10n.tr("橙色")
+        case .yellow: L10n.tr("黄色")
+        case .green: L10n.tr("绿色")
+        case .blue: L10n.tr("蓝色")
+        case .indigo: L10n.tr("靛蓝色")
+        case .purple: L10n.tr("紫色")
+        }
+    }
 }
 import UniformTypeIdentifiers
 

@@ -34,10 +34,8 @@ struct ClipboardItemForm: View {
                     Text(L10n.tr("留空则使用内容自动生成的标题。"))
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
-                    ScrollView {
-                        Text(loaded.displayTitle).textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }.frame(maxHeight: 52)
+                    ClipboardPreviewText(text: loaded.displayTitle)
+                        .frame(maxHeight: 52)
                 }
 
                 Text(L10n.tr("内容")).font(.caption).foregroundStyle(.secondary)
@@ -85,7 +83,7 @@ struct ClipboardItemForm: View {
             imageIsLoading = false
             guard item.hasImage, let url = repository.assetURL(for: item) else { return }
             imageIsLoading = true
-            let loaded = await ClipboardImageLoader.load(from: url, maxPixelSize: 1_200)
+            let loaded = await ClipboardImageLoader.load(from: url, maxPixelSize: 1_200, priority: .veryHigh)
             guard !Task.isCancelled else { return }
             image = loaded
             imageIsLoading = false
@@ -115,17 +113,17 @@ struct ClipboardItemForm: View {
             }
         } else {
             let text = loaded.type == .file ? loaded.filePaths.joined(separator: "\n\n") : loaded.textContent ?? ""
-            ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(String(text.prefix(10_000))).textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    if text.count > 10_000 {
-                        Text(L10n.tr("仅预览前 10,000 字，粘贴时使用完整内容。"))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }.padding(8)
+            // Only inspect the displayed prefix, even when the saved body is several MB.
+            let previewText = text.prefix(10_001)
+            VStack(alignment: .leading, spacing: 10) {
+                ClipboardPreviewText(text: String(previewText.prefix(10_000)))
+                    .accessibilityLabel(L10n.tr("内容"))
+                if previewText.count > 10_000 {
+                    Text(L10n.tr("仅预览前 10,000 字，粘贴时使用完整内容。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
-            .font(.system(size: 13))
+            .padding(8)
             .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
         }
     }
@@ -155,5 +153,37 @@ struct ClipboardItemForm: View {
                 dismiss()
             } catch { self.error = error.localizedDescription }
         }
+    }
+}
+
+// NSTextView lays out visible text incrementally instead of drawing the entire
+// preview as one SwiftUI Text surface, which is expensive for long Unicode text.
+private struct ClipboardPreviewText: NSViewRepresentable {
+    let text: String
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+
+        let textView = NSTextView(frame: .zero)
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.drawsBackground = false
+        textView.font = .systemFont(ofSize: 13)
+        textView.textColor = .labelColor
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.lineFragmentPadding = 0
+        scrollView.documentView = textView
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        if textView.string != text { textView.string = text }
     }
 }
