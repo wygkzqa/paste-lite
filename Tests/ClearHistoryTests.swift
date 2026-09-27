@@ -57,7 +57,7 @@ struct ClearHistoryTests {
         let staleImport = try await repository.previewImport(batch)
         let pasteboard = NSPasteboard(name: .init("PasteLite-clear-test-\(UUID())"))
         defer { pasteboard.releaseGlobally() }
-        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard)
+        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard, loadSourceIcon: { _ in nil })
         monitor.start()
         defer { monitor.stop() }
         pasteboard.setString("Keep current clipboard", forType: .string)

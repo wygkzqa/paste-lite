@@ -50,7 +50,7 @@ struct ClipboardEditTests {
 
         let pasteboard = NSPasteboard(name: .init("PasteLite-edit-tests-\(UUID())"))
         defer { pasteboard.releaseGlobally() }
-        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard)
+        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard, loadSourceIcon: { _ in nil })
         let service = PasteService(repository: repository, monitor: monitor, pasteboard: pasteboard)
         precondition(service.writeToPasteboard(updated))
         precondition(pasteboard.string(forType: .string) == updatedText)

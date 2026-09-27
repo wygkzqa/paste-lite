@@ -27,7 +27,7 @@ struct ClipboardImageTests {
         // Use a private pasteboard so tests never overwrite the user's clipboard.
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
-        let monitor = ClipboardMonitor(repository: repository, pasteboard: board)
+        let monitor = ClipboardMonitor(repository: repository, pasteboard: board, loadSourceIcon: { _ in nil })
         monitor.start()
         defer { monitor.stop() }
 

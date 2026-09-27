@@ -52,7 +52,7 @@ struct PanelDismissalTests {
             try await Task.sleep(for: .milliseconds(10))
         }
         precondition(repository.isReady)
-        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard)
+        let monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard, loadSourceIcon: { _ in nil })
         let service = PasteService(repository: repository, monitor: monitor, pasteboard: pasteboard)
         let controller = ClipboardPanelController(repository: repository, pasteService: service)
         let panel = app.windows.compactMap { $0 as? ClipboardPanel }.first!
