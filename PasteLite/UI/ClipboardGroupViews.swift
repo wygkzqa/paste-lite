@@ -11,6 +11,8 @@ extension ClipboardGroupColor {
         case .blue: .blue
         case .indigo: .indigo
         case .purple: .purple
+        case .pink: .pink
+        case .gray: .gray
         }
     }
 }
@@ -255,7 +257,7 @@ struct ClipboardGroupInteraction: NSViewRepresentable {
                 menu?.cancelTracking()
                 self?.interaction?.actions.onColor(color)
             })
-            colors.view?.frame = NSRect(x: 0, y: 0, width: 208, height: 54)
+            colors.view?.frame = NSRect(x: 0, y: 0, width: 256, height: 54)
             menu.addItem(colors)
             return menu
         }

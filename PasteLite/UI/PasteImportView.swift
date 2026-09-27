@@ -280,6 +280,7 @@ struct PasteImportView: View {
             LabeledContent(L10n.tr("可新增"), value: L10n.tr("%d 条", preview.entries.count))
             LabeledContent(L10n.tr("重复，保持已有记录"), value: L10n.tr("%d 条", preview.duplicates))
             LabeledContent(L10n.tr("新增分组"), value: L10n.tr("%d 个", preview.groupsToCreate.count))
+            LabeledContent(L10n.tr("补充已有分组的标识色"), value: L10n.tr("%d 个", preview.groupColorUpdates.count))
             LabeledContent(L10n.tr("补充已有记录的分组"), value: L10n.tr("%d 条", preview.groupUpdates.count))
             LabeledContent(L10n.tr("补充已有记录的标题"), value: L10n.tr("%d 条", preview.titleUpdates.count))
             let counts = Dictionary(grouping: preview.entries, by: { $0.item.type })
@@ -301,7 +302,7 @@ struct PasteImportView: View {
                      : L10n.tr("只导入剩余条数内的最近 %d 条，另有 %d 条不导入。", viewModel.importCount, preview.entries.count - viewModel.importCount))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Text(L10n.tr("保留标题、Pinboard 名称及记录归属，同名分组合并。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。"))
+            Text(L10n.tr("保留标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if !preview.hasChanges {
                 Text(L10n.tr("没有可新增的记录，可以关闭此窗口。"))
@@ -319,6 +320,7 @@ struct PasteImportView: View {
             LabeledContent(L10n.tr("重复记录"), value: L10n.tr("%d 条", result.duplicates))
             LabeledContent(L10n.tr("条数限制而跳过"), value: L10n.tr("%d 条", result.capacitySkipped))
             LabeledContent(L10n.tr("新增分组"), value: L10n.tr("%d 个", result.groupsAdded))
+            LabeledContent(L10n.tr("补充已有分组的标识色"), value: L10n.tr("%d 个", result.groupColorsUpdated))
             LabeledContent(L10n.tr("补充已有记录的分组"), value: L10n.tr("%d 条", result.recordsUpdated))
             LabeledContent(L10n.tr("补充已有记录的标题"), value: L10n.tr("%d 条", result.titlesUpdated))
             Text(L10n.tr("记录按原始时间排列，Paste 原始数据保持不变。"))
