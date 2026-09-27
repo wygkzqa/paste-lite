@@ -8,6 +8,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Fixed
 
+- Keep the Paste import window in front after data-access permission prompts, and attach the folder picker to it so scanning remains visible.
 - Speed up long text previews with native incremental text layout, and prioritize image previews over queued list thumbnails while keeping the existing full-content loading behavior.
 - Keep Preview from receiving focus automatically when the history context menu opens, while preserving keyboard navigation and activation.
 - Let Beta quit normally after history fails to load, so a later local build can replace it.

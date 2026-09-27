@@ -322,6 +322,7 @@
 
 "补充已有分组的标识色" = "Colors for existing groups";
 "补充已有来源的图标" = "Icons for existing sources";
+"正在查找 Paste 数据…" = "Looking for Paste data…";
 "%d 个图标" = "%d";
 "保存来源应用图标" = "Source application icons saved";
 "%d 个来源应用图标未能保存，历史记录已导入，可重新扫描补齐图标。" = "%d source application icons could not be saved. History was imported; scan again to add the missing icons.";

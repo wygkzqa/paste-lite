@@ -288,6 +288,7 @@ struct PasteImportTests {
         try await testGroups(root: root, png: png)
         try await testGroupColors(root: root, png: png)
         try await testSourceIcons(root: root, png: png)
+        try await testWindowFocus(root: root, repository: repository, source: fixture.directory)
         try await testTitles(root: root, png: png)
         try await testTextURLs(root: root)
 
@@ -785,6 +786,73 @@ struct PasteImportTests {
         precondition(limitedResult.added == 1 && limitedResult.sourceIconsSaved == 0)
         precondition(!FileManager.default.fileExists(atPath: limitedManager.root.appendingPathComponent("PasteLite/SourceAppIcons").path))
         print("PASS: capacity-skipped records do not leave orphan source icons")
+    }
+
+    private static func testWindowFocus(root: URL, repository: ClipboardRepository, source: URL) async throws {
+        let started = DispatchSemaphore(value: 0), resume = DispatchSemaphore(value: 0)
+        let viewModel = PasteImportViewModel(repository: repository, isPasteRunning: { false }, directorySearch: {
+            started.signal()
+            precondition(resume.wait(timeout: .now() + 10) == .success)
+            return [source]
+        })
+        precondition(started.wait(timeout: .now()) == .timedOut, "Constructing the model must not probe protected directories")
+        let controller = PasteImportWindowController(viewModel: viewModel, onShowHistory: {})
+        let window = controller.window!
+        let coveringWindow = NSWindow(contentRect: NSRect(x: -10_000, y: -10_000, width: 540, height: 630),
+                                      styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        coveringWindow.isReleasedWhenClosed = false
+        window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
+        NSApp.setActivationPolicy(.prohibited)
+        defer { coveringWindow.close(); controller.close() }
+        var focusRequests = 0
+        let restoreFocus = viewModel.onRestoreFocus
+        viewModel.onRestoreFocus = { focusRequests += 1; restoreFocus?() }
+        controller.showWindow(nil)
+        try await waitUntil { started.wait(timeout: .now()) == .success }
+        precondition(window.isVisible && viewModel.isFindingDirectories)
+        coveringWindow.orderFront(nil)
+        precondition(coveringWindow.orderedIndex < window.orderedIndex)
+        resume.signal()
+        try await waitUntil { !viewModel.isFindingDirectories && window.orderedIndex < coveringWindow.orderedIndex }
+        precondition(focusRequests == 1 && viewModel.selectedDirectory == source)
+        focusRequests = 0
+        coveringWindow.orderFront(nil)
+        viewModel.scan()
+        try await waitUntil { !viewModel.isScanning }
+        precondition(viewModel.preview != nil && focusRequests == 1, "Scan progress must restore focus only once")
+        try await waitUntil { window.orderedIndex < coveringWindow.orderedIndex }
+        coveringWindow.orderFront(nil)
+        await Task.yield()
+        precondition(coveringWindow.orderedIndex < window.orderedIndex, "Completed scans must not keep raising the import window")
+        focusRequests = 0
+        viewModel.selectDirectory(root.appendingPathComponent("missing-permission-fixture"))
+        viewModel.scan()
+        try await waitUntil { !viewModel.isScanning }
+        precondition(focusRequests == 1 && viewModel.message != nil && viewModel.preview == nil)
+        controller.close()
+        restoreFocus?()
+        await Task.yield()
+        precondition(!window.isVisible, "A delayed access callback must not reopen a closed import window")
+        print("PASS: directory probing waits for a visible window; access success/failure restores its order once; later progress and closed windows do not steal focus")
+
+        let cancelledStarted = DispatchSemaphore(value: 0), cancelledResume = DispatchSemaphore(value: 0)
+        let cancelledFinished = DispatchSemaphore(value: 0)
+        let cancelledModel = PasteImportViewModel(repository: repository, directorySearch: {
+            cancelledStarted.signal()
+            precondition(cancelledResume.wait(timeout: .now() + 10) == .success)
+            cancelledFinished.signal()
+            return [source]
+        })
+        var cancelledFocusRequests = 0
+        cancelledModel.onRestoreFocus = { cancelledFocusRequests += 1 }
+        cancelledModel.findDirectories()
+        try await waitUntil { cancelledStarted.wait(timeout: .now()) == .success }
+        cancelledModel.cancelScan()
+        cancelledResume.signal()
+        try await waitUntil { cancelledFinished.wait(timeout: .now()) == .success }
+        await Task.yield()
+        precondition(!cancelledModel.isFindingDirectories && cancelledModel.directories.isEmpty && cancelledFocusRequests == 0)
+        print("PASS: closing while permission/discovery is pending discards late directory results and focus requests")
     }
 
     private static func waitUntil(_ condition: () -> Bool) async throws {

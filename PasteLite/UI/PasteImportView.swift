@@ -5,6 +5,7 @@ import SwiftUI
 final class PasteImportViewModel: ObservableObject {
     @Published var directories: [URL] = []
     @Published var selectedDirectory: URL?
+    @Published private(set) var isFindingDirectories = false
     @Published var isScanning = false
     @Published var isSaving = false
     @Published var processed = 0
@@ -16,18 +17,22 @@ final class PasteImportViewModel: ObservableObject {
     private(set) var batch: PasteImportBatch?
     private let repository: ClipboardRepository
     private let isPasteRunning: () -> Bool
+    private let directorySearch: @Sendable () -> [URL]
+    private var directoryTask: Task<Void, Never>?
     private var scanTask: Task<PasteImportBatch, Error>?
     private var scanID = UUID()
+    private var needsScanFocus = false
     var onShowHistory: (() -> Void)?
     var onClose: (() -> Void)?
+    var onChooseDirectory: (() -> Void)?
+    var onRestoreFocus: (() -> Void)?
 
     init(repository: ClipboardRepository, isPasteRunning: @escaping () -> Bool = {
         !NSRunningApplication.runningApplications(withBundleIdentifier: "com.wiheads.paste").isEmpty
-    }) {
+    }, directorySearch: @escaping @Sendable () -> [URL] = { PasteImportService.candidateDirectories }) {
         self.repository = repository
         self.isPasteRunning = isPasteRunning
-        directories = PasteImportService.candidateDirectories
-        if directories.count == 1 { selectedDirectory = directories.first }
+        self.directorySearch = directorySearch
     }
 
     var importCount: Int { preview?.selectedEntries(expand: expandCapacity).count ?? 0 }
@@ -37,29 +42,31 @@ final class PasteImportViewModel: ObservableObject {
     }
     var skipped: [String: Int] { result?.skipped ?? batch?.skipped ?? [:] }
 
-    func chooseDirectory() {
-        guard !isScanning, !isSaving else { return }
-        let panel = NSOpenPanel()
-        panel.title = L10n.tr("选择 Paste 数据文件夹")
-        panel.prompt = L10n.tr("选择")
-        panel.message = L10n.tr("请选择包含 db.sqlite 和 .db_SUPPORT 的文件夹。")
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.showsHiddenFiles = true
-        panel.directoryURL = selectedDirectory
-        panel.begin { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            self?.selectedDirectory = url
-            self?.preview = nil
-            self?.batch = nil
-            self?.result = nil
-            self?.message = nil
+    func findDirectories() {
+        guard directoryTask == nil, directories.isEmpty, selectedDirectory == nil else { return }
+        isFindingDirectories = true
+        let search = directorySearch
+        directoryTask = Task { [weak self] in
+            let directories = await Task.detached(priority: .userInitiated) { search() }.value
+            guard let self, !Task.isCancelled else { return }
+            self.directories = directories
+            if directories.count == 1 { self.selectedDirectory = directories.first }
+            self.isFindingDirectories = false
+            self.directoryTask = nil
+            self.onRestoreFocus?()
         }
     }
 
+    func selectDirectory(_ url: URL) {
+        selectedDirectory = url
+        preview = nil
+        batch = nil
+        result = nil
+        message = nil
+    }
+
     func scan() {
-        guard let directory = selectedDirectory, !isScanning, !isSaving else { return }
+        guard let directory = selectedDirectory, !isFindingDirectories, !isScanning, !isSaving else { return }
         guard !isPasteRunning() else {
             message = "请先退出 Paste，再点击扫描。导入不会修改 Paste 的原始数据。"
             return
@@ -71,6 +78,7 @@ final class PasteImportViewModel: ObservableObject {
         processed = 0
         total = 0
         isScanning = true
+        needsScanFocus = true
         let id = UUID()
         scanID = id
         let limits = repository.limits
@@ -79,7 +87,12 @@ final class PasteImportViewModel: ObservableObject {
             defer { if access { directory.stopAccessingSecurityScopedResource() } }
             return try PasteImportService.scan(directory: directory, limits: limits) { processed, total in
                 Task { @MainActor [self] in
-                    guard self.scanID == id else { return }
+                    guard self.scanID == id, self.isScanning else { return }
+                    // The first progress event follows opening the source, which may request access.
+                    if self.needsScanFocus {
+                        self.needsScanFocus = false
+                        self.onRestoreFocus?()
+                    }
                     self.processed = processed
                     self.total = total
                 }
@@ -100,6 +113,10 @@ final class PasteImportViewModel: ObservableObject {
                 if scanID == id { message = (error as? PasteImportError)?.messageKey ?? "读取失败，请检查目录权限和剩余空间后重试。" }
             }
             if scanID == id {
+                if needsScanFocus {
+                    needsScanFocus = false
+                    onRestoreFocus?()
+                }
                 isScanning = false
                 scanTask = nil
             }
@@ -107,6 +124,10 @@ final class PasteImportViewModel: ObservableObject {
     }
 
     func cancelScan() {
+        directoryTask?.cancel()
+        directoryTask = nil
+        isFindingDirectories = false
+        needsScanFocus = false
         scanTask?.cancel()
         scanTask = nil
         scanID = UUID()
@@ -140,8 +161,8 @@ final class PasteImportViewModel: ObservableObject {
 final class PasteImportWindowController: NSWindowController, NSWindowDelegate {
     let viewModel: PasteImportViewModel
 
-    init(repository: ClipboardRepository, onShowHistory: @escaping () -> Void) {
-        viewModel = PasteImportViewModel(repository: repository)
+    init(viewModel: PasteImportViewModel, onShowHistory: @escaping () -> Void) {
+        self.viewModel = viewModel
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 540, height: 630),
             styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false
@@ -157,14 +178,53 @@ final class PasteImportWindowController: NSWindowController, NSWindowDelegate {
             onShowHistory()
         }
         viewModel.onClose = { [weak self] in self?.close() }
+        viewModel.onChooseDirectory = { [weak self] in self?.chooseDirectory() }
+        viewModel.onRestoreFocus = { [weak self] in self?.restoreFocus() }
     }
 
     required init?(coder: NSCoder) { nil }
 
+    override func showWindow(_ sender: Any?) {
+        super.showWindow(sender)
+        // The window must exist and be visible before probing protected Paste directories.
+        viewModel.findDirectories()
+    }
+
+    private func restoreFocus() {
+        DispatchQueue.main.async { [weak self] in
+            guard let window = self?.window, window.isVisible, !window.isMiniaturized,
+                  window.attachedSheet == nil else { return }
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    private func chooseDirectory() {
+        guard let window, window.isVisible, window.attachedSheet == nil,
+              !viewModel.isFindingDirectories, !viewModel.isScanning, !viewModel.isSaving else { return }
+        let panel = NSOpenPanel()
+        panel.title = L10n.tr("选择 Paste 数据文件夹")
+        panel.prompt = L10n.tr("选择")
+        panel.message = L10n.tr("请选择包含 db.sqlite 和 .db_SUPPORT 的文件夹。")
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.directoryURL = viewModel.selectedDirectory
+        panel.beginSheetModal(for: window) { [weak self] response in
+            panel.orderOut(nil)
+            guard let self else { return }
+            if response == .OK, let url = panel.url { self.viewModel.selectDirectory(url) }
+            self.restoreFocus()
+        }
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        guard !viewModel.isSaving else { return false }
+        !viewModel.isSaving
+    }
+
+    func windowWillClose(_ notification: Notification) {
         viewModel.cancelScan()
-        return true
     }
 }
 
@@ -262,15 +322,20 @@ struct PasteImportView: View {
                 }
                 .disabled(viewModel.isScanning || viewModel.isSaving || viewModel.preview != nil)
             }
-            if let directory = viewModel.selectedDirectory {
+            if viewModel.isFindingDirectories {
+                HStack {
+                    ProgressView().controlSize(.small)
+                    Text(L10n.tr("正在查找 Paste 数据…")).font(.callout).foregroundStyle(.secondary)
+                }
+            } else if let directory = viewModel.selectedDirectory {
                 Text(directory.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                     .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
             } else {
                 Text(L10n.tr("未找到可读取的数据，请选择 Paste 数据文件夹。"))
                     .font(.callout).foregroundStyle(.secondary)
             }
-            Button(L10n.tr("选择数据文件夹…")) { viewModel.chooseDirectory() }
-                .disabled(viewModel.isScanning || viewModel.isSaving)
+            Button(L10n.tr("选择数据文件夹…")) { viewModel.onChooseDirectory?() }
+                .disabled(viewModel.isFindingDirectories || viewModel.isScanning || viewModel.isSaving)
             Text(L10n.tr("扫描前请先退出 Paste。当前已验证 Paste 6.0.3 的数据结构；其他结构会提示暂不支持。"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
