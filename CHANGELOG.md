@@ -16,6 +16,8 @@ Notable changes to Paste Lite are recorded here.
 
 ### Features
 
+- Import Paste Pinboard colors, including pink and gray. Reimport fills missing colors on matching local groups while preserving existing colors.
+
 - Make the color choices in the group context menu more compact.
 - Press Space to preview a selected history item in either layout, with the shortcut shown beside Preview in the context menu and following the app's language setting; typing spaces in search and editing fields keeps working.
 - Add a More menu beside the main panel's layout switch, with Settings and Quit commands matching the menu bar labels.

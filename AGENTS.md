@@ -47,7 +47,7 @@ docs/                   README 图片资源
 - `ClipboardMonitor` 负责监测剪贴板变化、识别内容、跳过特定标记类型，以及睡眠和会话切换时的暂停与恢复。
 - `ClipboardRepository` 对外提供历史数据；其内部 `ClipboardStorage` 负责 SwiftData、去重、分页查询、保留清理、图片资源和旧数据迁移。
 - `PreparedCapture` 将仅含完整 HTTP(S) 网址的文本识别为链接，采集、Paste 导入及正文编辑共用此规则；说明文字、Markdown 和多个网址仍为文本。不为早期开发版本的旧文本网址执行启动分类回填。链接写回剪贴板时同时提供 URL 与原始纯文本。
-- `PasteImportService` 只读解析已验证结构的 Paste 数据，通过 `ClipboardRepository` 批量合并。导入不能删除已有历史；条数与单条大小统一读取持久化限制，解析与测试不得依赖个人数据库。
+- `PasteImportService` 只读解析已验证结构的 Paste 数据，通过 `ClipboardRepository` 批量合并。导入保留已验证的 Pinboard 标识色，同名分组仅补齐缺失颜色，保留本地已有颜色；颜色更新和分组、记录在同一事务保存。导入不能删除已有历史；条数与单条大小统一读取持久化限制，解析与测试不得依赖个人数据库。
 - `PasteService` 负责写回剪贴板、检查辅助功能权限、打开授权设置和发送粘贴快捷键。写回成功后保留监听回环抑制，避免把自身复制重复采集为新记录。
 - `GlobalHotKeyManager` 管理全局快捷键的注册与释放；通用设置可录制打开主面板的组合键，默认 ⇧⌘V，注册成功后才保存，失败保留原设置。录制期间临时释放当前快捷键，取消、失焦或关闭设置时恢复；菜单栏同步显示当前组合键。
 - `LoginItemManager` 使用 `SMAppService.mainApp` 读写系统登录项；只在用户切换时注册或移除，状态以系统为准，不另存一个启用布尔值。

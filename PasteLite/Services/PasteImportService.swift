@@ -12,6 +12,11 @@ enum PasteImportService {
         let dataByType: [String: Data]
     }
 
+    private struct ListAttributes: Decodable {
+        let type: String?
+        let colorCode: UInt64?
+    }
+
     private enum ItemError: Error {
         case skipped(String)
     }
@@ -61,7 +66,7 @@ enum PasteImportService {
         defer { sqlite3_close(database) }
         try validateSchema(database)
         // Paste 6.0.3 ListType: unknown = 0, clipboard = 1, pinboard = 2.
-        let groupQuery = try statement("SELECT Z_PK, ZNAME FROM ZLISTENTITY WHERE ZRAWTYPE = 2 ORDER BY Z_PK", database: database)
+        let groupQuery = try statement("SELECT Z_PK, ZNAME, ZRAWATTRIBUTES FROM ZLISTENTITY WHERE ZRAWTYPE = 2 ORDER BY Z_PK", database: database)
         defer { sqlite3_finalize(groupQuery) }
         var groups: [PasteImportGroup] = []
         var groupResult = sqlite3_step(groupQuery)
@@ -69,7 +74,8 @@ enum PasteImportService {
             try Task.checkCancellation()
             let name = string(groupQuery, column: 1).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { throw PasteImportError.unsupportedStore }
-            groups.append(PasteImportGroup(id: sqlite3_column_int64(groupQuery, 0), name: name))
+            groups.append(PasteImportGroup(id: sqlite3_column_int64(groupQuery, 0), name: name,
+                                          color: groupColor(from: blob(groupQuery, column: 2))))
             groupResult = sqlite3_step(groupQuery)
         }
         guard groupResult == SQLITE_DONE else { throw PasteImportError.unreadable }
@@ -159,6 +165,24 @@ enum PasteImportService {
         let attributes = try FileManager.default.attributesOfFileSystem(forPath: directory.path)
         if let free = attributes[.systemFreeSize] as? NSNumber, free.int64Value < required {
             throw PasteImportError.insufficientSpace
+        }
+    }
+
+    private static func groupColor(from data: Data?) -> ClipboardGroupColor? {
+        // Paste 6.0.3 stores plain JSON here; colorCode is the Pinboard's RGB integer.
+        // Missing or unrecognized optional attributes must not prevent history import.
+        guard let data, let attributes = try? JSONDecoder().decode(ListAttributes.self, from: data),
+              attributes.type == "pinboard", let code = attributes.colorCode else { return nil }
+        switch code {
+        case 0xF0554D: return .red
+        case 0xFA9214: return .orange
+        case 0xFAB700: return .yellow
+        case 0x52CC64: return .green
+        case 0x62A9F5: return .blue
+        case 0xB663E0: return .purple
+        case 0xFA506F: return .pink
+        case 0x8F8F93: return .gray
+        default: return nil
         }
     }
 

@@ -39,7 +39,7 @@ final class PasteImportFixture {
         execute("CREATE TABLE Z_METADATA (Z_PLIST BLOB)")
         execute("CREATE TABLE ZAPPLICATIONENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZBUNDLEIDENTIFIER TEXT)")
         execute("CREATE TABLE ZITEMENTITY (Z_PK INTEGER PRIMARY KEY, ZCREATEDAT REAL, ZTIMESTAMP REAL, ZSOURCEAPPLICATION INTEGER, ZDATA INTEGER, ZLIST INTEGER, ZTITLE TEXT)")
-        execute("CREATE TABLE ZLISTENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZRAWTYPE INTEGER)")
+        execute("CREATE TABLE ZLISTENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZRAWTYPE INTEGER, ZRAWATTRIBUTES BLOB)")
         execute("CREATE TABLE ZITEMDATAENTITY (Z_PK INTEGER PRIMARY KEY, ZRAWPASTEBOARDITEMS BLOB)")
         execute("INSERT INTO ZAPPLICATIONENTITY VALUES (1, 'Fixture Editor', 'example.fixture')")
         let hashes = [
@@ -81,8 +81,11 @@ final class PasteImportFixture {
         }
     }
 
-    func addGroup(id: Int64, name: String, type: Int = 2) {
-        insertBlob("INSERT INTO ZLISTENTITY VALUES (\(id), CAST(? AS TEXT), \(type))", data: Data(name.utf8))
+    func addGroup(id: Int64, name: String, type: Int = 2, attributes: Data? = nil) {
+        insertBlob("INSERT INTO ZLISTENTITY (Z_PK, ZNAME, ZRAWTYPE) VALUES (\(id), CAST(? AS TEXT), \(type))", data: Data(name.utf8))
+        if let attributes {
+            insertBlob("UPDATE ZLISTENTITY SET ZRAWATTRIBUTES = ? WHERE Z_PK = \(id)", data: attributes)
+        }
     }
 
     func invalidateSchema() { execute("UPDATE Z_METADATA SET Z_PLIST = X'00'") }
@@ -273,6 +276,7 @@ struct PasteImportTests {
         print("PASS: running Paste blocks scanning; closing a completed preview releases staged files")
 
         try await testGroups(root: root, png: png)
+        try await testGroupColors(root: root, png: png)
         try await testTitles(root: root, png: png)
         try await testTextURLs(root: root)
 
@@ -543,6 +547,103 @@ struct PasteImportTests {
         try await waitUntil { !emptyViewModel.isSaving }
         precondition(emptyViewModel.result?.groupsAdded == 1 && emptyViewModel.result?.added == 0)
         print("PASS: an entirely empty Pinboard can be imported through the UI")
+    }
+
+    private static func testGroupColors(root: URL, png: Data) async throws {
+        let fixture = try PasteImportFixture(directory: root.appendingPathComponent("group-colors-source"))
+        let colors: [(UInt64, ClipboardGroupColor)] = [
+            (0xF0554D, .red), (0xFA9214, .orange), (0xFAB700, .yellow), (0x52CC64, .green),
+            (0x62A9F5, .blue), (0xB663E0, .purple), (0xFA506F, .pink), (0x8F8F93, .gray)
+        ]
+        for (index, color) in colors.enumerated() {
+            fixture.addGroup(id: Int64(index + 1), name: color.1.rawValue,
+                             attributes: Data("{\"type\":\"pinboard\",\"colorCode\":\(color.0)}".utf8))
+        }
+        let invalidAttributes = [
+            "{}", "{\"type\":\"pinboard\"}", "{\"type\":\"pinboard\",\"colorCode\":null}",
+            "{\"type\":\"pinboard\",\"colorCode\":123}", "{\"type\":\"pinboard\",\"colorCode\":-1}",
+            "{\"type\":\"pinboard\",\"colorCode\":\"red\"}", "not JSON",
+            "{\"type\":\"clipboard\",\"colorCode\":15750477}", "{\"colorCode\":15750477}"
+        ]
+        for (index, json) in invalidAttributes.enumerated() {
+            fixture.addGroup(id: Int64(100 + index), name: "Uncolored \(index)", attributes: Data(json.utf8))
+        }
+        fixture.addGroup(id: 200, name: "No attributes")
+        fixture.addGroup(id: 201, name: "Merged")
+        fixture.addGroup(id: 202, name: "merged", attributes: Data("{\"type\":\"pinboard\",\"colorCode\":16404591}".utf8))
+        fixture.addGroup(id: 203, name: "MERGED", attributes: Data("{\"type\":\"pinboard\",\"colorCode\":9408403}".utf8))
+        try fixture.add([["public.png": png]], groupID: 1)
+        let sourceHashes = try hashes(in: fixture.directory)
+        let batch = try await Task.detached { try PasteImportService.scan(directory: fixture.directory) { _, _ in } }.value
+        let afterScanHashes = try hashes(in: fixture.directory)
+        precondition(afterScanHashes == sourceHashes)
+        for (index, color) in colors.enumerated() {
+            precondition(batch.groups.first { $0.id == Int64(index + 1) }?.color == color.1)
+        }
+        precondition(batch.groups.filter { (100...201).contains($0.id) }.allSatisfy { $0.color == nil })
+        print("PASS: all eight Paste Pinboard colors decode; missing, malformed, unknown and non-Pinboard attributes stay uncolored; source unchanged")
+
+        let manager = ImportFileManager(root: root.appendingPathComponent("group-colors-destination"))
+        let repository = ClipboardRepository(fileManager: manager)
+        try await waitUntil { repository.isReady }
+        let red = try await repository.saveGroup(name: "RED")
+        try await repository.setGroupColor(id: red.id, color: .indigo)
+        let orange = try await repository.saveGroup(name: "Orange")
+        let preview = try await repository.previewImport(batch)
+        precondition(preview.groupColorUpdates == [orange.id: .orange])
+        precondition(preview.groupsToCreate.first { $0.name == "Merged" }?.color == .pink,
+                     "Same-name source boards use the first known color, including a later color after a missing one")
+        let result = try await repository.importBatch(batch, preview: preview, expand: true)
+        precondition(result.added == 1 && result.groupColorsUpdated == 1)
+        let reloaded = ClipboardRepository(fileManager: manager)
+        try await waitUntil { reloaded.groups.count == preview.groupsToCreate.count + 2 }
+        precondition(reloaded.groups.first { $0.id == red.id }?.color == .indigo, "Keep existing local colors")
+        precondition(reloaded.groups.first { $0.id == orange.id }?.color == .orange)
+        for (_, color) in colors.dropFirst(2) {
+            precondition(reloaded.groups.first { $0.name == color.rawValue }?.color == color)
+        }
+        precondition(reloaded.groups.first { $0.name == "Merged" }?.color == .pink)
+        let repeated = try await reloaded.previewImport(batch)
+        precondition(!repeated.hasChanges)
+        print("PASS: new colors and missing local colors persist across restart, existing local colors win, and repeated import has no changes")
+
+        try await repository.setGroupColor(id: orange.id, color: nil)
+        let stale = try await repository.previewImport(batch)
+        try await repository.setGroupColor(id: orange.id, color: .blue)
+        do {
+            _ = try await repository.importBatch(batch, preview: stale, expand: true)
+            preconditionFailure("Color edits after preview must require a fresh confirmation")
+        } catch PasteImportError.stalePreview { }
+        try await repository.setGroupColor(id: orange.id, color: nil)
+        let viewModel = PasteImportViewModel(repository: repository, isPasteRunning: { false })
+        viewModel.selectedDirectory = fixture.directory
+        viewModel.scan()
+        try await waitUntil { !viewModel.isScanning }
+        precondition(viewModel.canImport && viewModel.importCount == 0)
+        precondition(viewModel.preview?.groupsToCreate.isEmpty == true && viewModel.preview?.groupUpdates.isEmpty == true)
+        precondition(viewModel.preview?.groupColorUpdates == [orange.id: .orange])
+        viewModel.importRecords()
+        try await waitUntil { !viewModel.isSaving }
+        precondition(viewModel.result?.groupColorsUpdated == 1 && viewModel.result?.added == 0)
+        print("PASS: color-only reimport is available in the UI; edits after preview are protected")
+
+        let failureManager = ImportFileManager(root: root.appendingPathComponent("group-colors-rollback"))
+        let failedRepository = ClipboardRepository(fileManager: failureManager)
+        try await waitUntil { failedRepository.isReady }
+        let uncolored = try await failedRepository.saveGroup(name: "Red")
+        failureManager.failSecondCopy = true
+        let failurePreview = try await failedRepository.previewImport(batch)
+        do {
+            _ = try await failedRepository.importBatch(batch, preview: failurePreview, expand: true)
+            preconditionFailure("Asset failure must roll back color updates and new groups")
+        } catch PasteImportError.storage { }
+        let afterFailure = try await failedRepository.previewImport(batch)
+        precondition(afterFailure.existingGroups == [uncolored] && afterFailure.existingHashes.isEmpty)
+        precondition(afterFailure.groupColorUpdates == [uncolored.id: .red])
+        failureManager.failSecondCopy = false
+        let retry = try await failedRepository.importBatch(batch, preview: afterFailure, expand: true)
+        precondition(retry.groupColorsUpdated == 1 && retry.added == 1)
+        print("PASS: failed import rolls back color backfills together with new groups and history; retry succeeds")
     }
 
     private static func waitUntil(_ condition: () -> Bool) async throws {
