@@ -56,6 +56,7 @@ struct PanelDismissalTests {
         let service = PasteService(repository: repository, monitor: monitor, pasteboard: pasteboard)
         let controller = ClipboardPanelController(repository: repository, pasteService: service)
         let panel = app.windows.compactMap { $0 as? ClipboardPanel }.first!
+        precondition(!panel.isMovableByWindowBackground, "The production panel must dispatch background moves after controls handle their drags")
         let hosting = panel.contentView as! NSHostingView<ClipboardHistoryView>
         let model = hosting.rootView.viewModel
         // Exercise native notifications in this process without activating a window over the user's apps.

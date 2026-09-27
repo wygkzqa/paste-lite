@@ -57,7 +57,12 @@ struct PerformanceRegressionTests {
         let missingFile = await ClipboardFileStatus.filesExist([missingURL.path])
         precondition(existingFile == true && missingFile == false)
         let tasks = (0..<500).map { index in
-            Task.detached { await ClipboardImageLoader.load(from: fixture.directory.appendingPathComponent("image-\(index % 512).png"), maxPixelSize: 128) }
+            Task.detached {
+                await ClipboardImageLoader.load(
+                    from: fixture.directory.appendingPathComponent("image-\(index % 512).png"),
+                    maxPixelSize: 128, priority: index.isMultiple(of: 10) ? .veryHigh : .normal
+                )
+            }
         }
         try await Task.sleep(for: .milliseconds(1))
         for task in tasks { task.cancel() }
@@ -66,7 +71,7 @@ struct PerformanceRegressionTests {
         precondition(cancelled > 0)
         let finalImage = await ClipboardImageLoader.load(from: imageURL, maxPixelSize: 128)
         precondition(finalImage != nil)
-        print("PASS: missing thumbnails fall back to originals; file checks work; 500 cancelled loads drain without hangs")
+        print("PASS: missing thumbnails fall back to originals; file checks work; 500 cancelled loads with mixed priorities drain without hangs")
         withExtendedLifetime(fixture) {}
     }
 

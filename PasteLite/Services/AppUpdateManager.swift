@@ -35,6 +35,8 @@ final class AppUpdateManager: NSObject, ObservableObject, SPUUserDriver, SPUUpda
 
     override init() {
         super.init()
+        // Local Beta builds never create an updater, even if a release key is supplied by mistake.
+        guard !AppVariant.isBeta else { return }
         NotificationCenter.default.publisher(for: .appLanguageDidChange)
             .sink { [weak self] _ in self?.window?.title = L10n.tr("软件更新") }
             .store(in: &subscriptions)
@@ -60,7 +62,7 @@ final class AppUpdateManager: NSObject, ObservableObject, SPUUserDriver, SPUUpda
         }
     }
 
-    var canOpenUpdate: Bool { !isConfigured || canCheckForUpdates || phase != .idle }
+    var canOpenUpdate: Bool { !AppVariant.isBeta && (!isConfigured || canCheckForUpdates || phase != .idle) }
     var canClose: Bool { phase != .extracting && phase != .installing }
 
     func setAutomaticallyChecksForUpdates(_ enabled: Bool) {
@@ -69,6 +71,7 @@ final class AppUpdateManager: NSObject, ObservableObject, SPUUserDriver, SPUUpda
     }
 
     func checkForUpdates() {
+        guard !AppVariant.isBeta else { return }
         guard isConfigured else {
             phase = .message
             messageKey = "此构建尚未配置在线更新，请从 GitHub 下载新版本。"

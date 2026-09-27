@@ -26,7 +26,7 @@ struct AboutView: View {
                 .padding(.bottom, 8)
                 .accessibilityLabel("Paste Lite Logo")
 
-            Text("Paste Lite")
+            Text(AppVariant.displayName)
                 .font(.system(size: 18, weight: .semibold))
 
             Text(L10n.tr("版本 %@（%@）", version, build))
@@ -34,19 +34,22 @@ struct AboutView: View {
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 
-            Button(updates.availableVersion.map { L10n.tr("发现新版本 %@…", $0) } ?? L10n.tr("检查更新…"), action: updates.checkForUpdates)
-                .disabled(!updates.canOpenUpdate)
+            if !AppVariant.isBeta {
+                Button(updates.availableVersion.map { L10n.tr("发现新版本 %@…", $0) } ?? L10n.tr("检查更新…"), action: updates.checkForUpdates)
+                    .disabled(!updates.canOpenUpdate)
+                    .padding(.top, 4)
+
+                Toggle(L10n.tr("自动检查更新"), isOn: Binding(
+                    get: { updates.automaticallyChecksForUpdates },
+                    set: updates.setAutomaticallyChecksForUpdates
+                ))
+                .toggleStyle(.checkbox)
+                .disabled(!updates.isConfigured)
                 .padding(.top, 4)
+            }
 
-            Toggle(L10n.tr("自动检查更新"), isOn: Binding(
-                get: { updates.automaticallyChecksForUpdates },
-                set: updates.setAutomaticallyChecksForUpdates
-            ))
-            .toggleStyle(.checkbox)
-            .disabled(!updates.isConfigured)
-            .padding(.top, 4)
-
-            Text(L10n.tr(updates.isConfigured ? "检查时会连接 GitHub。新版本需你确认后安装。" : "此构建尚未配置在线更新，请从 GitHub 下载新版本。"))
+            Text(L10n.tr(AppVariant.isBeta ? "Beta 由本地构建更新，不检查在线更新。" :
+                (updates.isConfigured ? "检查时会连接 GitHub。新版本需你确认后安装。" : "此构建尚未配置在线更新，请从 GitHub 下载新版本。")))
                 .font(.caption).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

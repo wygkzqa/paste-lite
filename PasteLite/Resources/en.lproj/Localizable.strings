@@ -104,6 +104,7 @@
 "读取失败，请检查目录权限和剩余空间后重试。" = "Could not read the data. Check folder permissions and disk space, then try again.";
 "跟随系统" = "System Default";
 "退出" = "Quit";
+"更多" = "More";
 "选择" = "Select";
 "选择 Paste 数据文件夹" = "Select Paste Data Folder";
 "选择一条记录以预览" = "Select a record to preview";
@@ -199,6 +200,7 @@
 "记录或分组已不存在，请刷新后重试。" = "The entry or group no longer exists. Refresh and try again.";
 "辅助功能权限" = "Accessibility Permission";
 "预览" = "Preview";
+"空格键" = "Space";
 "%d 个" = "%d groups";
 "导入分组与标题" = "Import groups and titles";
 "新增分组" = "New groups";
@@ -273,3 +275,43 @@
 "下载更新" = "Download Update";
 "安装并重新启动" = "Install and Relaunch";
 "重试退出" = "Retry Quitting";
+
+"空格" = "Space";
+
+"打开主界面快捷键" = "Open Main Panel";
+
+"请按组合键…" = "Press a shortcut…";
+
+"恢复默认" = "Restore Default";
+
+"点击快捷键后按下新的组合键，需包含 ⌘、⌥ 或 ⌃。按 Esc 取消。" = "Click the shortcut, then press a combination that includes ⌘, ⌥, or ⌃. Press Esc to cancel.";
+
+"请使用包含 ⌘、⌥ 或 ⌃ 的组合键。" = "Use a shortcut that includes ⌘, ⌥, or ⌃.";
+
+"无法注册快捷键事件处理器（%d）。" = "Unable to register the shortcut handler (%d).";
+
+"无法注册此快捷键，可能已被占用（%d）。" = "Unable to register this shortcut. It may already be in use (%d).";
+
+"标识色" = "Group Color";
+
+"无标识色" = "No Color";
+
+"红色" = "Red";
+
+"橙色" = "Orange";
+
+"黄色" = "Yellow";
+
+"绿色" = "Green";
+
+"蓝色" = "Blue";
+
+"靛蓝色" = "Indigo";
+
+"紫色" = "Purple";
+"打开 %@" = "Open %@";
+"关于 %@" = "About %@";
+"Beta 由本地构建更新，不检查在线更新。" = "Beta is updated by local builds. Online updates are disabled.";
+"登录 Mac 后自动打开 %@。" = "Open %@ automatically after logging in to your Mac.";
+"尚未获准启动，请在系统设置的登录项中允许 %@。" = "Allow %@ in Login Items in System Settings.";
+"找不到登录项，请将 %@ 放入 Applications 后重新打开。" = "Login item not found. Move %@ to Applications and reopen it.";

@@ -52,6 +52,7 @@ try key.publicKey.rawRepresentation.base64EncodedString().write(to: root.appendi
         run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-D', 'UPDATE_TESTING',
              '-module-cache-path', ROOT / '.build/ModuleCache.noindex', '-F', framework.parent,
              '-framework', 'Sparkle', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks',
+             ROOT / 'PasteLite/Models/AppVariant.swift', ROOT / 'PasteLite/Models/PanelShortcut.swift',
              ROOT / 'PasteLite/Services/AppSettings.swift', ROOT / 'PasteLite/Services/AppUpdateManager.swift',
              ROOT / 'PasteLite/UI/AppUpdateView.swift', ROOT / 'PasteLite/UI/AboutView.swift',
              ROOT / 'Tests/AppUpdateHarness.swift', '-o', executable])

@@ -6,6 +6,25 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- Speed up long text previews with native incremental text layout, and prioritize image previews over queued list thumbnails while keeping the existing full-content loading behavior.
+- Keep Preview from receiving focus automatically when the history context menu opens, while preserving keyboard navigation and activation.
+- Let Beta quit normally after history fails to load, so a later local build can replace it.
+- Keep scrolling when a dragged group tab is held near either edge, allowing moves to groups outside the visible area.
+- Fix group-tab drags moving the whole window instead of reordering groups. Empty background areas still move the panel; adjacent tabs, gaps, and empty ends of the group bar accept drops, while releasing outside the bar cancels the move.
+
+### Features
+
+- Make the color choices in the group context menu more compact.
+- Press Space to preview a selected history item in either layout, with the shortcut shown beside Preview in the context menu and following the app's language setting; typing spaces in search and editing fields keeps working.
+- Add a More menu beside the main panel's layout switch, with Settings and Quit commands matching the menu bar labels.
+- Remove the separator between Rename and Delete Group, and slightly strengthen the selected background of group tabs.
+- Add a retained local Beta with separate data and preferences, the same default ⇧⌘V shortcut as stable, and online updates disabled. The local build script replaces only Beta and preserves stable and Beta data.
+- Customize the main-panel shortcut in General settings, with recording, conflict feedback, and restoration of the default ⇧⌘V.
+- Drag custom group tabs to reorder them: the dragged tab follows the pointer while its neighbours animate aside, without an insertion line. Choose a colored dot from the bottom of the context menu. Order and colors persist across restarts.
+- Add system icons to the menu bar commands.
+
 ## [1.1.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.1.1)
 
 Build 13. The first version with in-app updates; users of 1.0.0 need to install 1.1.1 manually once before receiving later updates in the app.

@@ -2,9 +2,15 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class ClipboardPanel: NSPanel {
+class ClipboardPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        // Only unhandled background clicks reach the window. Let controls handle
+        // their drags before explicitly handing a window move to WindowServer.
+        performDrag(with: event)
+    }
 }
 
 @MainActor
@@ -16,7 +22,7 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
     private var localKeyMonitor: Any?
     private var isCompletingPaste = false
 
-    init(repository: ClipboardRepository, pasteService: PasteService) {
+    init(repository: ClipboardRepository, pasteService: PasteService, onShowSettings: @escaping () -> Void = {}) {
         self.pasteService = pasteService
         viewModel = ClipboardViewModel(repository: repository)
 
@@ -28,10 +34,12 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
         )
         super.init()
 
-        panel.title = "Paste Lite"
+        panel.title = AppVariant.displayName
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
-        panel.isMovableByWindowBackground = true
+        // Automatic background dragging also moves the window behind SwiftUI's
+        // embedded group views, before their mouse handlers can reorder a tab.
+        panel.isMovableByWindowBackground = false
         panel.level = .floating
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
@@ -54,6 +62,11 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
         viewModel.onDismiss = { [weak self] in
             self?.dismiss(reactivateTarget: true)
         }
+        viewModel.onShowSettings = { [weak self] in
+            self?.dismiss(reactivateTarget: false)
+            onShowSettings()
+        }
+        viewModel.onQuit = { NSApp.terminate(nil) }
         viewModel.onRequestAccessibilityPermission = { [weak self] in
             guard let self else { return }
             self.refreshAccessibilityPermission()
@@ -197,6 +210,11 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
             }
 
             switch Int(event.keyCode) {
+            case 49: // Space
+                guard !(window.firstResponder is NSTextView),
+                      event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty else { return event }
+                if !event.isARepeat { self.viewModel.previewSelected() }
+                return nil
             case 53: // Escape
                 self.dismiss(reactivateTarget: true)
                 return nil

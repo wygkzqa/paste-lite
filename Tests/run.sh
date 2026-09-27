@@ -165,3 +165,26 @@ compile -parse-as-library -module-name PasteLitePanelTests -swift-version 5 \
   PasteLite/UI/Clipboard*.swift \
   Tests/PanelDismissalTests.swift -o .build/tests/panel-dismissal
 .build/tests/panel-dismissal
+
+compile -parse-as-library -module-name PasteLiteGroupDragTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/ClipboardMonitor.swift \
+  PasteLite/Services/PasteService.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/UI/Clipboard*.swift Tests/Performance/Fixtures.swift \
+  Tests/ClipboardGroupDragTests.swift -o .build/tests/group-drag
+.build/tests/group-drag
+
+compile -parse-as-library -module-name PasteLiteShortcutTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/AppVariant.swift PasteLite/Models/PanelShortcut.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/GlobalHotKeyManager.swift PasteLite/UI/ShortcutRecorder.swift \
+  Tests/ShortcutTests.swift -o .build/tests/shortcuts
+.build/tests/shortcuts
+
+compile -parse-as-library -D BETA -module-name PasteLiteBetaTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  Tests/Performance/Fixtures.swift Tests/BetaIsolationTests.swift -o .build/tests/beta-isolation
+.build/tests/beta-isolation

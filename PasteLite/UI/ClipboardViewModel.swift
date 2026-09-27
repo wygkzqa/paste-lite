@@ -51,10 +51,13 @@ final class ClipboardViewModel: ObservableObject {
     @Published private(set) var sourceApps: [String] = []
     @Published private(set) var sourceAppNames: [String: String] = [:]
     let keyboardScrollRequests = PassthroughSubject<UUID, Never>()
+    let previewRequests = PassthroughSubject<ClipboardItem, Never>()
 
     var onPaste: ((ClipboardItem) -> Void)?
     var onDismiss: (() -> Void)?
     var onRequestAccessibilityPermission: (() -> Void)?
+    var onShowSettings: (() -> Void)?
+    var onQuit: (() -> Void)?
 
     let repository: ClipboardRepository
     private var cancellables = Set<AnyCancellable>()
@@ -321,6 +324,13 @@ final class ClipboardViewModel: ObservableObject {
     func pasteSelected() {
         guard selectedIDs.count == 1, let item = selectedItem else { return }
         paste(item)
+    }
+
+    func previewSelected() {
+        guard selectedIDs.count == 1, let item = selectedItem,
+              displayedQuery == activeQuery,
+              query.trimmingCharacters(in: .whitespacesAndNewlines) == activeQuery.text else { return }
+        previewRequests.send(item)
     }
 
     func paste(_ item: ClipboardItem) {

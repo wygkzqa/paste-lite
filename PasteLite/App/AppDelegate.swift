@@ -27,7 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         pasteService = PasteService(repository: repository, monitor: monitor)
         panelController = ClipboardPanelController(
             repository: repository,
-            pasteService: pasteService
+            pasteService: pasteService,
+            onShowSettings: { [weak self] in self?.showSettings() }
         )
 
         configureStatusItem()
@@ -40,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         monitor.start()
         Task.detached(priority: .utility) { PasteImportService.removeExpiredTemporaryFiles() }
         NotificationCenter.default.addObserver(self, selector: #selector(updateLanguage), name: .appLanguageDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateMenuShortcut), name: .panelShortcutDidChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshSystemLanguage), name: NSLocale.currentLocaleDidChangeNotification, object: nil)
 
         let launchEvent = NSAppleEventManager.shared().currentAppleEvent
@@ -70,6 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         Task { @MainActor in AppSettings.shared.refreshSystemLanguage() }
     }
 
+    @objc private func updateMenuShortcut() { configureMenu() }
+
     @objc private func updateLanguage() {
         configureMenu()
         settingsWindow?.title = L10n.tr("设置")
@@ -84,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             )
             window.title = L10n.tr("设置")
             window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: SettingsView(repository: repository, navigation: settingsNavigation, updates: updates, onImport: { [weak self] in
+            window.contentView = NSHostingView(rootView: SettingsView(repository: repository, navigation: settingsNavigation, updates: updates, hotKeys: hotKeyManager, onImport: { [weak self] in
                 self?.showImport()
             }, onClearHistory: { [weak self] in
                 guard let self else { throw ClipboardHistoryClearError.failed }
@@ -126,6 +130,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             return .terminateCancel
         }
         if updates.installationRequested, updateInstallationBlockReason() != nil { return .terminateCancel }
+        // Beta replacement must not discard an open edit, but ordinary quitting
+        // can drain the storage queue even when history failed to load.
+        if AppVariant.isBeta,
+           panelController?.hasAttachedSheet == true || importWindowController?.window?.isVisible == true || settingsWindow?.attachedSheet != nil {
+            return .terminateCancel
+        }
         if importWindowController?.viewModel.isSaving == true || repository.isSavingLimits || repository.isClearingHistory || repository.isDeletingItems {
             return .terminateCancel
         }
@@ -165,13 +175,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     private func configureStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: AppVariant.isBeta ? NSStatusItem.variableLength : NSStatusItem.squareLength)
         if let button = statusItem.button, let image = NSImage(named: "MenuBarIcon") {
             image.size = NSSize(width: 18, height: 18)
             image.isTemplate = true
-            image.accessibilityDescription = "Paste Lite"
+            image.accessibilityDescription = AppVariant.displayName
             button.image = image
-            button.toolTip = "Paste Lite"
+            button.toolTip = AppVariant.displayName
+            if AppVariant.isBeta {
+                button.title = " β"
+                button.imagePosition = .imageLeading
+            }
         }
 
         configureMenu()
@@ -180,25 +194,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     private func configureMenu() {
         let menu = NSMenu()
         let openItem = NSMenuItem(
-            title: L10n.tr("打开 Paste Lite"),
+            title: L10n.tr("打开 %@", AppVariant.displayName),
             action: #selector(togglePanel),
-            keyEquivalent: "v"
+            keyEquivalent: AppSettings.shared.panelShortcut.keyEquivalent
         )
-        openItem.keyEquivalentModifierMask = [.command, .shift]
+        openItem.keyEquivalentModifierMask = AppSettings.shared.panelShortcut.modifierFlags
+        openItem.image = NSImage(systemSymbolName: "clipboard", accessibilityDescription: nil)
         openItem.target = self
         menu.addItem(openItem)
         menu.addItem(.separator())
 
         let settingsItem = NSMenuItem(title: L10n.tr("设置…"), action: #selector(showSettings), keyEquivalent: ",")
         settingsItem.keyEquivalentModifierMask = [.command]
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
         settingsItem.target = self
         menu.addItem(settingsItem)
 
         let aboutItem = NSMenuItem(
-            title: L10n.tr("关于 Paste Lite"),
+            title: L10n.tr("关于 %@", AppVariant.displayName),
             action: #selector(showAbout),
             keyEquivalent: ""
         )
+        aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
         aboutItem.target = self
         menu.addItem(aboutItem)
 
@@ -206,30 +223,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             title: updates.availableVersion.map { L10n.tr("发现新版本 %@…", $0) } ?? L10n.tr("检查更新…"),
             action: #selector(checkForUpdates), keyEquivalent: ""
         )
+        updateItem.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: nil)
         updateItem.target = self
-        menu.addItem(updateItem)
+        if !AppVariant.isBeta { menu.addItem(updateItem) }
 
         let quitItem = NSMenuItem(
             title: L10n.tr("退出"),
             action: #selector(quit),
             keyEquivalent: "q"
         )
+        quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
         quitItem.target = self
         menu.addItem(quitItem)
         statusItem.menu = menu
     }
 
     private func configureHotKey() {
-        hotKeyManager = GlobalHotKeyManager()
-        hotKeyManager.action = { [weak self] in
-            DispatchQueue.main.async {
-                self?.panelController.toggle()
-            }
-        }
-        do {
-            try hotKeyManager.register()
-        } catch {
-            NSLog("Paste Lite: \(error.localizedDescription)")
-        }
+        hotKeyManager = GlobalHotKeyManager(settings: .shared)
+        hotKeyManager.action = { [weak self] in self?.panelController.toggle() }
+        hotKeyManager.start()
     }
 }

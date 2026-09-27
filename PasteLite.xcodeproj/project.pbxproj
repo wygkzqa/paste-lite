@@ -38,6 +38,10 @@
 		B00000000000000000000020 /* AppUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000020 /* AppUpdateView.swift */; };
 		B00000000000000000000021 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D00000000000000000000001 /* Sparkle */; };
 		B00000000000000000000022 /* Sparkle-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* Sparkle-LICENSE.txt */; };
+		B00000000000000000000023 /* PanelShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* PanelShortcut.swift */; };
+		B00000000000000000000024 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000024 /* ShortcutRecorder.swift */; };
+		B00000000000000000000025 /* AppVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* AppVariant.swift */; };
+		B00000000000000000000026 /* ClipboardMoreMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* ClipboardMoreMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +78,10 @@
 		F0000000000000000000001F /* AppUpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateManager.swift; sourceTree = "<group>"; };
 		F00000000000000000000020 /* AppUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateView.swift; sourceTree = "<group>"; };
 		F00000000000000000000022 /* Sparkle-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Sparkle-LICENSE.txt"; sourceTree = "<group>"; };
+		F00000000000000000000023 /* PanelShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelShortcut.swift; sourceTree = "<group>"; };
+		F00000000000000000000024 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
+		F00000000000000000000025 /* AppVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVariant.swift; sourceTree = "<group>"; };
+		F00000000000000000000026 /* ClipboardMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMoreMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +140,8 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000014 /* PasteImport.swift */,
+				F00000000000000000000023 /* PanelShortcut.swift */,
+				F00000000000000000000025 /* AppVariant.swift */,
 				F00000000000000000000003 /* ClipboardItem.swift */,
 				F00000000000000000000004 /* ClipboardCapture.swift */,
 			);
@@ -158,7 +168,9 @@
 			children = (
 				F0000000000000000000001C /* ClipboardGlass.swift */,
 				F0000000000000000000001D /* ClipboardGroupViews.swift */,
+				F00000000000000000000026 /* ClipboardMoreMenu.swift */,
 				F0000000000000000000001E /* ClipboardItemContextMenu.swift */,
+				F00000000000000000000024 /* ShortcutRecorder.swift */,
 				F00000000000000000000018 /* SettingsView.swift */,
 				F00000000000000000000016 /* PasteImportView.swift */,
 				F00000000000000000000009 /* ClipboardViewModel.swift */,
@@ -265,7 +277,9 @@
 			files = (
 				B0000000000000000000001C /* ClipboardGlass.swift in Sources */,
 				B0000000000000000000001D /* ClipboardGroupViews.swift in Sources */,
+				B00000000000000000000026 /* ClipboardMoreMenu.swift in Sources */,
 				B0000000000000000000001E /* ClipboardItemContextMenu.swift in Sources */,
+				B00000000000000000000024 /* ShortcutRecorder.swift in Sources */,
 				B00000000000000000000018 /* SettingsView.swift in Sources */,
 				B00000000000000000000017 /* AppSettings.swift in Sources */,
 				B0000000000000000000001B /* LoginItemManager.swift in Sources */,
@@ -276,6 +290,8 @@
 				B00000000000000000000002 /* AppDelegate.swift in Sources */,
 				B00000000000000000000020 /* AppUpdateView.swift in Sources */,
 				B0000000000000000000001F /* AppUpdateManager.swift in Sources */,
+				B00000000000000000000023 /* PanelShortcut.swift in Sources */,
+				B00000000000000000000025 /* AppVariant.swift in Sources */,
 				B00000000000000000000003 /* ClipboardItem.swift in Sources */,
 				B00000000000000000000004 /* ClipboardCapture.swift in Sources */,
 				B00000000000000000000005 /* ClipboardRepository.swift in Sources */,
@@ -356,6 +372,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.1.1;
+				PASTE_LITE_CHANNEL = stable;
 				PRODUCT_BUNDLE_IDENTIFIER = com.local.PasteLite;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME)";
 				PRODUCT_NAME = "Paste Lite";
@@ -387,6 +404,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.1.1;
+				PASTE_LITE_CHANNEL = stable;
 				PRODUCT_BUNDLE_IDENTIFIER = com.local.PasteLite;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME)";
 				PRODUCT_NAME = "Paste Lite";
@@ -398,6 +416,60 @@
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
+		};
+		C00000000000000000000005 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG BETA";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Beta;
+		};
+		C00000000000000000000006 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 13;
+				EXECUTABLE_NAME = "$(TARGET_NAME)";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PasteLite/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.1.1;
+				PASTE_LITE_CHANNEL = beta;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.PasteLite.beta;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Paste Lite Beta";
+				SUPPORTED_PLATFORMS = macosx;
+				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_FEED_URL = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Beta;
 		};
 /* End XCBuildConfiguration section */
 
@@ -423,6 +495,7 @@
 			buildConfigurations = (
 				C00000000000000000000001 /* Debug */,
 				C00000000000000000000002 /* Release */,
+				C00000000000000000000005 /* Beta */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -432,6 +505,7 @@
 			buildConfigurations = (
 				C00000000000000000000003 /* Debug */,
 				C00000000000000000000004 /* Release */,
+				C00000000000000000000006 /* Beta */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

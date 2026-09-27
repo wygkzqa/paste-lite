@@ -138,6 +138,13 @@ final class ClipboardGroupRecord {
     @Attribute(.unique) var id: UUID
     var name: String
     var createdAt: Date
+    // Optional fields keep existing stores compatible; nil order follows creation time.
+    var sortOrder: Int?
+    var colorRawValue: String?
+
+    var group: ClipboardGroup {
+        ClipboardGroup(id: id, name: name, color: colorRawValue.flatMap(ClipboardGroupColor.init(rawValue:)))
+    }
 
     init(name: String) {
         id = UUID()
@@ -299,7 +306,7 @@ private final class ClipboardStorage {
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!
-        baseDirectory = applicationSupport.appendingPathComponent("PasteLite", isDirectory: true)
+        baseDirectory = applicationSupport.appendingPathComponent(AppVariant.dataDirectoryName, isDirectory: true)
         limitsURL = baseDirectory.appendingPathComponent("history-settings.json")
         if fileManager.fileExists(atPath: limitsURL.path) {
             limits = try JSONDecoder().decode(ClipboardLimits.self, from: Data(contentsOf: limitsURL))
@@ -459,9 +466,49 @@ private final class ClipboardStorage {
     func groups(completion: @escaping (Result<[ClipboardGroup], Error>) -> Void) {
         queue.async { [self] in
             do {
-                let descriptor = FetchDescriptor<ClipboardGroupRecord>(sortBy: [SortDescriptor(\.createdAt)])
-                let groups = try makeContext().fetch(descriptor).map { ClipboardGroup(id: $0.id, name: $0.name) }
+                let groups = try orderedGroups(in: makeContext()).map(\.group)
                 complete(.success(groups), using: completion)
+            } catch { complete(.failure(error), using: completion) }
+        }
+    }
+
+    private func orderedGroups(in context: ModelContext) throws -> [ClipboardGroupRecord] {
+        let groups = try context.fetch(FetchDescriptor<ClipboardGroupRecord>(sortBy: [SortDescriptor(\.createdAt)]))
+        return groups.sorted {
+            if $0.sortOrder != $1.sortOrder { return ($0.sortOrder ?? Int.max) < ($1.sortOrder ?? Int.max) }
+            if $0.createdAt != $1.createdAt { return $0.createdAt < $1.createdAt }
+            return $0.id.uuidString < $1.id.uuidString
+        }
+    }
+
+    func moveGroup(id: UUID, relativeTo targetID: UUID, after: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async { [self] in
+            do {
+                let context = makeContext()
+                var groups = try orderedGroups(in: context)
+                guard let source = groups.firstIndex(where: { $0.id == id }),
+                      groups.contains(where: { $0.id == targetID }) else { throw ClipboardGroupError.missingRecord }
+                if id != targetID {
+                    let moved = groups.remove(at: source)
+                    let target = groups.firstIndex(where: { $0.id == targetID })!
+                    groups.insert(moved, at: target + (after ? 1 : 0))
+                    for (index, group) in groups.enumerated() { group.sortOrder = index }
+                    try context.save()
+                }
+                complete(.success(()), using: completion)
+            } catch { complete(.failure(error), using: completion) }
+        }
+    }
+
+    func setGroupColor(id: UUID, color: ClipboardGroupColor?, completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async { [self] in
+            do {
+                let context = makeContext()
+                let descriptor = FetchDescriptor<ClipboardGroupRecord>(predicate: #Predicate { $0.id == id })
+                guard let group = try context.fetch(descriptor).first else { throw ClipboardGroupError.missingRecord }
+                group.colorRawValue = color?.rawValue
+                try context.save()
+                complete(.success(()), using: completion)
             } catch { complete(.failure(error), using: completion) }
         }
     }
@@ -486,7 +533,7 @@ private final class ClipboardStorage {
                     context.insert(record)
                 }
                 try context.save()
-                complete(.success(ClipboardGroup(id: record.id, name: record.name)), using: completion)
+                complete(.success(record.group), using: completion)
             } catch { complete(.failure(error), using: completion) }
         }
     }
@@ -843,7 +890,7 @@ private final class ClipboardStorage {
                 preview.titleUpdates[record.contentHash] = importedTitles[record.contentHash]
             }
         }
-        preview.existingGroups = groups.map { ClipboardGroup(id: $0.id, name: $0.name) }
+        preview.existingGroups = groups.map(\.group)
             .sorted { $0.id.uuidString < $1.id.uuidString }
         var destinationGroups = preview.existingGroups
         for source in batch.groups {
@@ -1262,6 +1309,24 @@ final class ClipboardRepository: ObservableObject {
         }
         await reload(refreshSources: false)
         return group
+    }
+
+    func moveGroup(id: UUID, relativeTo targetID: UUID, after: Bool) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
+        guard let storage else { throw PasteImportError.storage }
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            storage.moveGroup(id: id, relativeTo: targetID, after: after) { continuation.resume(with: $0) }
+        }
+        await reload(refreshSources: false)
+    }
+
+    func setGroupColor(id: UUID, color: ClipboardGroupColor?) async throws {
+        guard !isPreparingToTerminate else { throw ClipboardHistoryClearError.busy }
+        guard let storage else { throw PasteImportError.storage }
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            storage.setGroupColor(id: id, color: color) { continuation.resume(with: $0) }
+        }
+        await reload(refreshSources: false)
     }
 
     func renameTitle(id: UUID, title: String) async throws {

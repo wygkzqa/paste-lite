@@ -20,7 +20,7 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
 
     func updateNSView(_ view: MenuView, context: Context) { view.actions = self }
 
-    final class MenuView: NSView {
+    final class MenuView: NSView, NSMenuDelegate {
         var actions: ClipboardItemContextMenu?
         private var itemIDs = Set<UUID>()
         private var doubleClickPending = false
@@ -60,10 +60,17 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
             itemIDs = Set(selected.keys)
             let menu = NSMenu()
             menu.autoenablesItems = false
+            menu.delegate = self
             for (title, action) in [(L10n.tr("编辑…"), #selector(edit)), (L10n.tr("预览"), #selector(preview))] {
                 let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
                 item.target = self
                 item.isEnabled = selected.count == 1
+                if action == #selector(preview) {
+                    item.keyEquivalent = " "
+                    item.keyEquivalentModifierMask = []
+                    // AppKit localizes key names using the launch language, not our live language setting.
+                    item.view = PreviewMenuItemView(item: item)
+                }
                 menu.addItem(item)
             }
             let groupMenu = NSMenu()
@@ -98,6 +105,10 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
             actions?.onClose()
         }
 
+        func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
+            for item in menu.items { item.view?.needsDisplay = true }
+        }
+
         @objc private func edit() { actions?.onEdit() }
         @objc private func preview() { actions?.onPreview() }
         @objc private func group(_ sender: NSMenuItem) {
@@ -107,5 +118,70 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
         @objc private func createGroup() { actions?.onNewGroup(itemIDs) }
         @objc private func selectAllEntries() { actions?.onSelectAll() }
         @objc private func deleteItems() { actions?.onDelete(itemIDs) }
+    }
+
+    final class PreviewMenuItemView: NSView {
+        private let shortcutLabel = L10n.tr("空格键")
+        private var didActivate = false
+
+        init(item: NSMenuItem) {
+            let font = NSFont.menuFont(ofSize: 0)
+            let textWidth = (item.title as NSString).size(withAttributes: [.font: font]).width
+                + (shortcutLabel as NSString).size(withAttributes: [.font: font]).width
+            super.init(frame: NSRect(x: 0, y: 0, width: max(160, textWidth + 52), height: ceil(font.ascender - font.descender) + 8))
+            autoresizingMask = [.width]
+            setAccessibilityElement(true)
+            setAccessibilityRole(.menuItem)
+            setAccessibilityLabel(item.title)
+            setAccessibilityHelp(shortcutLabel)
+            setAccessibilityEnabled(item.isEnabled)
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+        override var acceptsFirstResponder: Bool { enclosingMenuItem?.isEnabled == true }
+        // Keep keyboard activation without taking the menu's initial focus.
+        override var canBecomeKeyView: Bool { false }
+
+        override func mouseDown(with event: NSEvent) {}
+
+        override func keyDown(with event: NSEvent) {
+            if [36, 49, 76].contains(event.keyCode),
+               event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty {
+                _ = activate()
+            } else {
+                super.keyDown(with: event)
+            }
+        }
+
+        override func draw(_ dirtyRect: NSRect) {
+            guard let item = enclosingMenuItem else { return }
+            let selected = item.isEnabled && item.isHighlighted
+            if selected {
+                NSColor.selectedContentBackgroundColor.setFill()
+                NSBezierPath(roundedRect: bounds.insetBy(dx: 5, dy: 0), xRadius: 4, yRadius: 4).fill()
+            }
+            let font = item.menu?.font ?? NSFont.menuFont(ofSize: 0)
+            let color: NSColor = !item.isEnabled ? .disabledControlTextColor : (selected ? .selectedMenuItemTextColor : .labelColor)
+            let text = NSAttributedString(string: item.title, attributes: [.font: font, .foregroundColor: color])
+            let shortcut = NSAttributedString(string: shortcutLabel,
+                attributes: [.font: font, .foregroundColor: item.isEnabled && !selected ? NSColor.tertiaryLabelColor : color])
+            text.draw(at: NSPoint(x: 16, y: (bounds.height - text.size().height) / 2))
+            shortcut.draw(at: NSPoint(x: bounds.width - 18 - shortcut.size().width, y: (bounds.height - shortcut.size().height) / 2))
+        }
+
+        override func mouseUp(with event: NSEvent) {
+            guard bounds.contains(convert(event.locationInWindow, from: nil)) else { return }
+            _ = activate()
+        }
+
+        override func accessibilityPerformPress() -> Bool { activate() }
+
+        private func activate() -> Bool {
+            guard !didActivate, let item = enclosingMenuItem, item.isEnabled, let action = item.action else { return false }
+            didActivate = true
+            item.menu?.cancelTracking()
+            return NSApp.sendAction(action, to: item.target, from: item)
+        }
     }
 }

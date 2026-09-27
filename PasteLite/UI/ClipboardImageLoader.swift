@@ -22,9 +22,13 @@ private final class ResourceOperation<Value>: Operation, @unchecked Sendable {
     }
 }
 
-private func loadResource<Value>(_ work: @escaping (ResourceOperation<Value>) -> Value?) async -> Value? {
+private func loadResource<Value>(
+    priority: Operation.QueuePriority = .normal,
+    _ work: @escaping (ResourceOperation<Value>) -> Value?
+) async -> Value? {
     guard !Task.isCancelled else { return nil }
     let operation = ResourceOperation(work: work)
+    operation.queuePriority = priority
     return await withTaskCancellationHandler {
         await withCheckedContinuation { continuation in
             operation.completionBlock = { [weak operation] in
@@ -50,11 +54,14 @@ enum ClipboardImageLoader {
         cache.removeAllObjects()
     }
 
-    static func load(from url: URL, fallbackURL: URL? = nil, maxPixelSize: Int) async -> CGImage? {
+    static func load(
+        from url: URL, fallbackURL: URL? = nil, maxPixelSize: Int,
+        priority: Operation.QueuePriority = .normal
+    ) async -> CGImage? {
         guard !Task.isCancelled else { return nil }
         let key = "\(url.absoluteString)#\(fallbackURL?.absoluteString ?? "")#\(maxPixelSize)" as NSString
         if let image = cache.object(forKey: key) { return image }
-        return await loadResource { operation in
+        return await loadResource(priority: priority) { operation in
             if let image = cache.object(forKey: key) { return image }
             for candidate in [url, fallbackURL].compactMap({ $0 }) {
                 guard !operation.isCancelled else { return nil }
