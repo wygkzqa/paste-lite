@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.2.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.0) — 2026-09-27
+
+Build 14.
+
 ### Fixed
 
 - Keep the Paste import window in front after data-access permission prompts, and attach the folder picker to it so scanning remains visible.
@@ -19,7 +23,6 @@ Notable changes to Paste Lite are recorded here.
 
 - Save source application icons locally and display them beside the source name in both list and card layouts. Paste imports save available source icons directly, including icon-only reimports without overwriting saved icons. Older history can also fill missing icons from installed applications; sources without an available icon show only their name, with no placeholder.
 - Import Paste Pinboard colors, including pink and gray. Reimport fills missing colors on matching local groups while preserving existing colors.
-
 - Make the color choices in the group context menu more compact.
 - Press Space to preview a selected history item in either layout, with the shortcut shown beside Preview in the context menu and following the app's language setting; typing spaces in search and editing fields keeps working.
 - Add a More menu beside the main panel's layout switch, with Settings and Quit commands matching the menu bar labels.
