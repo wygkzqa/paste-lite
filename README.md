@@ -26,7 +26,8 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 ## Features
 
 - **Clipboard history** — save plain text, links, images, and file references; repeated content is deduplicated.
-- **Import from Paste** — scan local Paste history, review counts and capacity, then import supported records and Pinboards with original times and source apps.
+- **Import from Paste** — scan local Paste history, review counts and capacity, then import supported records and Pinboards with original times, source apps, and Pinboard colors.
+- **Source icons** — save application icons locally and show them in both layouts; Paste imports preserve available icons even when the source app is no longer installed. Unknown sources show no icon.
 - **Quick search** — search content, filenames, and source apps, with filters for content type and application.
 - **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
 - **Keyboard access** — customize the history shortcut in General settings (default ⇧⌘V), navigate with arrow keys, preview one selected item with Space, and paste with Return.
@@ -61,9 +62,9 @@ Single image files also appear under the image filter, while retaining their fil
 
 [Download the latest published release — macOS Universal DMG, notes and checksums](https://github.com/wygkzqa/paste-lite/releases/latest)
 
-This source revision prepares **1.1.1 (build 13)**. Its download becomes available when the 1.1.1 Release is published; until then, the link above points to the existing 1.0.0 release.
+This source revision is **1.2.0 (build 14)**. Use the link above for published packages and release notes.
 
-1. Download the release's Universal DMG (`Paste-Lite-1.1.1-universal.dmg` for 1.1.1). It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
+1. Download the release's Universal DMG (`Paste-Lite-1.2.0-universal.dmg` for 1.2.0). It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
 2. Quit an existing copy of Paste Lite, open the disk image, and drag **Paste Lite** into **Applications**.
 3. Eject the disk image, then open Paste Lite from Applications. Press **⇧⌘V** to show history.
 
@@ -77,7 +78,7 @@ In builds configured for online updates, use **Check for Updates…** in the men
 
 **Automatically check for updates** is off by default. When enabled, Sparkle checks about once a day and shows availability in the menu and About page without stealing focus. Downloads and installation require your action. Errors leave the current app available, and **Downloads** opens the GitHub release page.
 
-Version 1.0.0 does not include the updater: install 1.1.1 manually once after its Release is published. Later versions can then be installed in the app. The online update source becomes available when the first signed feed is published. Source builds without a configured public update key show an explicit unavailable message; see [Contributing](./CONTRIBUTING.md#configure-online-update-publishing) for configuration. Updating does not resolve the known Accessibility authorization issue.
+Version 1.0.0 does not include the updater: install the current release manually once. Versions 1.1.1 and later can receive subsequent releases through the signed in-app update feed. Source builds without a configured public update key show an explicit unavailable message; see [Contributing](./CONTRIBUTING.md#configure-online-update-publishing) for configuration. Updating does not resolve the known Accessibility authorization issue.
 
 ### Build from source
 
