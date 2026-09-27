@@ -9,9 +9,12 @@ struct ClipboardRowView: View {
     let assetURL: URL?
     let isSelected: Bool
     var isCard = false
+    var sourceIconRevision = 0
+    var loadSourceIcon: () async -> URL? = { nil }
     @State private var isHovered = false
     @State private var previewImage: CGImage?
     @State private var filesStillExist: Bool?
+    @State private var sourceIcon: CGImage?
 
     private let selectionBlue = Color(red: 90 / 255.0, green: 143 / 255.0, blue: 237 / 255.0) // #5A8FED
     private var secondaryForeground: Color { isSelected ? .white.opacity(0.88) : .secondary }
@@ -54,7 +57,14 @@ struct ClipboardRowView: View {
                 filesStillExist = exists
             }
         }
-        .onDisappear { previewImage = nil }
+        .task(id: "\(item.sourceBundleID)-\(item.lastCopiedAt.timeIntervalSince1970)-\(sourceIconRevision)") {
+            sourceIcon = nil
+            guard let url = await loadSourceIcon(), !Task.isCancelled else { return }
+            let image = await ClipboardImageLoader.load(from: url, maxPixelSize: 64)
+            guard !Task.isCancelled else { return }
+            sourceIcon = image
+        }
+        .onDisappear { previewImage = nil; sourceIcon = nil }
     }
 
     private var rowContent: some View {
@@ -93,13 +103,21 @@ struct ClipboardRowView: View {
 
     private var metadata: some View {
         HStack(spacing: 4) {
+            if let sourceIcon {
+                Image(decorative: sourceIcon, scale: 1).resizable().scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .accessibilityHidden(true)
+            }
             Text(item.displaySourceAppName)
+                .truncationMode(.tail)
+                .help(item.displaySourceAppName)
             if item.type == .file, filesStillExist == false {
                 Image(systemName: "exclamationmark.triangle")
                     .foregroundStyle(isSelected ? Color.white : Color.orange)
                     .help(L10n.tr("文件已不存在"))
+                    .fixedSize()
             }
-            if let timeLabel { Text("·"); Text(timeLabel) }
+            if let timeLabel { Text("·").fixedSize(); Text(timeLabel).fixedSize() }
         }
         .font(.system(size: 11)).foregroundStyle(secondaryForeground).lineLimit(1)
     }

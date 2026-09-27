@@ -83,7 +83,7 @@ struct BetaTerminationTests {
 extension AppDelegate {
     fileprivate func configureTerminationTest(repository: ClipboardRepository, pasteboard: NSPasteboard) {
         self.repository = repository
-        monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard)
+        monitor = ClipboardMonitor(repository: repository, pasteboard: pasteboard, loadSourceIcon: { _ in nil })
         hotKeyManager = GlobalHotKeyManager(settings: .shared)
         // Neither clipboard monitoring nor global shortcuts are started in this fixture.
     }

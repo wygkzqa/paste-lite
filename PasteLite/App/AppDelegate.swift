@@ -109,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     @objc private func showImport() {
         if importWindowController?.window?.isVisible != true {
-            importWindowController = PasteImportWindowController(repository: repository) { [weak self] in
+            importWindowController = PasteImportWindowController(viewModel: PasteImportViewModel(repository: repository)) { [weak self] in
                 self?.panelController.showImportedHistory()
             }
         }

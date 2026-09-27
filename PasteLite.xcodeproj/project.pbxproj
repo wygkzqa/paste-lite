@@ -42,6 +42,7 @@
 		B00000000000000000000024 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000024 /* ShortcutRecorder.swift */; };
 		B00000000000000000000025 /* AppVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* AppVariant.swift */; };
 		B00000000000000000000026 /* ClipboardMoreMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* ClipboardMoreMenu.swift */; };
+		B00000000000000000000027 /* SourceAppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* SourceAppIcon.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +83,7 @@
 		F00000000000000000000024 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
 		F00000000000000000000025 /* AppVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVariant.swift; sourceTree = "<group>"; };
 		F00000000000000000000026 /* ClipboardMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMoreMenu.swift; sourceTree = "<group>"; };
+		F00000000000000000000027 /* SourceAppIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceAppIcon.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +159,7 @@
 				F00000000000000000000015 /* PasteImportService.swift */,
 				F00000000000000000000005 /* ClipboardRepository.swift */,
 				F00000000000000000000006 /* ClipboardMonitor.swift */,
+				F00000000000000000000027 /* SourceAppIcon.swift */,
 				F00000000000000000000007 /* GlobalHotKeyManager.swift */,
 				F00000000000000000000008 /* PasteService.swift */,
 			);
@@ -296,6 +299,7 @@
 				B00000000000000000000004 /* ClipboardCapture.swift in Sources */,
 				B00000000000000000000005 /* ClipboardRepository.swift in Sources */,
 				B00000000000000000000006 /* ClipboardMonitor.swift in Sources */,
+				B00000000000000000000027 /* SourceAppIcon.swift in Sources */,
 				B00000000000000000000007 /* GlobalHotKeyManager.swift in Sources */,
 				B00000000000000000000008 /* PasteService.swift in Sources */,
 				B00000000000000000000009 /* ClipboardViewModel.swift in Sources */,

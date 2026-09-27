@@ -297,10 +297,15 @@ private final class ClipboardStorage {
     private let baseDirectory: URL
     private let assetsDirectory: URL
     private let thumbnailsDirectory: URL
+    private let sourceIconsDirectory: URL
+    private let installedSourceIcon: (String) -> CGImage?
+    private var savedSourceIcons = Set<String>()
+    private var missingSourceIcons = Set<String>()
     private let legacyHistoryFile: URL
 
-    init(fileManager: FileManager) throws {
+    init(fileManager: FileManager, installedSourceIcon: @escaping (String) -> CGImage?) throws {
         self.fileManager = fileManager
+        self.installedSourceIcon = installedSourceIcon
 
         let applicationSupport = fileManager.urls(
             for: .applicationSupportDirectory,
@@ -316,6 +321,7 @@ private final class ClipboardStorage {
         }
         assetsDirectory = baseDirectory.appendingPathComponent("Assets", isDirectory: true)
         thumbnailsDirectory = baseDirectory.appendingPathComponent("Thumbnails", isDirectory: true)
+        sourceIconsDirectory = baseDirectory.appendingPathComponent("SourceAppIcons", isDirectory: true)
         legacyHistoryFile = baseDirectory.appendingPathComponent("history.json")
 
         try fileManager.createDirectory(at: assetsDirectory, withIntermediateDirectories: true)
@@ -641,16 +647,17 @@ private final class ClipboardStorage {
     func deleteItems(_ itemIDs: Set<UUID>, completion: @escaping (Result<Void, Error>) -> Void) {
         queue.async { [self] in
             let context = makeContext()
-            var assets = Set<String>(), thumbnails = Set<String>()
+            var assets = Set<String>(), thumbnails = Set<String>(), sourceIcons = Set<String>()
             do {
                 let ids = Array(itemIDs)
                 for start in stride(from: 0, to: ids.count, by: 200) {
                     let batch = Array(ids[start..<min(start + 200, ids.count)])
                     var descriptor = FetchDescriptor<ClipboardRecord>(predicate: #Predicate { batch.contains($0.id) })
-                    descriptor.propertiesToFetch = [\.id, \.assetFilename, \.thumbnailFilename]
+                    descriptor.propertiesToFetch = [\.id, \.assetFilename, \.thumbnailFilename, \.sourceBundleID]
                     for record in try context.fetch(descriptor) {
                         if let name = record.assetFilename { assets.insert(name) }
                         if let name = record.thumbnailFilename { thumbnails.insert(name) }
+                        if !record.sourceBundleID.isEmpty { sourceIcons.insert(SourceAppIcon.filename(for: record.sourceBundleID)) }
                         context.delete(record)
                     }
                 }
@@ -664,16 +671,19 @@ private final class ClipboardStorage {
                 return
             }
             do {
-                if !assets.isEmpty || !thumbnails.isEmpty {
+                if !assets.isEmpty || !thumbnails.isEmpty || !sourceIcons.isEmpty {
                     var remaining = FetchDescriptor<ClipboardRecord>()
-                    remaining.propertiesToFetch = [\.assetFilename, \.thumbnailFilename]
+                    remaining.propertiesToFetch = [\.assetFilename, \.thumbnailFilename, \.sourceBundleID]
                     try context.enumerate(remaining, batchSize: 500) { record in
                         if let name = record.assetFilename { assets.remove(name) }
                         if let name = record.thumbnailFilename { thumbnails.remove(name) }
+                        if !record.sourceBundleID.isEmpty { sourceIcons.remove(SourceAppIcon.filename(for: record.sourceBundleID)) }
                     }
                 }
                 var filesRemain = false
-                for (directory, filenames) in [(assetsDirectory, assets), (thumbnailsDirectory, thumbnails)] {
+                savedSourceIcons.subtract(sourceIcons)
+                missingSourceIcons.subtract(sourceIcons)
+                for (directory, filenames) in [(assetsDirectory, assets), (thumbnailsDirectory, thumbnails), (sourceIconsDirectory, sourceIcons)] {
                     for name in filenames {
                         let url = directory.appendingPathComponent(name).standardizedFileURL
                         guard url.deletingLastPathComponent() == directory.standardizedFileURL else { filesRemain = true; continue }
@@ -733,8 +743,11 @@ private final class ClipboardStorage {
                 return
             }
             var filesRemain = false
-            for directory in [assetsDirectory, thumbnailsDirectory] {
+            savedSourceIcons.removeAll()
+            missingSourceIcons.removeAll()
+            for directory in [assetsDirectory, thumbnailsDirectory, sourceIconsDirectory] {
                 do {
+                    guard fileManager.fileExists(atPath: directory.path) else { continue }
                     let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
                     for file in files {
                         do { try fileManager.removeItem(at: file) }
@@ -802,6 +815,10 @@ private final class ClipboardStorage {
 
                 try context.save()
                 cachedQuery = nil
+                // A missing icon must never turn a successful clipboard capture into a failure.
+                if let image = capture.sourceIcon {
+                    _ = resolveSourceIcon(for: capture.sourceBundleID, image: image)
+                }
                 complete(
                     .success(record.makeItem(summary: true)),
                     using: completion
@@ -862,7 +879,7 @@ private final class ClipboardStorage {
             do {
                 let context = makeContext()
                 var descriptor = FetchDescriptor<ClipboardRecord>()
-                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle]
+                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle, \.sourceBundleID]
                 let records = try context.fetch(descriptor)
                 let groups = try context.fetch(FetchDescriptor<ClipboardGroupRecord>())
                 complete(.success(try importPreview(batch, records: records, groups: groups)), using: completion)
@@ -881,6 +898,10 @@ private final class ClipboardStorage {
             existingBytes: records.reduce(0) { $0 + $1.byteCount }, limits: limits,
             duplicates: batch.duplicates + batch.entries.count - entries.count
         )
+        let existingSources = Set(records.map(\.sourceBundleID))
+        preview.sourceIconUpdates = batch.sourceIconBundleIDs.intersection(existingSources).filter {
+            storedSourceIconURL(filename: SourceAppIcon.filename(for: $0)) == nil
+        }
         let importedTitles = Dictionary(uniqueKeysWithValues: batch.entries.compactMap { entry in
             entry.item.customTitle.map { (entry.item.contentHash, $0) }
         })
@@ -941,7 +962,7 @@ private final class ClipboardStorage {
             var changedLimits = false
             do {
                 var descriptor = FetchDescriptor<ClipboardRecord>()
-                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle]
+                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle, \.sourceBundleID]
                 let records = try context.fetch(descriptor)
                 let groups = try context.fetch(FetchDescriptor<ClipboardGroupRecord>())
                 let current = try importPreview(batch, records: records, groups: groups)
@@ -950,7 +971,8 @@ private final class ClipboardStorage {
                       current.limits == preview.limits,
                       current.existingGroups == preview.existingGroups,
                       current.existingMemberships == preview.existingMemberships,
-                      current.existingTitles == preview.existingTitles else {
+                      current.existingTitles == preview.existingTitles,
+                      current.sourceIconUpdates == preview.sourceIconUpdates else {
                     throw PasteImportError.stalePreview(current)
                 }
                 let selected = current.selectedEntries(expand: expand)
@@ -1001,11 +1023,26 @@ private final class ClipboardStorage {
                 }
                 try context.save()
                 cachedQuery = nil
+                var sourceIconsSaved = 0, sourceIconsFailed = 0
+                let importedSources = Set(selected.map { $0.item.sourceBundleID }).union(current.sourceIconUpdates)
+                for bundleID in batch.sourceIconBundleIDs.intersection(importedSources) {
+                    let filename = SourceAppIcon.filename(for: bundleID)
+                    guard storedSourceIconURL(filename: filename) == nil else { continue }
+                    let staged = batch.directory.appendingPathComponent("SourceAppIcons").appendingPathComponent(filename)
+                    if let data = try? Data(contentsOf: staged), let image = SourceAppIcon.image(from: data),
+                       resolveSourceIcon(for: bundleID, image: image) != nil {
+                        sourceIconsSaved += 1
+                    } else {
+                        // History is already committed. Report optional icon failures separately.
+                        sourceIconsFailed += 1
+                    }
+                }
                 let result = PasteImportResult(
                     added: selected.count, duplicates: current.duplicates, skipped: batch.skipped,
                     capacitySkipped: current.entries.count - selected.count,
                     groupsAdded: current.groupsToCreate.count, recordsUpdated: current.groupUpdates.count,
-                    titlesUpdated: current.titleUpdates.count, groupColorsUpdated: current.groupColorUpdates.count
+                    titlesUpdated: current.titleUpdates.count, groupColorsUpdated: current.groupColorUpdates.count,
+                    sourceIconsSaved: sourceIconsSaved, sourceIconsFailed: sourceIconsFailed
                 )
                 complete(.success((result, limits)), using: completion)
             } catch {
@@ -1050,6 +1087,51 @@ private final class ClipboardStorage {
             return thumbnailsDirectory.appendingPathComponent(filename)
         }
         return assetURL(for: item)
+    }
+
+    func sourceIconURL(for bundleID: String, completion: @escaping (URL?) -> Void) {
+        queue.async { [self] in
+            let url = resolveSourceIcon(for: bundleID)
+            DispatchQueue.main.async { completion(url) }
+        }
+    }
+
+    private func resolveSourceIcon(for bundleID: String, image: CGImage? = nil) -> URL? {
+        guard !bundleID.isEmpty else { return nil }
+        let filename = SourceAppIcon.filename(for: bundleID)
+        let url = sourceIconsDirectory.appendingPathComponent(filename)
+        if savedSourceIcons.contains(filename) { return url }
+        if image == nil, missingSourceIcons.contains(filename) { return nil }
+        // Serialized with deletion: an old row cannot recreate icons after its history is cleared.
+        var descriptor = FetchDescriptor<ClipboardRecord>(predicate: #Predicate { $0.sourceBundleID == bundleID })
+        descriptor.fetchLimit = 1
+        guard (try? makeContext().fetchCount(descriptor)) ?? 0 > 0 else { return nil }
+        if let stored = storedSourceIconURL(filename: filename) { return stored }
+        guard let image = image ?? installedSourceIcon(bundleID), let data = SourceAppIcon.pngData(from: image) else {
+            missingSourceIcons.insert(filename)
+            return nil
+        }
+        do {
+            try fileManager.createDirectory(at: sourceIconsDirectory, withIntermediateDirectories: true)
+            try data.write(to: url, options: .atomic)
+            savedSourceIcons.insert(filename)
+            missingSourceIcons.remove(filename)
+            return url
+        } catch {
+            missingSourceIcons.insert(filename)
+            return nil
+        }
+    }
+
+    private func storedSourceIconURL(filename: String) -> URL? {
+        let url = sourceIconsDirectory.appendingPathComponent(filename)
+        if savedSourceIcons.contains(filename) { return url }
+        guard fileManager.fileExists(atPath: url.path),
+              let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              CGImageSourceCreateImageAtIndex(source, 0, nil) != nil else { return nil }
+        savedSourceIcons.insert(filename)
+        missingSourceIcons.remove(filename)
+        return url
     }
 
     private func makeContext() -> ModelContext {
@@ -1149,14 +1231,18 @@ private final class ClipboardStorage {
     private func removeOrphanedAssets() throws {
         let context = makeContext()
         var descriptor = FetchDescriptor<ClipboardRecord>()
-        descriptor.propertiesToFetch = [\.assetFilename, \.thumbnailFilename]
-        var assets = Set<String>(), thumbnails = Set<String>()
+        descriptor.propertiesToFetch = [\.assetFilename, \.thumbnailFilename, \.sourceBundleID]
+        var assets = Set<String>(), thumbnails = Set<String>(), sourceIcons = Set<String>()
         try context.enumerate(descriptor, batchSize: 500) { record in
             if let name = record.assetFilename { assets.insert(name) }
             if let name = record.thumbnailFilename { thumbnails.insert(name) }
+            if !record.sourceBundleID.isEmpty { sourceIcons.insert(SourceAppIcon.filename(for: record.sourceBundleID)) }
         }
         removeOrphanedFiles(in: assetsDirectory, retaining: assets)
         removeOrphanedFiles(in: thumbnailsDirectory, retaining: thumbnails)
+        removeOrphanedFiles(in: sourceIconsDirectory, retaining: sourceIcons)
+        savedSourceIcons.formIntersection(sourceIcons)
+        missingSourceIcons.formIntersection(sourceIcons)
     }
 
     private func removeOrphanedFiles(in directory: URL, retaining filenames: Set<String>) {
@@ -1187,6 +1273,7 @@ final class ClipboardRepository: ObservableObject {
     @Published private(set) var sourceApps: [String] = []
     @Published private(set) var groups: [ClipboardGroup] = []
     @Published private(set) var revision = 0
+    @Published private(set) var sourceIconRevision = 0
     @Published private(set) var limits = ClipboardLimits.default
     @Published private(set) var isReady = false
     @Published private(set) var isSavingLimits = false
@@ -1199,9 +1286,9 @@ final class ClipboardRepository: ObservableObject {
     private var cleaning = false
     private(set) var isPreparingToTerminate = false
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, installedSourceIcon: @escaping (String) -> CGImage? = SourceAppIcon.installedIcon) {
         do {
-            let storage = try ClipboardStorage(fileManager: fileManager)
+            let storage = try ClipboardStorage(fileManager: fileManager, installedSourceIcon: installedSourceIcon)
             self.storage = storage
             storage.load { [weak self] result in
                 guard let self else { return }
@@ -1455,6 +1542,7 @@ final class ClipboardRepository: ObservableObject {
             storage.importBatch(batch, preview: preview, expand: expand) { continuation.resume(with: $0) }
         }
         self.limits = limits
+        if result.sourceIconsSaved > 0 { sourceIconRevision += 1 }
         await reload()
         return result
     }
@@ -1470,6 +1558,14 @@ final class ClipboardRepository: ObservableObject {
 
     func assetURL(for item: ClipboardItem) -> URL? { storage?.assetURL(for: item) }
     func previewURL(for item: ClipboardItem) -> URL? { storage?.previewURL(for: item) }
+
+    func sourceIconURL(for bundleID: String) async -> URL? {
+        guard let storage, !bundleID.isEmpty, !isClearingHistory, !isPreparingToTerminate, !Task.isCancelled else { return nil }
+        let url: URL? = await withCheckedContinuation { continuation in
+            storage.sourceIconURL(for: bundleID) { continuation.resume(returning: $0) }
+        }
+        return Task.isCancelled || isClearingHistory ? nil : url
+    }
 
     func prepareForTermination() async {
         isPreparingToTerminate = true

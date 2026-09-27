@@ -44,8 +44,9 @@ final class PasteImportBatch: @unchecked Sendable {
     let skipped: [String: Int]
     let limits: ClipboardLimits
     let groups: [PasteImportGroup]
+    let sourceIconBundleIDs: Set<String>
 
-    init(directory: URL, entries: [PasteImportEntry], total: Int, duplicates: Int, skipped: [String: Int], limits: ClipboardLimits = .default, groups: [PasteImportGroup] = []) {
+    init(directory: URL, entries: [PasteImportEntry], total: Int, duplicates: Int, skipped: [String: Int], limits: ClipboardLimits = .default, groups: [PasteImportGroup] = [], sourceIconBundleIDs: Set<String> = []) {
         self.directory = directory
         self.entries = entries
         self.total = total
@@ -53,6 +54,7 @@ final class PasteImportBatch: @unchecked Sendable {
         self.skipped = skipped
         self.limits = limits
         self.groups = groups
+        self.sourceIconBundleIDs = sourceIconBundleIDs
     }
 
     deinit { try? FileManager.default.removeItem(at: directory) }
@@ -72,9 +74,10 @@ struct PasteImportPreview: Sendable {
     var existingMemberships: [String: Set<UUID>] = [:]
     var titleUpdates: [String: String] = [:]
     var existingTitles: [String: String] = [:]
+    var sourceIconUpdates: Set<String> = []
 
     var hasGroupChanges: Bool { !groupsToCreate.isEmpty || !groupUpdates.isEmpty || !groupColorUpdates.isEmpty }
-    var hasChanges: Bool { !entries.isEmpty || hasGroupChanges || !titleUpdates.isEmpty }
+    var hasChanges: Bool { !entries.isEmpty || hasGroupChanges || !titleUpdates.isEmpty || !sourceIconUpdates.isEmpty }
 
     var requiredCount: Int { existingHashes.count + entries.count }
     var requiredBytes: Int64 { existingBytes + entries.reduce(0) { $0 + $1.byteCount } }
@@ -96,6 +99,8 @@ struct PasteImportResult: Sendable {
     let recordsUpdated: Int
     let titlesUpdated: Int
     let groupColorsUpdated: Int
+    var sourceIconsSaved = 0
+    var sourceIconsFailed = 0
 }
 
 enum PasteImportError: LocalizedError {

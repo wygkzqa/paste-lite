@@ -239,7 +239,9 @@ struct ClipboardHistoryView: View {
             ClipboardRowView(item: item, timeLabel: viewModel.timeLabel(for: item),
                 previewURL: repository.previewURL(for: item), assetURL: repository.assetURL(for: item),
                 isSelected: viewModel.selectedIDs.contains(item.id),
-                isCard: layout == .cards)
+                isCard: layout == .cards,
+                sourceIconRevision: repository.sourceIconRevision,
+                loadSourceIcon: { await repository.sourceIconURL(for: item.sourceBundleID) })
                 .overlay {
                     ClipboardItemContextMenu(
                         onSelect: { modifiers in
