@@ -13,11 +13,19 @@ compile() {
 
 mkdir -p .build/tests
 cp -R PasteLite/Resources/en.lproj PasteLite/Resources/zh-Hans.lproj .build/tests/
+compile -parse-as-library -module-name PasteLiteSourceIconTests -swift-version 5 \
+  -module-cache-path .build/ModuleCache.noindex \
+  PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift \
+  PasteLite/Services/PasteImportService.swift PasteLite/UI/ClipboardImageLoader.swift \
+  Tests/Performance/Fixtures.swift Tests/SourceAppIconTests.swift -o .build/tests/source-app-icons
+.build/tests/source-app-icons
+
 compile -parse-as-library -module-name PasteLiteImageTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift \
   PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift \
   PasteLite/Services/ClipboardMonitor.swift \
   PasteLite/Services/PasteService.swift \
   PasteLite/Services/PasteImportService.swift \
@@ -30,7 +38,7 @@ compile -parse-as-library -module-name PasteLiteImageTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteURLTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/Services/ClipboardMonitor.swift PasteLite/Services/PasteService.swift \
   Tests/ClipboardURLTests.swift -o .build/tests/clipboard-urls
 .build/tests/clipboard-urls
@@ -39,7 +47,7 @@ compile -parse-as-library -module-name PasteLiteImportTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift \
   PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift \
   PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/PasteImportView.swift \
   Tests/PasteImportTests.swift \
@@ -50,7 +58,7 @@ compile -parse-as-library -module-name PasteLiteLanguageTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift \
   PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift \
   PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift \
   Tests/LanguageSettingsTests.swift \
@@ -68,7 +76,7 @@ compile -parse-as-library -module-name PasteLitePerformanceTests -swift-version 
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift \
   PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift \
   PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift \
   PasteLite/UI/ClipboardImageLoader.swift \
@@ -84,7 +92,7 @@ compile -parse-as-library -module-name PasteLiteHistoryTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteHistoryTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/HistoryLimitsTests.swift -o .build/tests/history-limits
 .build/tests/history-limits
@@ -97,7 +105,7 @@ compile -parse-as-library -module-name PasteLiteHistoryTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteHistoryTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardGroupTests.swift -o .build/tests/clipboard-groups
 .build/tests/clipboard-groups
@@ -105,7 +113,7 @@ compile -parse-as-library -module-name PasteLiteHistoryTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteClearHistoryTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/Services/ClipboardMonitor.swift PasteLite/UI/ClipboardViewModel.swift \
   PasteLite/UI/ClipboardImageLoader.swift Tests/Performance/Fixtures.swift \
   Tests/ClearHistoryTests.swift -o .build/tests/clear-history
@@ -119,7 +127,7 @@ compile -parse-as-library -module-name PasteLiteTitleTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteTitleTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/Services/ClipboardMonitor.swift PasteLite/Services/PasteService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardTitleTests.swift -o .build/tests/clipboard-titles
@@ -128,7 +136,7 @@ compile -parse-as-library -module-name PasteLiteTitleTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteEditTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/Services/ClipboardMonitor.swift PasteLite/Services/PasteService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardEditTests.swift -o .build/tests/clipboard-edit
@@ -137,14 +145,14 @@ compile -parse-as-library -module-name PasteLiteEditTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteTerminationTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   Tests/Performance/Fixtures.swift Tests/ClipboardTerminationTests.swift -o .build/tests/clipboard-termination
 .build/tests/clipboard-termination
 
 compile -parse-as-library -module-name PasteLiteSelectionTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardSelectionTests.swift -o .build/tests/clipboard-selection
 .build/tests/clipboard-selection
@@ -152,7 +160,7 @@ compile -parse-as-library -module-name PasteLiteSelectionTests -swift-version 5 
 compile -parse-as-library -module-name PasteLiteSearchTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/ClipboardViewModel.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardSearchTests.swift -o .build/tests/clipboard-search
 .build/tests/clipboard-search
@@ -160,7 +168,7 @@ compile -parse-as-library -module-name PasteLiteSearchTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLitePanelTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/ClipboardMonitor.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/ClipboardMonitor.swift \
   PasteLite/Services/PasteService.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/Clipboard*.swift \
   Tests/PanelDismissalTests.swift -o .build/tests/panel-dismissal
@@ -169,7 +177,7 @@ compile -parse-as-library -module-name PasteLitePanelTests -swift-version 5 \
 compile -parse-as-library -module-name PasteLiteGroupDragTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/ClipboardMonitor.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/ClipboardMonitor.swift \
   PasteLite/Services/PasteService.swift PasteLite/Services/PasteImportService.swift \
   PasteLite/UI/Clipboard*.swift Tests/Performance/Fixtures.swift \
   Tests/ClipboardGroupDragTests.swift -o .build/tests/group-drag
@@ -185,6 +193,6 @@ compile -parse-as-library -module-name PasteLiteShortcutTests -swift-version 5 \
 compile -parse-as-library -D BETA -module-name PasteLiteBetaTests -swift-version 5 \
   -module-cache-path .build/ModuleCache.noindex \
   PasteLite/Models/*.swift PasteLite/Services/AppSettings.swift \
-  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/PasteImportService.swift \
+  PasteLite/Services/ClipboardRepository.swift PasteLite/Services/SourceAppIcon.swift PasteLite/Services/PasteImportService.swift \
   Tests/Performance/Fixtures.swift Tests/BetaIsolationTests.swift -o .build/tests/beta-isolation
 .build/tests/beta-isolation

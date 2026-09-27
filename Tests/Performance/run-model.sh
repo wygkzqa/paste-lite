@@ -3,6 +3,11 @@ set -eu
 cd "$(dirname "$0")/../.."
 source_dir=${1:-PasteLite}
 label=${2:-after}
+# Baseline source trees may predate source application icons.
+set --
+if [ -f "$source_dir/Services/SourceAppIcon.swift" ]; then
+  set -- "$source_dir/Services/SourceAppIcon.swift"
+fi
 mkdir -p .build/performance
 cp -R "$source_dir/Resources/en.lproj" "$source_dir/Resources/zh-Hans.lproj" .build/performance/
 xcrun swiftc -O -parse-as-library -swift-version 5 -module-name PasteLitePerformance \
@@ -10,6 +15,7 @@ xcrun swiftc -O -parse-as-library -swift-version 5 -module-name PasteLitePerform
   "$source_dir"/Models/*.swift \
   "$source_dir"/Services/AppSettings.swift \
   "$source_dir"/Services/ClipboardRepository.swift \
+  "$@" \
   "$source_dir"/Services/PasteImportService.swift \
   "$source_dir"/UI/ClipboardViewModel.swift \
   Tests/Performance/Fixtures.swift Tests/Performance/ModelBenchmark.swift \

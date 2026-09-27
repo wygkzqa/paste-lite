@@ -7,6 +7,12 @@ final class ClipboardMonitor {
     private var timer: Timer?
     private var lastChangeCount: Int
     private var isObservingWorkspace = false
+    private let sourceIcons: NSCache<NSString, CGImage> = {
+        let cache = NSCache<NSString, CGImage>()
+        cache.countLimit = 64
+        cache.totalCostLimit = 8 * 1_024 * 1_024
+        return cache
+    }()
 
     private let ignoredTypes: Set<String> = [
         "org.nspasteboard.ConcealedType",
@@ -91,7 +97,7 @@ final class ClipboardMonitor {
 
     func clearHistory() async throws {
         markCurrentChangeHandled()
-        defer { markCurrentChangeHandled() }
+        defer { markCurrentChangeHandled(); sourceIcons.removeAllObjects() }
         try await repository.clearHistory()
     }
 
@@ -109,6 +115,13 @@ final class ClipboardMonitor {
         let sourceApplication = NSWorkspace.shared.frontmostApplication
         let sourceName = sourceApplication?.localizedName ?? "未知应用"
         let sourceBundleID = sourceApplication?.bundleIdentifier ?? ""
+        var sourceIcon = sourceIcons.object(forKey: sourceBundleID as NSString)
+        if sourceIcon == nil, !sourceBundleID.isEmpty {
+            sourceIcon = SourceAppIcon.snapshot(from: sourceApplication?.icon)
+            if let sourceIcon {
+                sourceIcons.setObject(sourceIcon, forKey: sourceBundleID as NSString, cost: sourceIcon.bytesPerRow * sourceIcon.height)
+            }
+        }
         let capturedAt = Date()
 
         if let urls = pasteboard.readObjects(
@@ -123,7 +136,7 @@ final class ClipboardMonitor {
                 filePaths: paths,
                 sourceAppName: sourceName,
                 sourceBundleID: sourceBundleID,
-                capturedAt: capturedAt
+                capturedAt: capturedAt, sourceIcon: sourceIcon
             )
         }
 
@@ -135,7 +148,7 @@ final class ClipboardMonitor {
                 filePaths: [],
                 sourceAppName: sourceName,
                 sourceBundleID: sourceBundleID,
-                capturedAt: capturedAt
+                capturedAt: capturedAt, sourceIcon: sourceIcon
             )
         }
 
@@ -147,7 +160,7 @@ final class ClipboardMonitor {
                 filePaths: [],
                 sourceAppName: sourceName,
                 sourceBundleID: sourceBundleID,
-                capturedAt: capturedAt
+                capturedAt: capturedAt, sourceIcon: sourceIcon
             )
         }
 
@@ -159,7 +172,7 @@ final class ClipboardMonitor {
                 filePaths: [],
                 sourceAppName: sourceName,
                 sourceBundleID: sourceBundleID,
-                capturedAt: capturedAt
+                capturedAt: capturedAt, sourceIcon: sourceIcon
             )
         }
 

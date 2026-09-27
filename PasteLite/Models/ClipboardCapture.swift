@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 struct ClipboardCapture: Sendable {
     let type: ClipboardContentType
@@ -8,4 +9,5 @@ struct ClipboardCapture: Sendable {
     let sourceAppName: String
     let sourceBundleID: String
     let capturedAt: Date
+    var sourceIcon: CGImage? = nil
 }
