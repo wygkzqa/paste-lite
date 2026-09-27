@@ -18,6 +18,16 @@ enum SourceAppIcon {
         return snapshot(from: NSWorkspace.shared.icon(forFile: url.path))
     }
 
+    static func image(from data: Data) -> CGImage? {
+        guard data.count <= 4 * 1_024 * 1_024,
+              let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: 64
+        ] as CFDictionary)
+    }
+
     static func pngData(from image: CGImage) -> Data? {
         guard let context = CGContext(
             data: nil, width: 64, height: 64, bitsPerComponent: 8, bytesPerRow: 0,

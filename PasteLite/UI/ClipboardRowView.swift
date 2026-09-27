@@ -9,6 +9,7 @@ struct ClipboardRowView: View {
     let assetURL: URL?
     let isSelected: Bool
     var isCard = false
+    var sourceIconRevision = 0
     var loadSourceIcon: () async -> URL? = { nil }
     @State private var isHovered = false
     @State private var previewImage: CGImage?
@@ -56,7 +57,7 @@ struct ClipboardRowView: View {
                 filesStillExist = exists
             }
         }
-        .task(id: "\(item.sourceBundleID)-\(item.lastCopiedAt.timeIntervalSince1970)") {
+        .task(id: "\(item.sourceBundleID)-\(item.lastCopiedAt.timeIntervalSince1970)-\(sourceIconRevision)") {
             sourceIcon = nil
             guard let url = await loadSourceIcon(), !Task.isCancelled else { return }
             let image = await ClipboardImageLoader.load(from: url, maxPixelSize: 64)

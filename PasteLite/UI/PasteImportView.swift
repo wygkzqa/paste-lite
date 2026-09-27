@@ -31,7 +31,10 @@ final class PasteImportViewModel: ObservableObject {
     }
 
     var importCount: Int { preview?.selectedEntries(expand: expandCapacity).count ?? 0 }
-    var canImport: Bool { importCount > 0 || preview?.hasGroupChanges == true || preview?.titleUpdates.isEmpty == false }
+    var canImport: Bool {
+        importCount > 0 || preview?.hasGroupChanges == true || preview?.titleUpdates.isEmpty == false
+            || preview?.sourceIconUpdates.isEmpty == false
+    }
     var skipped: [String: Int] { result?.skipped ?? batch?.skipped ?? [:] }
 
     func chooseDirectory() {
@@ -231,7 +234,7 @@ struct PasteImportView: View {
                         Button(L10n.tr("完成")) { viewModel.cancelScan(); viewModel.onClose?() }
                             .buttonStyle(.borderedProminent).tint(.indigo)
                     } else {
-                        Button(viewModel.importCount == 0 ? L10n.tr("导入分组与标题") : L10n.tr("导入 %d 条", viewModel.importCount)) { viewModel.importRecords() }
+                        Button(viewModel.importCount == 0 ? L10n.tr("导入补充信息") : L10n.tr("导入 %d 条", viewModel.importCount)) { viewModel.importRecords() }
                             .buttonStyle(.borderedProminent).tint(.indigo)
                             .disabled(viewModel.isSaving || !viewModel.canImport)
                     }
@@ -283,6 +286,9 @@ struct PasteImportView: View {
             LabeledContent(L10n.tr("补充已有分组的标识色"), value: L10n.tr("%d 个", preview.groupColorUpdates.count))
             LabeledContent(L10n.tr("补充已有记录的分组"), value: L10n.tr("%d 条", preview.groupUpdates.count))
             LabeledContent(L10n.tr("补充已有记录的标题"), value: L10n.tr("%d 条", preview.titleUpdates.count))
+            if !preview.sourceIconUpdates.isEmpty {
+                LabeledContent(L10n.tr("补充已有来源的图标"), value: L10n.tr("%d 个图标", preview.sourceIconUpdates.count))
+            }
             let counts = Dictionary(grouping: preview.entries, by: { $0.item.type })
             Text(ClipboardContentType.allCases.map { "\($0.title) \(counts[$0]?.count ?? 0)" }.joined(separator: " · "))
                 .font(.caption).foregroundStyle(.secondary)
@@ -302,7 +308,7 @@ struct PasteImportView: View {
                      : L10n.tr("只导入剩余条数内的最近 %d 条，另有 %d 条不导入。", viewModel.importCount, preview.entries.count - viewModel.importCount))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Text(L10n.tr("保留标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。"))
+            Text(L10n.tr("保留来源应用图标、标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if !preview.hasChanges {
                 Text(L10n.tr("没有可新增的记录，可以关闭此窗口。"))
@@ -313,7 +319,7 @@ struct PasteImportView: View {
 
     private func resultContent(_ result: PasteImportResult) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            let partial = !result.skipped.isEmpty || result.capacitySkipped > 0
+            let partial = !result.skipped.isEmpty || result.capacitySkipped > 0 || result.sourceIconsFailed > 0
             Label(partial ? L10n.tr("部分完成") : L10n.tr("导入完成"), systemImage: partial ? "info.circle.fill" : "checkmark.circle.fill")
                 .font(.title2.weight(.semibold)).foregroundStyle(.indigo)
             LabeledContent(L10n.tr("新增记录"), value: L10n.tr("%d 条", result.added))
@@ -323,6 +329,13 @@ struct PasteImportView: View {
             LabeledContent(L10n.tr("补充已有分组的标识色"), value: L10n.tr("%d 个", result.groupColorsUpdated))
             LabeledContent(L10n.tr("补充已有记录的分组"), value: L10n.tr("%d 条", result.recordsUpdated))
             LabeledContent(L10n.tr("补充已有记录的标题"), value: L10n.tr("%d 条", result.titlesUpdated))
+            if result.sourceIconsSaved > 0 {
+                LabeledContent(L10n.tr("保存来源应用图标"), value: L10n.tr("%d 个图标", result.sourceIconsSaved))
+            }
+            if result.sourceIconsFailed > 0 {
+                Text(L10n.tr("%d 个来源应用图标未能保存，历史记录已导入，可重新扫描补齐图标。", result.sourceIconsFailed))
+                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             Text(L10n.tr("记录按原始时间排列，Paste 原始数据保持不变。"))
                 .font(.callout).foregroundStyle(.secondary)
         }

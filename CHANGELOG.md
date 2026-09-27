@@ -16,7 +16,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Features
 
-- Save source application icons locally and display them beside the source name in both list and card layouts. Older history can fill missing icons from installed applications; sources without an available icon show only their name, with no placeholder.
+- Save source application icons locally and display them beside the source name in both list and card layouts. Paste imports save available source icons directly, including icon-only reimports without overwriting saved icons. Older history can also fill missing icons from installed applications; sources without an available icon show only their name, with no placeholder.
 - Import Paste Pinboard colors, including pink and gray. Reimport fills missing colors on matching local groups while preserving existing colors.
 
 - Make the color choices in the group context menu more compact.

@@ -202,7 +202,7 @@
 "预览" = "Preview";
 "空格键" = "Space";
 "%d 个" = "%d groups";
-"导入分组与标题" = "Import groups and titles";
+"导入补充信息" = "Import additional information";
 "新增分组" = "New groups";
 "补充已有记录的分组" = "Existing records gaining groups";
 "正在处理数据，请稍后再试。" = "Data is being updated. Please try again shortly.";
@@ -224,7 +224,7 @@
 "记录已不存在，请关闭后重试。" = "This entry no longer exists. Close this dialog and try again.";
 "补充已有记录的标题" = "Titles added to existing entries";
 "搜索标题、文本、链接、文件或来源应用" = "Search titles, text, links, files, or source apps";
-"保留标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。" = "Titles, Pinboard names, colors, and memberships are preserved. Same-name groups merge and missing colors are filled without replacing existing colors. Duplicates gain memberships and missing titles; existing titles are kept. Existing history is not deleted. Group ordering, sharing, and rich-text styles are not preserved. Grouped records follow existing cleanup rules.";
+"保留来源应用图标、标题、Pinboard 名称、标识色及记录归属，同名分组合并并补充缺失颜色，保留已有颜色。重复记录补充分组及缺失标题，保留已有标题。不会删除已有历史；不保留分组排序、共享关系及富文本样式。分组记录仍按现有规则清理。" = "Available source application icons, titles, Pinboard names, colors, and memberships are preserved. Existing application icons are kept. Same-name groups merge and missing colors are filled without replacing existing colors. Duplicates gain memberships and missing titles; existing titles are kept. Existing history is not deleted. Group ordering, sharing, and rich-text styles are not preserved. Grouped records follow existing cleanup rules.";
 "切换为卡片" = "Switch to Cards";
 "切换为列表" = "Switch to List";
 "编辑…" = "Edit…";
@@ -321,3 +321,7 @@
 "灰色" = "Gray";
 
 "补充已有分组的标识色" = "Colors for existing groups";
+"补充已有来源的图标" = "Icons for existing sources";
+"%d 个图标" = "%d";
+"保存来源应用图标" = "Source application icons saved";
+"%d 个来源应用图标未能保存，历史记录已导入，可重新扫描补齐图标。" = "%d source application icons could not be saved. History was imported; scan again to add the missing icons.";

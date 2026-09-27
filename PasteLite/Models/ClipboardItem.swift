@@ -89,7 +89,7 @@ struct ClipboardItem: Codable, Identifiable, Equatable, Sendable {
 
     var displaySourceAppName: String {
         if sourceAppName == "未知应用", sourceBundleID.isEmpty { return L10n.tr("未知应用") }
-        if sourceAppName == "Paste（导入）", sourceBundleID == "com.wiheads.paste" { return L10n.tr("Paste（导入）") }
+        if sourceAppName == "Paste（导入）", sourceBundleID.isEmpty || sourceBundleID == "com.wiheads.paste" { return L10n.tr("Paste（导入）") }
         return sourceAppName
     }
 

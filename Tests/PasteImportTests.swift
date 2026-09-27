@@ -1,6 +1,7 @@
 import AppKit
 import CryptoKit
 import Foundation
+import ImageIO
 import SQLite3
 import zlib
 
@@ -37,11 +38,11 @@ final class PasteImportFixture {
         guard sqlite3_open(directory.appendingPathComponent("db.sqlite").path, &database) == SQLITE_OK else { fatalError("fixture database") }
         execute("PRAGMA journal_mode=WAL")
         execute("CREATE TABLE Z_METADATA (Z_PLIST BLOB)")
-        execute("CREATE TABLE ZAPPLICATIONENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZBUNDLEIDENTIFIER TEXT)")
+        execute("CREATE TABLE ZAPPLICATIONENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZBUNDLEIDENTIFIER TEXT, ZRAWICON BLOB)")
         execute("CREATE TABLE ZITEMENTITY (Z_PK INTEGER PRIMARY KEY, ZCREATEDAT REAL, ZTIMESTAMP REAL, ZSOURCEAPPLICATION INTEGER, ZDATA INTEGER, ZLIST INTEGER, ZTITLE TEXT)")
         execute("CREATE TABLE ZLISTENTITY (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZRAWTYPE INTEGER, ZRAWATTRIBUTES BLOB)")
         execute("CREATE TABLE ZITEMDATAENTITY (Z_PK INTEGER PRIMARY KEY, ZRAWPASTEBOARDITEMS BLOB)")
-        execute("INSERT INTO ZAPPLICATIONENTITY VALUES (1, 'Fixture Editor', 'example.fixture')")
+        execute("INSERT INTO ZAPPLICATIONENTITY (Z_PK, ZNAME, ZBUNDLEIDENTIFIER) VALUES (1, 'Fixture Editor', 'example.fixture')")
         let hashes = [
             "ApplicationEntity": "81a4089f6fcd2002a422c9441d7b769abd405f1275aa09e12bd5fcd38987225d",
             "ItemDataEntity": "8102715aa1cbaae37a8a0049240a67996f9d6b314b5cd34aafd71a167cdb8e57",
@@ -58,7 +59,7 @@ final class PasteImportFixture {
 
     deinit { sqlite3_close(database) }
 
-    func add(_ items: [[String: Data]], external: Bool = false, missing: Bool = false, noTimestamp: Bool = false, groupID: Int64? = nil, title: String? = nil) throws {
+    func add(_ items: [[String: Data]], external: Bool = false, missing: Bool = false, noTimestamp: Bool = false, groupID: Int64? = nil, title: String? = nil, sourceID: Int? = 1) throws {
         let dictionaries: [[String: Any]] = items.map { ["types": Array($0.keys), "dataByType": $0.mapValues { $0.base64EncodedString() }] }
         let json = try JSONSerialization.data(withJSONObject: dictionaries)
         let compressed = compress(json)
@@ -68,17 +69,26 @@ final class PasteImportFixture {
             if !missing { try compressed.write(to: directory.appendingPathComponent(".db_SUPPORT/_EXTERNAL_DATA/" + name)) }
             data = Data([2]) + Data(name.utf8) + Data([0])
         } else { data = Data([1]) + compressed }
-        addEncoded(data, noTimestamp: noTimestamp, groupID: groupID, title: title)
+        addEncoded(data, noTimestamp: noTimestamp, groupID: groupID, title: title, sourceID: sourceID)
     }
 
-    func addEncoded(_ data: Data, noTimestamp: Bool = false, groupID: Int64? = nil, title: String? = nil) {
+    func addEncoded(_ data: Data, noTimestamp: Bool = false, groupID: Int64? = nil, title: String? = nil, sourceID: Int? = 1) {
         nextID += 1
         insertBlob("INSERT INTO ZITEMDATAENTITY VALUES (\(nextID), ?)", data: data)
         let timestamp = noTimestamp ? "NULL" : String(created.timeIntervalSinceReferenceDate + Double(nextID))
-        execute("INSERT INTO ZITEMENTITY (Z_PK, ZCREATEDAT, ZTIMESTAMP, ZSOURCEAPPLICATION, ZDATA, ZLIST) VALUES (\(nextID), \(created.timeIntervalSinceReferenceDate), \(timestamp), 1, \(nextID), \(groupID.map(String.init) ?? "NULL"))")
+        execute("INSERT INTO ZITEMENTITY (Z_PK, ZCREATEDAT, ZTIMESTAMP, ZSOURCEAPPLICATION, ZDATA, ZLIST) VALUES (\(nextID), \(created.timeIntervalSinceReferenceDate), \(timestamp), \(sourceID.map(String.init) ?? "NULL"), \(nextID), \(groupID.map(String.init) ?? "NULL"))")
         if let title {
             insertBlob("UPDATE ZITEMENTITY SET ZTITLE = CAST(? AS TEXT) WHERE Z_PK = \(nextID)", data: Data(title.utf8))
         }
+    }
+
+    func addApplication(id: Int, bundleID: String, icon: Data) {
+        insertBlob("INSERT INTO ZAPPLICATIONENTITY (Z_PK, ZNAME, ZBUNDLEIDENTIFIER) VALUES (\(id), 'Fixture App', CAST(? AS TEXT))", data: Data(bundleID.utf8))
+        setIcon(icon, applicationID: id)
+    }
+
+    func setIcon(_ data: Data, applicationID: Int = 1) {
+        insertBlob("UPDATE ZAPPLICATIONENTITY SET ZRAWICON = ? WHERE Z_PK = \(applicationID)", data: data)
     }
 
     func addGroup(id: Int64, name: String, type: Int = 2, attributes: Data? = nil) {
@@ -277,6 +287,7 @@ struct PasteImportTests {
 
         try await testGroups(root: root, png: png)
         try await testGroupColors(root: root, png: png)
+        try await testSourceIcons(root: root, png: png)
         try await testTitles(root: root, png: png)
         try await testTextURLs(root: root)
 
@@ -644,6 +655,136 @@ struct PasteImportTests {
         let retry = try await failedRepository.importBatch(batch, preview: afterFailure, expand: true)
         precondition(retry.groupColorsUpdated == 1 && retry.added == 1)
         print("PASS: failed import rolls back color backfills together with new groups and history; retry succeeds")
+    }
+
+    private static func testSourceIcons(root: URL, png: Data) async throws {
+        let fixture = try PasteImportFixture(directory: root.appendingPathComponent("icons-source"))
+        fixture.setIcon(png)
+        fixture.addApplication(id: 2, bundleID: "example.second", icon: NSImage(data: png)!.tiffRepresentation!)
+        fixture.addApplication(id: 3, bundleID: "example.broken", icon: Data([0, 1, 2]))
+        fixture.addApplication(id: 4, bundleID: "example.oversized", icon: Data(repeating: 0, count: 4 * 1_024 * 1_024 + 1))
+        fixture.addApplication(id: 5, bundleID: "", icon: png)
+        fixture.addApplication(id: 6, bundleID: "com.wiheads.paste", icon: png)
+        for (index, source) in [1, 1, 2, 3, 4, 5, nil].enumerated() {
+            try fixture.add([["public.utf8-plain-text": Data("Icon record \(index)".utf8)]], sourceID: source)
+        }
+        let sourceBefore = try hashes(in: fixture.directory)
+        let batch = try await Task.detached { try PasteImportService.scan(directory: fixture.directory) { _, _ in } }.value
+        precondition(batch.entries.count == 7 && batch.skipped.isEmpty)
+        precondition(batch.sourceIconBundleIDs == ["example.fixture", "example.second"])
+        precondition(batch.entries.filter { $0.item.sourceBundleID.isEmpty }.count == 2, "Missing sources must not borrow Paste's bundle ID or icon")
+        let sourceAfter = try hashes(in: fixture.directory)
+        precondition(sourceAfter == sourceBefore)
+        let manager = ImportFileManager(root: root.appendingPathComponent("icons-destination"))
+        let repository = ClipboardRepository(fileManager: manager, installedSourceIcon: { _ in
+            preconditionFailure("Import must use Paste's staged icon without querying installed apps")
+        })
+        try await waitUntil { repository.isReady }
+        let iconDirectory = manager.root.appendingPathComponent("PasteLite/SourceAppIcons")
+        precondition(!FileManager.default.fileExists(atPath: iconDirectory.path))
+        let preview = try await repository.previewImport(batch)
+        precondition(!FileManager.default.fileExists(atPath: iconDirectory.path), "Preview must not persist icons")
+        let result = try await repository.importBatch(batch, preview: preview, expand: true)
+        precondition(result.sourceIconsSaved == 2 && result.sourceIconsFailed == 0 && result.added == 7)
+        precondition(repository.sourceIconRevision == 1)
+        let savedFiles = try FileManager.default.contentsOfDirectory(atPath: iconDirectory.path)
+        precondition(savedFiles.count == 2)
+        let iconURL = iconDirectory.appendingPathComponent(SourceAppIcon.filename(for: "example.fixture"))
+        let savedData = try Data(contentsOf: iconURL)
+        let savedImage = CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithData(savedData as CFData, nil)!, 0, nil)!
+        precondition(savedImage.width == 64 && savedImage.height == 64)
+        let repeatPreview = try await repository.previewImport(batch)
+        precondition(!repeatPreview.hasChanges)
+        let repeatResult = try await repository.importBatch(batch, preview: repeatPreview, expand: true)
+        precondition(repeatResult.sourceIconsSaved == 0 && repository.sourceIconRevision == 1)
+        let repeatedData = try Data(contentsOf: iconURL)
+        precondition(repeatedData == savedData)
+        let differentIcon = NSBitmapImageRep(data: png)!
+        for y in 0..<differentIcon.pixelsHigh { for x in 0..<differentIcon.pixelsWide { differentIcon.setColor(.red, atX: x, y: y) } }
+        fixture.setIcon(differentIcon.representation(using: .png, properties: [:])!)
+        let changedBatch = try await Task.detached { try PasteImportService.scan(directory: fixture.directory) { _, _ in } }.value
+        let changedResult = try await repository.importBatch(changedBatch, preview: repository.previewImport(changedBatch), expand: true)
+        let preservedData = try Data(contentsOf: iconURL)
+        precondition(changedResult.sourceIconsSaved == 0 && preservedData == savedData, "An imported icon must not replace a saved local icon")
+        let reopened = ClipboardRepository(fileManager: manager, installedSourceIcon: { _ in nil })
+        try await waitUntil { reopened.isReady }
+        let reopenedIcon = await reopened.sourceIconURL(for: "example.fixture")
+        precondition(reopenedIcon == iconURL)
+        print("PASS: Paste PNG/TIFF icons persist during import without installed apps; malformed/oversized/unknown icons do not drop history; shared files survive restart")
+
+        let oldFixture = try PasteImportFixture(directory: root.appendingPathComponent("icons-backfill-source"))
+        try oldFixture.add([["public.utf8-plain-text": Data("Previously imported".utf8)]])
+        let oldBatch = try await Task.detached { try PasteImportService.scan(directory: oldFixture.directory) { _, _ in } }.value
+        let oldManager = ImportFileManager(root: root.appendingPathComponent("icons-backfill"))
+        let oldRepository = ClipboardRepository(fileManager: oldManager, installedSourceIcon: { _ in nil })
+        try await waitUntil { oldRepository.isReady }
+        _ = try await oldRepository.importBatch(oldBatch, preview: oldRepository.previewImport(oldBatch), expand: true)
+        let previousItems = oldRepository.items
+        let missingIcon = await oldRepository.sourceIconURL(for: "example.fixture")
+        precondition(missingIcon == nil)
+        oldFixture.setIcon(png)
+        let viewModel = PasteImportViewModel(repository: oldRepository, isPasteRunning: { false })
+        viewModel.selectedDirectory = oldFixture.directory
+        viewModel.scan()
+        try await waitUntil { !viewModel.isScanning }
+        precondition(viewModel.canImport && viewModel.importCount == 0)
+        precondition(viewModel.preview?.sourceIconUpdates == ["example.fixture"])
+        viewModel.importRecords()
+        try await waitUntil { !viewModel.isSaving }
+        precondition(viewModel.result?.sourceIconsSaved == 1 && viewModel.result?.added == 0)
+        precondition(oldRepository.items == previousItems && oldRepository.sourceIconRevision == 1)
+        let backfilled = await oldRepository.sourceIconURL(for: "example.fixture")
+        precondition(backfilled != nil)
+        print("PASS: icon-only reimport stays actionable, recovers negative cache, refreshes visible rows and preserves record metadata")
+
+        let collisionManager = ImportFileManager(root: root.appendingPathComponent("icons-other-source"))
+        let collisionRepository = ClipboardRepository(fileManager: collisionManager, installedSourceIcon: { _ in nil })
+        try await waitUntil { collisionRepository.isReady }
+        collisionRepository.record(ClipboardCapture(type: .text, textContent: "Previously imported", imageData: nil, filePaths: [], sourceAppName: "Other", sourceBundleID: "example.other", capturedAt: Date()))
+        try await waitUntil { collisionRepository.items.count == 1 }
+        let collisionBatch = try await Task.detached { try PasteImportService.scan(directory: oldFixture.directory) { _, _ in } }.value
+        let collisionPreview = try await collisionRepository.previewImport(collisionBatch)
+        precondition(!collisionPreview.hasChanges && collisionPreview.sourceIconUpdates.isEmpty)
+        let collisionResult = try await collisionRepository.importBatch(collisionBatch, preview: collisionPreview, expand: true)
+        precondition(collisionResult.sourceIconsSaved == 0 && collisionRepository.items[0].sourceBundleID == "example.other")
+        precondition(!FileManager.default.fileExists(atPath: collisionManager.root.appendingPathComponent("PasteLite/SourceAppIcons").path))
+        print("PASS: content deduplication preserves the local source and never attaches another app's imported icon")
+
+        let failureFixture = try PasteImportFixture(directory: root.appendingPathComponent("icons-failure-source"))
+        failureFixture.setIcon(png)
+        try failureFixture.add([["public.png": png]])
+        let failureBatch = try await Task.detached { try PasteImportService.scan(directory: failureFixture.directory) { _, _ in } }.value
+        let failureManager = ImportFileManager(root: root.appendingPathComponent("icons-failure"))
+        let failed = ClipboardRepository(fileManager: failureManager, installedSourceIcon: { _ in nil })
+        try await waitUntil { failed.isReady }
+        failureManager.failSecondCopy = true
+        let failurePreview = try await failed.previewImport(failureBatch)
+        do {
+            _ = try await failed.importBatch(failureBatch, preview: failurePreview, expand: true)
+            preconditionFailure("Content copy failure must roll back import")
+        } catch PasteImportError.storage { }
+        let blockedDirectory = failureManager.root.appendingPathComponent("PasteLite/SourceAppIcons")
+        precondition(!FileManager.default.fileExists(atPath: blockedDirectory.path) && failed.items.isEmpty)
+        failureManager.failSecondCopy = false
+        try Data([0]).write(to: blockedDirectory)
+        let partial = try await failed.importBatch(failureBatch, preview: failurePreview, expand: true)
+        precondition(partial.added == 1 && partial.sourceIconsSaved == 0 && partial.sourceIconsFailed == 1)
+        try FileManager.default.removeItem(at: blockedDirectory)
+        let retryPreview = try await failed.previewImport(failureBatch)
+        precondition(retryPreview.hasChanges && retryPreview.sourceIconUpdates == ["example.fixture"])
+        let retry = try await failed.importBatch(failureBatch, preview: retryPreview, expand: true)
+        precondition(retry.added == 0 && retry.sourceIconsSaved == 1 && retry.sourceIconsFailed == 0)
+        print("PASS: failed history import leaves no icons; icon write failure reports partial success and supports icon-only retry")
+
+        let limitedManager = ImportFileManager(root: root.appendingPathComponent("icons-capacity"))
+        let limited = ClipboardRepository(fileManager: limitedManager, installedSourceIcon: { _ in nil })
+        try await waitUntil { limited.isReady }
+        try await limited.updateLimits(ClipboardLimits(itemCount: 1))
+        let limitedPreview = try await limited.previewImport(batch)
+        let limitedResult = try await limited.importBatch(batch, preview: limitedPreview, expand: false)
+        precondition(limitedResult.added == 1 && limitedResult.sourceIconsSaved == 0)
+        precondition(!FileManager.default.fileExists(atPath: limitedManager.root.appendingPathComponent("PasteLite/SourceAppIcons").path))
+        print("PASS: capacity-skipped records do not leave orphan source icons")
     }
 
     private static func waitUntil(_ condition: () -> Bool) async throws {

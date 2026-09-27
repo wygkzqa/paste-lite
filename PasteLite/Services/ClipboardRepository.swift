@@ -879,7 +879,7 @@ private final class ClipboardStorage {
             do {
                 let context = makeContext()
                 var descriptor = FetchDescriptor<ClipboardRecord>()
-                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle]
+                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle, \.sourceBundleID]
                 let records = try context.fetch(descriptor)
                 let groups = try context.fetch(FetchDescriptor<ClipboardGroupRecord>())
                 complete(.success(try importPreview(batch, records: records, groups: groups)), using: completion)
@@ -898,6 +898,10 @@ private final class ClipboardStorage {
             existingBytes: records.reduce(0) { $0 + $1.byteCount }, limits: limits,
             duplicates: batch.duplicates + batch.entries.count - entries.count
         )
+        let existingSources = Set(records.map(\.sourceBundleID))
+        preview.sourceIconUpdates = batch.sourceIconBundleIDs.intersection(existingSources).filter {
+            storedSourceIconURL(filename: SourceAppIcon.filename(for: $0)) == nil
+        }
         let importedTitles = Dictionary(uniqueKeysWithValues: batch.entries.compactMap { entry in
             entry.item.customTitle.map { (entry.item.contentHash, $0) }
         })
@@ -958,7 +962,7 @@ private final class ClipboardStorage {
             var changedLimits = false
             do {
                 var descriptor = FetchDescriptor<ClipboardRecord>()
-                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle]
+                descriptor.propertiesToFetch = [\.contentHash, \.byteCount, \.groupIDsText, \.customTitle, \.sourceBundleID]
                 let records = try context.fetch(descriptor)
                 let groups = try context.fetch(FetchDescriptor<ClipboardGroupRecord>())
                 let current = try importPreview(batch, records: records, groups: groups)
@@ -967,7 +971,8 @@ private final class ClipboardStorage {
                       current.limits == preview.limits,
                       current.existingGroups == preview.existingGroups,
                       current.existingMemberships == preview.existingMemberships,
-                      current.existingTitles == preview.existingTitles else {
+                      current.existingTitles == preview.existingTitles,
+                      current.sourceIconUpdates == preview.sourceIconUpdates else {
                     throw PasteImportError.stalePreview(current)
                 }
                 let selected = current.selectedEntries(expand: expand)
@@ -1018,11 +1023,26 @@ private final class ClipboardStorage {
                 }
                 try context.save()
                 cachedQuery = nil
+                var sourceIconsSaved = 0, sourceIconsFailed = 0
+                let importedSources = Set(selected.map { $0.item.sourceBundleID }).union(current.sourceIconUpdates)
+                for bundleID in batch.sourceIconBundleIDs.intersection(importedSources) {
+                    let filename = SourceAppIcon.filename(for: bundleID)
+                    guard storedSourceIconURL(filename: filename) == nil else { continue }
+                    let staged = batch.directory.appendingPathComponent("SourceAppIcons").appendingPathComponent(filename)
+                    if let data = try? Data(contentsOf: staged), let image = SourceAppIcon.image(from: data),
+                       resolveSourceIcon(for: bundleID, image: image) != nil {
+                        sourceIconsSaved += 1
+                    } else {
+                        // History is already committed. Report optional icon failures separately.
+                        sourceIconsFailed += 1
+                    }
+                }
                 let result = PasteImportResult(
                     added: selected.count, duplicates: current.duplicates, skipped: batch.skipped,
                     capacitySkipped: current.entries.count - selected.count,
                     groupsAdded: current.groupsToCreate.count, recordsUpdated: current.groupUpdates.count,
-                    titlesUpdated: current.titleUpdates.count, groupColorsUpdated: current.groupColorUpdates.count
+                    titlesUpdated: current.titleUpdates.count, groupColorsUpdated: current.groupColorUpdates.count,
+                    sourceIconsSaved: sourceIconsSaved, sourceIconsFailed: sourceIconsFailed
                 )
                 complete(.success((result, limits)), using: completion)
             } catch {
@@ -1086,13 +1106,7 @@ private final class ClipboardStorage {
         var descriptor = FetchDescriptor<ClipboardRecord>(predicate: #Predicate { $0.sourceBundleID == bundleID })
         descriptor.fetchLimit = 1
         guard (try? makeContext().fetchCount(descriptor)) ?? 0 > 0 else { return nil }
-        if fileManager.fileExists(atPath: url.path),
-           let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-           CGImageSourceCreateImageAtIndex(source, 0, nil) != nil {
-            savedSourceIcons.insert(filename)
-            missingSourceIcons.remove(filename)
-            return url
-        }
+        if let stored = storedSourceIconURL(filename: filename) { return stored }
         guard let image = image ?? installedSourceIcon(bundleID), let data = SourceAppIcon.pngData(from: image) else {
             missingSourceIcons.insert(filename)
             return nil
@@ -1107,6 +1121,17 @@ private final class ClipboardStorage {
             missingSourceIcons.insert(filename)
             return nil
         }
+    }
+
+    private func storedSourceIconURL(filename: String) -> URL? {
+        let url = sourceIconsDirectory.appendingPathComponent(filename)
+        if savedSourceIcons.contains(filename) { return url }
+        guard fileManager.fileExists(atPath: url.path),
+              let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              CGImageSourceCreateImageAtIndex(source, 0, nil) != nil else { return nil }
+        savedSourceIcons.insert(filename)
+        missingSourceIcons.remove(filename)
+        return url
     }
 
     private func makeContext() -> ModelContext {
@@ -1248,6 +1273,7 @@ final class ClipboardRepository: ObservableObject {
     @Published private(set) var sourceApps: [String] = []
     @Published private(set) var groups: [ClipboardGroup] = []
     @Published private(set) var revision = 0
+    @Published private(set) var sourceIconRevision = 0
     @Published private(set) var limits = ClipboardLimits.default
     @Published private(set) var isReady = false
     @Published private(set) var isSavingLimits = false
@@ -1516,6 +1542,7 @@ final class ClipboardRepository: ObservableObject {
             storage.importBatch(batch, preview: preview, expand: expand) { continuation.resume(with: $0) }
         }
         self.limits = limits
+        if result.sourceIconsSaved > 0 { sourceIconRevision += 1 }
         await reload()
         return result
     }
