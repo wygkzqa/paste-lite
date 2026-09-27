@@ -102,15 +102,11 @@ struct ClipboardRowView: View {
 
     private var metadata: some View {
         HStack(spacing: 4) {
-            Group {
-                if let sourceIcon {
-                    Image(decorative: sourceIcon, scale: 1).resizable().scaledToFit()
-                } else {
-                    Image(systemName: "app").resizable().scaledToFit()
-                }
+            if let sourceIcon {
+                Image(decorative: sourceIcon, scale: 1).resizable().scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .accessibilityHidden(true)
             }
-            .frame(width: 14, height: 14)
-            .accessibilityHidden(true)
             Text(item.displaySourceAppName)
                 .truncationMode(.tail)
                 .help(item.displaySourceAppName)
