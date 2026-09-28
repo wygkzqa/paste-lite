@@ -12,6 +12,7 @@ Build 16.
 
 ### Improvements
 
+- Scroll to the beginning and select the first matching entry whenever the hidden panel opens, in both List and Cards. Preserve search and filters; bringing an already visible panel to the front keeps the current state.
 - Navigate cards with Left / Right and extend a selection with Shift+Left / Right. The footer shows the arrows for the current layout; horizontal arrows retain normal text editing when the search field has focus.
 
 ### Fixed
