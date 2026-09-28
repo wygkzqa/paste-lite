@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.2.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.1) — 2026-09-28
+
+Build 15.
+
 ### Features
 
 - Use Cards as the default clipboard layout while preserving saved layout preferences. Cards without a custom title show their content type as the heading.
