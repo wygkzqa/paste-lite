@@ -18,7 +18,7 @@ struct ClipboardRowView: View {
     @State private var sourceIcon: CGImage?
 
     private var backgroundColor: Color {
-        if isSelected { return .blue.opacity(colorScheme == .dark ? 0.18 : 0.10) }
+        if isSelected { return .blue.opacity(colorScheme == .dark ? 0.12 : 0.06) }
         if reduceTransparency { return .primary.opacity(0.025) }
         return .white.opacity(isHovered ? 0.09 : (isCard ? 0.04 : 0))
     }
