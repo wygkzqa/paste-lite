@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ClipboardRowView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
     let item: ClipboardItem
     let timeLabel: String?
     let previewURL: URL?
@@ -16,10 +17,8 @@ struct ClipboardRowView: View {
     @State private var filesStillExist: Bool?
     @State private var sourceIcon: CGImage?
 
-    private let selectionBlue = Color(red: 90 / 255.0, green: 143 / 255.0, blue: 237 / 255.0) // #5A8FED
-    private var secondaryForeground: Color { isSelected ? .white.opacity(0.88) : .secondary }
     private var backgroundColor: Color {
-        if isSelected { return selectionBlue }
+        if isSelected { return .blue.opacity(colorScheme == .dark ? 0.18 : 0.10) }
         if reduceTransparency { return .primary.opacity(0.025) }
         return .white.opacity(isHovered ? 0.09 : (isCard ? 0.04 : 0))
     }
@@ -29,14 +28,14 @@ struct ClipboardRowView: View {
             if isCard { cardContent }
             else { rowContent }
         }
-        .foregroundStyle(isSelected ? Color.white : Color.primary)
+        .foregroundStyle(Color.primary)
         .background(
             RoundedRectangle(cornerRadius: isCard ? 13 : 12)
                 .fill(backgroundColor)
         )
         .overlay {
             RoundedRectangle(cornerRadius: isCard ? 13 : 12)
-                .strokeBorder(isSelected ? selectionBlue : Color.white.opacity(isCard ? 0.2 : 0), lineWidth: 0.5)
+                .strokeBorder(isSelected ? Color.blue : Color.white.opacity(isCard ? 0.2 : 0), lineWidth: isSelected ? 1.5 : 0.5)
                 .allowsHitTesting(false)
         }
         .contentShape(RoundedRectangle(cornerRadius: 12))
@@ -92,12 +91,12 @@ struct ClipboardRowView: View {
                 preview.frame(height: 70)
             } else {
                 Image(systemName: item.type.systemImage)
-                    .font(.system(size: 12)).foregroundStyle(secondaryForeground)
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
             }
             Text(cardTitle).font(.system(size: 12, weight: .medium)).lineLimit(1)
                 .help(cardTitle)
             if !item.hasImage {
-                Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(secondaryForeground).lineLimit(3)
+                Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(3)
             }
             Spacer(minLength: 0)
             metadata
@@ -118,13 +117,13 @@ struct ClipboardRowView: View {
                 .help(item.displaySourceAppName)
             if item.type == .file, filesStillExist == false {
                 Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(isSelected ? Color.white : Color.orange)
+                    .foregroundStyle(.orange)
                     .help(L10n.tr("文件已不存在"))
                     .fixedSize()
             }
             if let timeLabel { Text("·").fixedSize(); Text(timeLabel).fixedSize() }
         }
-        .font(.system(size: 11)).foregroundStyle(secondaryForeground).lineLimit(1)
+        .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
     }
 
     @ViewBuilder
@@ -139,7 +138,7 @@ struct ClipboardRowView: View {
             RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(0.045))
                 .overlay {
                     Image(systemName: item.type.systemImage).font(.system(size: 15))
-                        .foregroundStyle(secondaryForeground)
+                        .foregroundStyle(.secondary)
                 }
         }
     }

@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Improvements
+
+- Lighten selection in List and Cards with a highlighted blue border and a pale blue background, preserving standard text colors in light and dark appearances.
+
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
 
 Build 16.
