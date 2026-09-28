@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Build and release
+
+- Run only regression tests for pull requests and main-branch commits; build and upload the Universal DMG in the Release workflow, with draft preparation waiting for tests and packaging to pass.
+
 ## [1.2.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.1) — 2026-09-28
 
 Build 15.

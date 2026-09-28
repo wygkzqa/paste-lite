@@ -94,7 +94,7 @@ git diff --check
 
 Release 产物为 `.build/Build/Products/Release/Paste Lite.app`。正式版仅构建不安装，继续使用在线更新；只有用户明确要求安装正式版时才能替换它。每次本地构建测试应用时使用 `sh scripts/build-beta.sh`，成功校验后更新 `~/Applications/Paste Lite Beta.app`；已运行的 Beta 正常退出后替换并重开，退出受阻则中止，不强杀。构建 Beta 后运行 `python3 Tests/run-beta.py` 验证安装保护与更新禁用。
 
-GitHub Actions 的 `ci.yml` 在 PR 和 `main` 提交上运行 Apple Silicon / Intel 隔离测试，并构建 Universal DMG；`release.yml` 复用同一检查。手动运行 Release 只构建，推送 `v*` 标签才会创建 Release 草稿。云端产物保留 7 天，不提交到 Git。当前没有独立的代码格式化工具。
+GitHub Actions 的 `ci.yml` 在 PR 和 `main` 提交上只运行 Apple Silicon / Intel 隔离测试，必需检查为 `Test (arm64)` 和 `Test (x86_64)`；`release.yml` 复用测试，并单独构建 Universal DMG，两者全部通过后才准备发布草稿。手动运行 Release 执行测试和构建，推送 `v*` 标签才会创建 Release 草稿。云端产物保留 7 天，不提交到 Git。当前没有独立的代码格式化工具。
 
 ## Swift 与并发约定
 
@@ -143,7 +143,7 @@ GitHub Actions 的 `ci.yml` 在 PR 和 `main` 提交上运行 Apple Silicon / In
 - 工作分支统一使用 `<type>/<short-description>`，不添加工具名或作者前缀。类型为 `feat`、`fix`、`refactor`、`perf`、`docs`、`test`、`ci`、`chore`、`release`；描述使用小写英文和数字，单词用 `-` 分隔，如 `feat/group-colors`。有关联 Issue 时可使用 `fix/42-selection-reset`，没有则省略编号。发布准备使用 `release/vX.Y.Z`，普通工作分支不加日期或版本号。类型用途见[分支命名规范](./CONTRIBUTING.zh-CN.md#分支命名)。
 - 一个分支对应一个明确任务或 PR；合并后删除工作分支，后续修改从最新 `main` 创建新分支。命名规范从新分支开始执行，已有分支无需批量改名。
 - 创建 PR 时遵循 [PR 模板](./.github/pull_request_template.md)，网页和命令行创建均适用。正文保留变更说明、主要改动、验证三个部分，关联问题可选；使用中文或英文即可，篇幅与改动规模相匹配。验证仅填写实际执行的检查和结果，明确未验证项，界面截图使用示例内容。标题采用 `类型: 简短描述`，如 `feat:`、`fix:`、`docs:`、`ci:`、`chore:`；发布准备使用 `chore: release vX.Y.Z`。通过 CLI 的 `--body-file` 提交按模板填写好的正文，不假设 CLI 会自动套用模板。
-- 日常 PR 将用户可见变化累积到两份 CHANGELOG 的未发布部分，不因每个 PR 合并而发布新版本。用户要求发布时，单独创建发布 PR，统一更新应用版本、递增构建号、整理双语更新日志和下载文档；合并后为该 PR 的确切合并提交创建 `vX.Y.Z` 标签，从该提交构建并验证发布包。标签不能被移动或复用来替换已发布版本。`v*` 标签触发云端构建：校验版本、双语更新日志及提交属于 `main` 后，将 DMG 和校验文件上传到 Release 草稿；核对安装包与说明后再由维护者正式发布。手动运行 Release 工作流只构建，不创建标签或 Release；不通过更新已发布附件来重试失败任务。
+- 日常 PR 将用户可见变化累积到两份 CHANGELOG 的未发布部分，不因每个 PR 合并而发布新版本。用户要求发布时，单独创建发布 PR，统一更新应用版本、递增构建号、整理双语更新日志和下载文档；合并后为该 PR 的确切合并提交创建 `vX.Y.Z` 标签，从该提交构建并验证发布包。标签不能被移动或复用来替换已发布版本。`v*` 标签触发云端构建：校验版本、双语更新日志及提交属于 `main` 后，将 DMG 和校验文件上传到 Release 草稿；核对安装包与说明后再由维护者正式发布。手动运行 Release 工作流执行测试和构建，不创建标签或 Release；不通过更新已发布附件来重试失败任务。
 - README、CONTRIBUTING、CHANGELOG 分别维护英文 `.md` 与简体中文 `.zh-CN.md`，同一变更同步更新相关语言版本。
 - 面向用户的变更写入两份 CHANGELOG 的未发布部分；仅在实际发布时记录发布版本和日期。
 - 应用支持简体中文与英文；用户可在设置中切换或跟随系统。新增文案同步维护两份本地化资源，检查英文长度和格式参数，不翻译用户正文。

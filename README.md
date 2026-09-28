@@ -70,7 +70,7 @@ This source revision is **1.2.1 (build 15)**. Use the link above for published p
 
 **Signing:** the app uses ad-hoc signing and has not been notarized by Apple. Sparkle update signatures do not replace Apple code signing or notarization. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval. Automatic pasting also has a separate [known Accessibility issue](#accessibility-permission).
 
-For 1.1.1 and later, download the DMG, `appcast.xml`, and `SHA256SUMS.txt` from the same Release into one folder, then run `shasum -a 256 -c SHA256SUMS.txt` there. The checksum file covers both the package and update feed; 1.0.0 only needs its DMG and checksum file. CI runs regression tests on Apple Silicon and Intel macOS runners and builds the Universal package. GUI installation and online upgrades on a physical Intel Mac have not been verified.
+For 1.1.1 and later, download the DMG, `appcast.xml`, and `SHA256SUMS.txt` from the same Release into one folder, then run `shasum -a 256 -c SHA256SUMS.txt` there. The checksum file covers both the package and update feed; 1.0.0 only needs its DMG and checksum file. CI runs regression tests on Apple Silicon and Intel macOS runners; the Release workflow also builds the Universal package. GUI installation and online upgrades on a physical Intel Mac have not been verified.
 
 ### Online updates (1.1.1+)
 
