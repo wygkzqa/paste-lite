@@ -21,7 +21,7 @@ struct LanguageSettingsTests {
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let settings = AppSettings(defaults: defaults)
         precondition(settings.language == .system)
-        precondition(settings.clipboardLayout == .list)
+        precondition(settings.clipboardLayout == .cards)
         precondition(settings.appearance == .system)
         let window = NSWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: false)
         for (appearance, name) in [(AppAppearance.dark, NSAppearance.Name.darkAqua), (.light, .aqua)] {
@@ -47,7 +47,7 @@ struct LanguageSettingsTests {
         settings.clipboardLayout = .list
         precondition(AppSettings(defaults: defaults).clipboardLayout == .list)
         defaults.set("unsupported", forKey: "clipboardLayout")
-        precondition(AppSettings(defaults: defaults).clipboardLayout == .list)
+        precondition(AppSettings(defaults: defaults).clipboardLayout == .cards)
         for language in ["zh-CN", "zh-Hans-CN", "zh-Hant-TW", "zh-HK"] {
             precondition(AppLanguage.system.resolved(preferredLanguages: [language]) == .chinese)
         }

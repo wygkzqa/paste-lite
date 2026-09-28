@@ -96,7 +96,7 @@ final class AppSettings: ObservableObject {
            let shortcut = try? JSONDecoder().decode(PanelShortcut.self, from: data), shortcut.isValid {
             panelShortcut = shortcut
         } else { panelShortcut = .default }
-        clipboardLayout = ClipboardLayout(rawValue: defaults.string(forKey: "clipboardLayout") ?? "") ?? .list
+        clipboardLayout = ClipboardLayout(rawValue: defaults.string(forKey: "clipboardLayout") ?? "") ?? .cards
         appearance = AppAppearance(rawValue: defaults.string(forKey: "appAppearance") ?? "") ?? .system
         language = AppLanguage(rawValue: defaults.string(forKey: L10n.languageDefaultsKey) ?? "") ?? .system
         systemLanguage = AppLanguage.system.resolved()

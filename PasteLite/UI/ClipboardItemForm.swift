@@ -31,7 +31,7 @@ struct ClipboardItemForm: View {
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel(L10n.tr("标题"))
                         .focused($titleIsFocused)
-                    Text(L10n.tr("留空则使用内容自动生成的标题。"))
+                    Text(L10n.tr("留空时，卡片显示内容类型，列表和预览使用自动标题。"))
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
                     ClipboardPreviewText(text: loaded.displayTitle)

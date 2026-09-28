@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Features
+
+- Use Cards as the default clipboard layout while preserving saved layout preferences. Cards without a custom title show their content type as the heading.
+
 ### Fixed
 
 - Keep the search field unfocused when opening the main panel, so keyboard navigation and Space preview are immediately available.

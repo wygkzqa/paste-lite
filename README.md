@@ -123,7 +123,7 @@ Selecting a row does not paste. Arrow-key navigation keeps the selected row visi
 
 Closing and reopening the panel during the same app session preserves the scroll position and selection in both layouts. New captures keep the record you were reading in place, and arrow-key navigation continues from your previous selection. This browsing state is kept in memory and resets when the app quits.
 
-Open **Settings… → General → Clipboard Layout** to choose **List** (default) or **Cards**. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance respects your chosen appearance and Reduce Transparency.
+Open **Settings… → General → Clipboard Layout** to choose **Cards** (default) or **List**. Existing saved layout preferences are preserved. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance respects your chosen appearance and Reduce Transparency.
 
 Choose **Settings… → General → Appearance** to use **System Default**, **Dark**, or **Light**. The default follows macOS. Changes apply immediately across the history panel, Settings, and app dialogs, and your choice is remembered after restarting.
 
@@ -169,7 +169,7 @@ Choose **Delete…** from the context menu and confirm the entry count. Deletion
 
 Right-click a list entry or card to select it and open the context menu. **Edit…** and **Preview** use the same title-and-content form; Preview is read-only. Text and link entries support body editing, while images and files support title editing and retain their original content. ⌘Return saves, Return inserts a line break in text, and Esc cancels. Saving updates history only; the system clipboard changes when you copy or paste the entry.
 
-Enter up to 100 characters on one line for a new title; clear it to restore the automatic title. Existing long titles imported from Paste can be preserved when editing only the body. Titles appear in both layouts and previews and participate in full-library search. Edits preserve identity, timestamps, order, source, and groups; body changes update the search summary and content deduplication. Empty text, invalid links, text above the configured size limit, and content that duplicates another entry are rejected without discarding the draft. Recopying the edited content keeps its title.
+Enter up to 100 characters on one line for a new title; clear it to show the content type on cards and the automatic title in the list and preview. Existing long titles imported from Paste can be preserved when editing only the body. Titles appear in both layouts and previews and participate in full-library search. Edits preserve identity, timestamps, order, source, and groups; body changes update the search summary and content deduplication. Empty text, invalid links, text above the configured size limit, and content that duplicates another entry are rejected without discarding the draft. Recopying the edited content keeps its title.
 
 ### Import from Paste
 
