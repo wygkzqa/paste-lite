@@ -221,8 +221,12 @@ final class ClipboardViewModel: ObservableObject {
         calendar = Calendar.current
         today = calendar.startOfDay(for: presentationDate)
         resetTimeLabels()
-        presentationToken += 1
+        selectedID = nil
+        selectedIDs = []
+        selectedGroups = [:]
+        selectionAnchorID = nil
         normalizeSelection()
+        presentationToken += 1
     }
 
     private func resetTimeLabels() {

@@ -121,7 +121,7 @@ Selecting a row does not paste. Arrow-key navigation keeps the selected row or c
 
 ### Layouts and groups
 
-Closing and reopening the panel during the same app session preserves the scroll position and selection in both layouts. New captures keep the record you were reading in place, and arrow-key navigation continues from your previous selection. This browsing state is kept in memory and resets when the app quits.
+Opening the hidden panel scrolls to the beginning and selects the first matching entry in both layouts, while preserving your search and filters. Bringing an already visible panel to the front keeps the current selection, scroll position, and any open editor. New captures keep the record you are reading in place while the panel remains open.
 
 Open **Settings… → General → Clipboard Layout** to choose **Cards** (default) or **List**. Existing saved layout preferences are preserved. The footer’s layout button also switches directly between the two, keeping your search, filters, group, and selected entry. The choice is saved, syncs with Settings, and applies immediately. Both use the same history, search, filters, and keyboard shortcuts. The glass appearance respects your chosen appearance and Reduce Transparency.
 
