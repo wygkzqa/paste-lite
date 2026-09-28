@@ -221,6 +221,11 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
             case 36, 76: // Return / keypad Enter
                 self.viewModel.pasteSelected()
                 return nil
+            case 123, 124: // Left / Right
+                guard AppSettings.shared.clipboardLayout == .cards,
+                      !(window.firstResponder is NSTextView) else { return event }
+                self.viewModel.moveSelection(by: event.keyCode == 123 ? -1 : 1, extending: event.modifierFlags.contains(.shift))
+                return nil
             case 125: // Down
                 self.viewModel.moveSelection(by: 1, extending: event.modifierFlags.contains(.shift))
                 return nil
