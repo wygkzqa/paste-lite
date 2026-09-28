@@ -228,7 +228,11 @@ struct ClipboardHistoryView: View {
                 .id(layout)
                 .onReceive(viewModel.keyboardScrollRequests) { id in
                     searchIsFocused = false
-                    proxy.scrollTo(id)
+                    // Let newly loaded rows enter the view before scrolling across a page boundary.
+                    DispatchQueue.main.async {
+                        guard viewModel.selectedID == id else { return }
+                        proxy.scrollTo(id)
+                    }
                 }
             }
         }
@@ -287,7 +291,7 @@ struct ClipboardHistoryView: View {
                 }
             }
             Spacer(minLength: 4)
-            Text("↑↓ \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
+            Text("\(layout == .cards ? "←→" : "↑↓") \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
             Button {
                 settings.clipboardLayout = layout == .list ? .cards : .list
             } label: {

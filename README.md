@@ -104,8 +104,8 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | --- | --- |
 | Open / close history | ⇧⌘V by default (customizable in General settings), or the menu bar menu |
 | Open the main panel | Launch Paste Lite from Spotlight or Finder |
-| Select a result | Click or ↑ / ↓ |
-| Select multiple entries | ⌘-click toggles entries; ⇧-click or ⇧↑ / ⇧↓ extends a range |
+| Select a result | Click or ↑ / ↓; cards also support ← / → |
+| Select multiple entries | ⌘-click toggles entries; ⇧-click or ⇧↑ / ⇧↓ extends a range; cards also support ⇧← / ⇧→ |
 | Select all matching entries | ⌘A when focus is on history, or right-click → Select All |
 | Delete selected entries | Right-click → Delete…, then confirm |
 | Copy and attempt to paste a result | Double-click or Return |
@@ -117,7 +117,7 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 
 Opening Paste Lite from Spotlight or Finder shows the main panel, including when the app is already running. Login-item launches stay in the menu bar without opening the panel.
 
-Selecting a row does not paste. Arrow-key navigation keeps the selected row visible; clicking a row does not automatically scroll the list. Without Accessibility permission, a paste action still copies the result to the clipboard; return to the destination app and press **⌘V** manually.
+Selecting a row does not paste. Arrow-key navigation keeps the selected row or card visible; clicking an entry does not automatically scroll. When the search field has focus, Left / Right retain normal text editing. Without Accessibility permission, a paste action still copies the result to the clipboard; return to the destination app and press **⌘V** manually.
 
 ### Layouts and groups
 

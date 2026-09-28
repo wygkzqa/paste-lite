@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Improvements
+
+- Navigate cards with Left / Right, extend a selection with Shift+Left / Right, and keep the selected card visible across pages. The footer shows the arrows for the current layout; horizontal arrows retain normal text editing when the search field has focus.
+
 ### Build and release
 
 - Run only regression tests for pull requests and main-branch commits; build and upload the Universal DMG in the Release workflow, with draft preparation waiting for tests and packaging to pass.
