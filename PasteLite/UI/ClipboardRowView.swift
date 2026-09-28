@@ -81,6 +81,11 @@ struct ClipboardRowView: View {
         .frame(height: 54)
     }
 
+    private var cardTitle: String {
+        if let title = item.customTitle, !title.isEmpty { return title }
+        return item.type.title
+    }
+
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 7) {
             if item.hasImage {
@@ -89,8 +94,8 @@ struct ClipboardRowView: View {
                 Image(systemName: item.type.systemImage)
                     .font(.system(size: 12)).foregroundStyle(secondaryForeground)
             }
-            Text(item.displayTitle).font(.system(size: 12, weight: .medium)).lineLimit(1)
-                .help(item.displayTitle)
+            Text(cardTitle).font(.system(size: 12, weight: .medium)).lineLimit(1)
+                .help(cardTitle)
             if !item.hasImage {
                 Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(secondaryForeground).lineLimit(3)
             }

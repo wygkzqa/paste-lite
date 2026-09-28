@@ -219,7 +219,7 @@
 "清空历史…" = "Clear History…";
 "删除全部历史和图片，包括分组内记录；保留分组、设置和系统当前剪贴板。" = "Remove all history and images, including grouped records. Keep groups, settings, and the current system clipboard.";
 "标题" = "Title";
-"留空则使用内容自动生成的标题。" = "Leave blank to use the title generated from the content.";
+"留空时，卡片显示内容类型，列表和预览使用自动标题。" = "Leave empty to show the content type on cards and an automatic title in the list and preview.";
 "标题最多 100 个字符，且不能包含换行。" = "Use up to 100 characters without line breaks.";
 "记录已不存在，请关闭后重试。" = "This entry no longer exists. Close this dialog and try again.";
 "补充已有记录的标题" = "Titles added to existing entries";
