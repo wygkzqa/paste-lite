@@ -69,6 +69,7 @@ struct ClipboardHistoryView: View {
             showsFilters = false
             showsPermission = false
             searchIsFocused = false
+            visibleItemID = nil
         }
     }
 
@@ -226,6 +227,11 @@ struct ClipboardHistoryView: View {
                 // Track the visible record so new captures do not displace the content being read.
                 .scrollPosition(id: $visibleItemID)
                 .id(layout)
+                .onChange(of: viewModel.presentationToken) {
+                    if let first = viewModel.filteredItems.first {
+                        proxy.scrollTo(first.id, anchor: layout == .cards ? .leading : .top)
+                    }
+                }
                 .onReceive(viewModel.keyboardScrollRequests) { id in
                     searchIsFocused = false
                     // Let newly loaded rows enter the view before scrolling across a page boundary.

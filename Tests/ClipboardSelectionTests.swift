@@ -101,12 +101,13 @@ struct ClipboardSelectionTests {
         model.selectForClick(visible[22], extending: true)
         let scrollsBeforeReopen = scrolls
         model.prepareForPresentation(hasAccessibilityPermission: false)
-        precondition(model.selectedID == visible[22].id && model.selectedIDs == Set(visible[20...22].map(\.id)))
-        precondition(scrolls == scrollsBeforeReopen, "Reopening must preserve selection without requesting a keyboard scroll")
+        precondition(model.selectedID == visible[0].id && model.selectedIDs == [visible[0].id])
+        precondition(model.selectionForContextMenu == [visible[0].id: Set(visible[0].groupIDs ?? [])])
+        precondition(scrolls == scrollsBeforeReopen, "Opening resets selection without requesting a keyboard scroll")
         model.moveSelection(by: 1, extending: true)
-        precondition(model.selectedIDs == Set(visible[20...23].map(\.id)) && scrolls == scrollsBeforeReopen + 1,
-                     "Keyboard navigation after reopening must continue from the previous selection and range anchor")
-        print("PASS: reopening retains multiple selection and its range anchor; keyboard navigation continues from that position")
+        precondition(model.selectedIDs == Set(visible[0...1].map(\.id)) && scrolls == scrollsBeforeReopen + 1,
+                     "Keyboard navigation after reopening must start a new range from the first entry")
+        print("PASS: reopening selects only the first entry and resets the range anchor; subsequent keyboard navigation extends from it")
 
         for action in ["click", "command-click", "shift-click", "context menu", "reopen"] {
             let pagingModel = ClipboardViewModel(repository: repository)
@@ -140,6 +141,11 @@ struct ClipboardSelectionTests {
         model.contentFilter = .text
         model.query = "Record"
         try await waitUntil { model.filteredItems.count == 200 && model.resultCount > 200 && !model.isLoading }
+        model.select(model.filteredItems[9])
+        model.prepareForPresentation(hasAccessibilityPermission: false)
+        precondition(model.selectedIDs == [model.filteredItems[0].id])
+        precondition(model.groupFilter == .group(firstGroup.id) && model.contentFilter == .text && model.query == "Record")
+        print("PASS: reopening selects the first matching result while preserving search, type and group filters")
         let expected = Set(entries.prefix(503).filter { $0.item.type == .text }.map(\.item.id))
         model.selectAll()
         try await waitUntil { !model.isSelectingAll && model.selectedIDs == expected }
@@ -215,6 +221,9 @@ struct ClipboardSelectionTests {
         model.query = "No matching result"
         try await waitUntil { model.resultCount == 0 && !model.isLoading }
         precondition(model.selectedIDs.isEmpty && !model.isSelectingAll)
+        model.prepareForPresentation(hasAccessibilityPermission: false)
+        precondition(model.selectedID == nil && model.selectedIDs.isEmpty && model.selectionForContextMenu.isEmpty)
+        precondition(model.query == "No matching result")
         let remaining = try await repository.selection(for: ClipboardQuery())
         try await repository.deleteItems(Set(remaining.keys))
         let reopened = ClipboardRepository(fileManager: manager)

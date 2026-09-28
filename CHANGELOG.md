@@ -8,6 +8,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Improvements
 
+- Scroll to the beginning and select the first matching entry whenever the hidden panel opens, in both List and Cards. Preserve search and filters; bringing an already visible panel to the front keeps the current state.
 - Navigate cards with Left / Right, extend a selection with Shift+Left / Right, and keep the selected card visible across pages. The footer shows the arrows for the current layout; horizontal arrows retain normal text editing when the search field has focus.
 
 ### Build and release
