@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- Keep the search field unfocused when opening the main panel, so keyboard navigation and Space preview are immediately available.
+
 ## [1.2.0](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.0) — 2026-09-27
 
 Build 14.

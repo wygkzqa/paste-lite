@@ -68,7 +68,7 @@ struct ClipboardHistoryView: View {
             sheet = nil
             showsFilters = false
             showsPermission = false
-            DispatchQueue.main.async { searchIsFocused = true }
+            searchIsFocused = false
         }
     }
 
