@@ -6,6 +6,10 @@
 
 ## 未发布
 
+### 构建与发布
+
+- PR 和主分支提交仅运行回归测试；Universal DMG 构建与上传移至 Release 流程，测试和打包全部通过后才准备发布草稿。
+
 ## [1.2.1](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.1) — 2026-09-28
 
 构建号 15。

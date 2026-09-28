@@ -70,7 +70,7 @@ Paste Lite 常驻 macOS 菜单栏，让复制过的内容随时可用。按下 *
 
 **签名说明：**应用使用临时签名，尚未经过 Apple 公证；Sparkle 更新签名不替代 Apple 代码签名或公证。首次打开可能被 Gatekeeper 阻止。确认信任本仓库并核对下载后，可参考 [Apple 关于打开身份未验证应用的说明](https://support.apple.com/zh-cn/102445)。本地构建成功不代表通过 Gatekeeper 验证。自动粘贴另有[辅助功能授权已知问题](#辅助功能权限)。
 
-对于 1.1.1 及后续版本，将同一 Release 的 DMG、`appcast.xml` 和 `SHA256SUMS.txt` 下载到同一文件夹，在该目录运行 `shasum -a 256 -c SHA256SUMS.txt` 即可校验。校验文件同时覆盖安装包与更新清单；1.0.0 只需下载 DMG 和校验文件。CI 在 Apple Silicon 与 Intel macOS 云端机器上运行回归测试，并构建 Universal 包；尚未在 Intel 实机上验证图形界面安装和在线升级。
+对于 1.1.1 及后续版本，将同一 Release 的 DMG、`appcast.xml` 和 `SHA256SUMS.txt` 下载到同一文件夹，在该目录运行 `shasum -a 256 -c SHA256SUMS.txt` 即可校验。校验文件同时覆盖安装包与更新清单；1.0.0 只需下载 DMG 和校验文件。CI 在 Apple Silicon 与 Intel macOS 云端机器上运行回归测试；Release 流程额外构建 Universal 包；尚未在 Intel 实机上验证图形界面安装和在线升级。
 
 ### 在线更新（1.1.1 起）
 
