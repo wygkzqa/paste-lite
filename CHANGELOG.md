@@ -6,10 +6,18 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
+
+Build 16.
+
 ### Improvements
 
 - Scroll to the beginning and select the first matching entry whenever the hidden panel opens, in both List and Cards. Preserve search and filters; bringing an already visible panel to the front keeps the current state.
-- Navigate cards with Left / Right, extend a selection with Shift+Left / Right, and keep the selected card visible across pages. The footer shows the arrows for the current layout; horizontal arrows retain normal text editing when the search field has focus.
+- Navigate cards with Left / Right and extend a selection with Shift+Left / Right. The footer shows the arrows for the current layout; horizontal arrows retain normal text editing when the search field has focus.
+
+### Fixed
+
+- Keep keyboard-selected entries visible when navigation loads a new page, in both List and Cards.
 
 ### Build and release
 
