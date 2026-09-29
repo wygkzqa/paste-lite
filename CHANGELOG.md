@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Website
+
+- Add a Chinese and English product website with actual Cards and List screenshots in both languages and appearances, feature and shortcut guides, installation FAQs, and links to the latest release. The website supports mobile screens and system light/dark appearance and deploys independently through GitHub Pages.
+
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
 
 Build 16.
