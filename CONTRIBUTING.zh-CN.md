@@ -118,6 +118,8 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
 
 打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
 
+`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。更换截图时，使用 `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` 重新生成，保留像素与颜色配置。日常官网构建只复制已提交的资源，不需要图片转换工具。
+
 在仓库 **Settings → Pages → Build and deployment** 中选择 **GitHub Actions**。[Website 工作流](./.github/workflows/pages.yml)在相关 PR 中构建，仅在 `main` 上的官网、图片资源、构建脚本或工作流变化后部署，也可手动运行。官网发布不创建应用新版本；下载始终链接到最新 GitHub Release。
 
 默认公开地址为 `https://wygkzqa.github.io/paste-lite/` 及其 `en/` 子目录。资源使用相对链接，兼容项目路径。以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址，以及两份 README 的官网入口。
