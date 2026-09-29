@@ -116,13 +116,17 @@ sh scripts/build-website.sh
 python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
 ```
 
-Open `http://127.0.0.1:4173/` or `http://127.0.0.1:4173/en/`. Re-run the build after edits. The build copies only the website pages, stylesheet, and selected images from `docs/` into `.build/website/`. Before submitting, check both languages, narrow and desktop layouts, light/dark appearance, keyboard navigation, FAQ expansion, and local links. No macOS app build is needed for website-only changes.
+Open `http://127.0.0.1:4173/` or `http://127.0.0.1:4173/en/`. Re-run the build after edits. The build copies only the website pages, stylesheet, sitemap, robots file, and selected images from `docs/` into `.build/website/`. Before submitting, check both languages, narrow and desktop layouts, light/dark appearance, keyboard navigation, FAQ expansion, and local links. No macOS app build is needed for website-only changes.
 
-Keep source PNGs in `docs/`. The website uses the 256 × 256 `logo-web.png` for its icons (displayed at up to 72 CSS pixels) and lossless `.webp` copies of the app screenshots. When replacing screenshots, regenerate the WebP with `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` to preserve pixels and the color profile. The normal website build only copies committed assets and does not require image conversion tools.
+Keep source PNGs in `docs/`. The website uses the 256 × 256 `logo-web.png` for its icons (displayed at up to 72 CSS pixels) and lossless `.webp` copies of the app screenshots. When replacing screenshots, regenerate the WebP with `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` to preserve pixels and the color profile. Capture the composited screen region with an opaque white backdrop in light appearance and a neutral dark backdrop in dark appearance; capturing the glass window alone can lose its backdrop and produce a gray veil. Use only synthetic content and exclude other windows. The normal website build only copies committed assets and does not require image conversion tools.
 
 In repository **Settings → Pages → Build and deployment**, select **GitHub Actions**. The [Website workflow](./.github/workflows/pages.yml) builds on relevant pull requests and deploys only from `main`, after website, selected asset, build-script, or workflow changes; it can also be run manually. Website publishing does not create an application release. Downloads always link to the latest GitHub Release.
 
-The default public URLs are `https://wygkzqa.github.io/paste-lite/` and its `en/` subdirectory. Relative asset links support this project path. If a custom domain is added, also update the canonical, alternate-language, and Open Graph URLs in both HTML files and the website links in both READMEs.
+The default public URLs are `https://wygkzqa.github.io/paste-lite/` and its `en/` subdirectory. Relative asset links support this project path.
+
+The [sitemap](./website/sitemap.xml) lists both language versions and is published at `https://wygkzqa.github.io/paste-lite/sitemap.xml`; it can be submitted directly to search-engine webmaster tools. [robots.txt](./website/robots.txt) is included in the build as a deployable copy, but crawlers only use `https://wygkzqa.github.io/robots.txt`. The project-path copy at `/paste-lite/robots.txt` has no effect on crawling; deploy the file separately through the account site to enable it. A missing host-root robots file does not block crawling.
+
+If a custom domain is added, also update the canonical, alternate-language, and Open Graph URLs in both HTML files, the sitemap and robots file, and the website links in both READMEs.
 
 ## Implementation guidelines
 

@@ -116,13 +116,17 @@ sh scripts/build-website.sh
 python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
 ```
 
-打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
+打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表、网站地图、robots 文件及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
 
-`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。更换截图时，使用 `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` 重新生成，保留像素与颜色配置。日常官网构建只复制已提交的资源，不需要图片转换工具。
+`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。更换截图时，使用 `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` 重新生成，保留像素与颜色配置。截图时，在浅色下使用不透明白色背景、深色下使用中性深色背景，截取屏幕合成后的应用区域；单独截取玻璃窗口可能丢失背景并产生灰色蒙层。仅使用示例内容，并排除其他窗口。日常官网构建只复制已提交的资源，不需要图片转换工具。
 
 在仓库 **Settings → Pages → Build and deployment** 中选择 **GitHub Actions**。[Website 工作流](./.github/workflows/pages.yml)在相关 PR 中构建，仅在 `main` 上的官网、图片资源、构建脚本或工作流变化后部署，也可手动运行。官网发布不创建应用新版本；下载始终链接到最新 GitHub Release。
 
-默认公开地址为 `https://wygkzqa.github.io/paste-lite/` 及其 `en/` 子目录。资源使用相对链接，兼容项目路径。以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址，以及两份 README 的官网入口。
+默认公开地址为 `https://wygkzqa.github.io/paste-lite/` 及其 `en/` 子目录。资源使用相对链接，兼容项目路径。
+
+[网站地图](./website/sitemap.xml)列出两种语言，发布地址为 `https://wygkzqa.github.io/paste-lite/sitemap.xml`，可直接提交给搜索引擎站长工具。[robots.txt](./website/robots.txt) 随构建提供可部署副本，但爬虫只读取 `https://wygkzqa.github.io/robots.txt`；项目路径 `/paste-lite/robots.txt` 下的副本不控制抓取，需要通过账号站点单独发布到域名根目录才会生效。根目录缺少 robots 文件不阻止抓取。
+
+以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址、网站地图与 robots 文件，以及两份 README 的官网入口。
 
 ## 实现约定
 
