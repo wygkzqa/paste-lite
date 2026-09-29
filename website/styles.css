@@ -37,7 +37,7 @@ a:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline
 .button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px #3547dc26; }
 .button.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
 .button svg { width: 19px; height: 19px; flex: none; }
-.nav-links .button { min-height: 40px; padding: 8px 16px; color: #fff; }
+.nav-links .button, .nav-links .button:hover { min-height: 40px; padding: 8px 16px; color: #fff; }
 .hero { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; padding-block: 88px 72px; }
 .eyebrow { margin: 0 0 22px; color: var(--blue); font-size: 13px; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
 h1, h2, h3, p { margin-top: 0; }
