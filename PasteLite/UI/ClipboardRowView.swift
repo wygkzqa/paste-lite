@@ -35,7 +35,7 @@ struct ClipboardRowView: View {
         )
         .overlay {
             RoundedRectangle(cornerRadius: isCard ? 13 : 12)
-                .strokeBorder(isSelected ? Color.blue : Color.white.opacity(isCard ? 0.2 : 0), lineWidth: isSelected ? 1.5 : 0.5)
+                .strokeBorder(isSelected ? Color.blue.opacity(0.6) : Color.white.opacity(isCard ? 0.2 : 0), lineWidth: isSelected ? 1.5 : 0.5)
                 .allowsHitTesting(false)
         }
         .contentShape(RoundedRectangle(cornerRadius: 12))
