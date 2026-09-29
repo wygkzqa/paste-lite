@@ -14,7 +14,7 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="MIT 许可证" /></a>
   </p>
 
-  <p><a href="#开始使用">开始使用</a> · <a href="./CONTRIBUTING.zh-CN.md">参与贡献</a> · <a href="./CHANGELOG.zh-CN.md">更新日志</a></p>
+  <p><a href="https://wygkzqa.github.io/paste-lite/">官网</a> · <a href="#开始使用">开始使用</a> · <a href="./CONTRIBUTING.zh-CN.md">参与贡献</a> · <a href="./CHANGELOG.zh-CN.md">更新日志</a></p>
 </div>
 
 ## 关于

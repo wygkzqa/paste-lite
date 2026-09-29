@@ -96,6 +96,31 @@ python3 Tests/run-updates.py \
 | `PasteLite/AppIcon.icon/` | 原生应用图标源文件 |
 | `Tests/` | 独立回归测试 |
 | `docs/` | README 图片资源 |
+| `website/` | 中英文静态官网与共用样式表 |
+
+## 官网
+
+官网使用纯 HTML 和 CSS，不依赖包管理器或 JavaScript 运行时。编辑[中文页面](./website/index.html)、[英文页面](./website/en/index.html)与[共用样式表](./website/styles.css)，保持双语同步；截图使用示例内容，保留签名、权限和隐私的已知限制说明。
+
+<details>
+<summary>官网预览（示例内容）</summary>
+
+![Paste Lite 中文官网的桌面浅色外观](./docs/website-preview.png)
+
+</details>
+
+在仓库根目录构建并预览：
+
+```bash
+sh scripts/build-website.sh
+python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
+```
+
+打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
+
+在仓库 **Settings → Pages → Build and deployment** 中选择 **GitHub Actions**。[Website 工作流](./.github/workflows/pages.yml)在相关 PR 中构建，仅在 `main` 上的官网、图片资源、构建脚本或工作流变化后部署，也可手动运行。官网发布不创建应用新版本；下载始终链接到最新 GitHub Release。
+
+默认公开地址为 `https://wygkzqa.github.io/paste-lite/` 及其 `en/` 子目录。资源使用相对链接，兼容项目路径。以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址，以及两份 README 的官网入口。
 
 ## 实现约定
 

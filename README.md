@@ -14,7 +14,7 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="MIT license" /></a>
   </p>
 
-  <p><a href="#getting-started">Getting started</a> · <a href="./CONTRIBUTING.md">Contributing</a> · <a href="./CHANGELOG.md">Changelog</a></p>
+  <p><a href="https://wygkzqa.github.io/paste-lite/en/">Website</a> · <a href="#getting-started">Getting started</a> · <a href="./CONTRIBUTING.md">Contributing</a> · <a href="./CHANGELOG.md">Changelog</a></p>
 </div>
 
 ## About
