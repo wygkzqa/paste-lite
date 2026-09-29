@@ -48,11 +48,37 @@
             </div>
             <figure class="hero-visual">
                 <div class="visual-topline" aria-hidden="true"><span>A little more memory for your clipboard.</span><span>⇧ ⌘ V</span></div>
-                <img src="../assets/group-tabs-light.png" width="1112" height="872" alt="Paste Lite in light appearance, showing search, colored group tabs and sample clipboard history" fetchpriority="high">
-                <figcaption>Actual app · Sample content</figcaption>
+                <picture>
+                    <source media="(prefers-color-scheme: dark)" srcset="../assets/website-cards-en-dark.png">
+                    <img src="../assets/website-cards-en-light.png" width="1200" height="580" alt="Actual Paste Lite Cards layout showing sample text, a link and an image" fetchpriority="high">
+                </picture>
+                <figcaption>Actual Cards layout · Sample content</figcaption>
             </figure>
         </section>
         <div class="container overview"><div><strong>Native to your Mac</strong><span>SwiftUI · AppKit</span></div><div><strong>Stored on your Mac</strong><span>No account needed</span></div><div><strong>Text, images & more</strong><span>Links · File references</span></div><div><strong>English & 中文</strong><span>Switch at any time</span></div></div>
+        <section id="layouts" class="container section layouts" aria-labelledby="layouts-title">
+            <div class="section-heading">
+                <p class="eyebrow">Two layouts. One clipboard history.</p>
+                <h2 id="layouts-title">A little more visual. Or a little more compact.</h2>
+                <p>Switch from the panel footer while keeping your search, groups and selection. These are actual app screenshots with sample content.</p>
+            </div>
+            <div class="layout-gallery">
+                <figure>
+                    <div class="layout-image"><picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="../assets/website-cards-en-dark.png">
+                        <img src="../assets/website-cards-en-light.png" width="1200" height="580" loading="lazy" alt="Actual Paste Lite Cards layout showing sample text, a link and an image">
+                    </picture></div>
+                    <figcaption><strong>Cards</strong><span>Browse horizontally, with text snippets and image previews in view.</span></figcaption>
+                </figure>
+                <figure>
+                    <div class="layout-image"><picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="../assets/website-list-en-dark.png">
+                        <img src="../assets/website-list-en-light.png" width="1020" height="780" loading="lazy" alt="Actual Paste Lite List layout showing the same sample history">
+                    </picture></div>
+                    <figcaption><strong>List</strong><span>A compact vertical view of titles, source apps and timestamps.</span></figcaption>
+                </figure>
+            </div>
+        </section>
         <section id="features" class="container section" aria-labelledby="features-title">
             <div class="section-heading">
                 <p class="eyebrow">Small app. Everyday useful.</p>

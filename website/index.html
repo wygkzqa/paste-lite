@@ -48,11 +48,37 @@
             </div>
             <figure class="hero-visual">
                 <div class="visual-topline" aria-hidden="true"><span>你的剪贴板，多一点记忆。</span><span>⇧ ⌘ V</span></div>
-                <img src="assets/group-tabs-light.png" width="1112" height="872" alt="Paste Lite 浅色列表界面，展示搜索、彩色分组标签与示例历史记录" fetchpriority="high">
-                <figcaption>应用实拍 · 使用示例内容</figcaption>
+                <picture>
+                    <source media="(prefers-color-scheme: dark)" srcset="assets/website-cards-zh-dark.png">
+                    <img src="assets/website-cards-zh-light.png" width="1200" height="580" alt="Paste Lite 卡片布局实拍，展示示例文字、链接和图片" fetchpriority="high">
+                </picture>
+                <figcaption>卡片布局实拍 · 使用示例内容</figcaption>
             </figure>
         </section>
         <div class="container overview"><div><strong>原生 Mac 应用</strong><span>SwiftUI · AppKit</span></div><div><strong>内容保存在本机</strong><span>无需账号</span></div><div><strong>文本、图片与更多</strong><span>链接 · 文件引用</span></div><div><strong>中文与 English</strong><span>随时切换</span></div></div>
+        <section id="layouts" class="container section layouts" aria-labelledby="layouts-title">
+            <div class="section-heading">
+                <p class="eyebrow">两种布局，同一份历史</p>
+                <h2 id="layouts-title">卡片或列表，按你的习惯来。</h2>
+                <p>从面板底部随时切换，搜索、分组和选中项都会保留。以下为原生应用实拍，使用示例内容。</p>
+            </div>
+            <div class="layout-gallery">
+                <figure>
+                    <div class="layout-image"><picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="assets/website-cards-zh-dark.png">
+                        <img src="assets/website-cards-zh-light.png" width="1200" height="580" loading="lazy" alt="Paste Lite 卡片布局实拍，展示示例文字、链接和图片">
+                    </picture></div>
+                    <figcaption><strong>卡片布局</strong><span>横向浏览，文字摘要和图片预览一眼可见。</span></figcaption>
+                </figure>
+                <figure>
+                    <div class="layout-image"><picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="assets/website-list-zh-dark.png">
+                        <img src="assets/website-list-zh-light.png" width="1020" height="780" loading="lazy" alt="Paste Lite 列表布局实拍，展示相同的示例历史记录">
+                    </picture></div>
+                    <figcaption><strong>列表布局</strong><span>纵向排列，更紧凑地查看标题、来源与时间。</span></figcaption>
+                </figure>
+            </div>
+        </section>
         <section id="features" class="container section" aria-labelledby="features-title">
             <div class="section-heading">
                 <p class="eyebrow">简单，也很顺手</p>
