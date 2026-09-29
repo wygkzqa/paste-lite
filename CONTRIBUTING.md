@@ -189,11 +189,17 @@ Name work branches `<type>/<short-description>`, without a tool or author prefix
 - Keep each branch focused on one task or PR. Delete the work branch after merging, and start subsequent work from the latest `main` on a new branch.
 - Apply this convention to new branches; existing branches do not need to be renamed. This is a documented convention and is not currently enforced by CI.
 
+## Commit and PR language
+
+Write commit subjects and bodies, PR titles and descriptions, and squash merge messages in English by default. Use another language only when explicitly requested for the task; the language of the conversation does not change this default.
+
+Keep commit messages concise and describe the change, using prefixes such as `docs:`, `fix:`, or `feat:` where appropriate, for example `docs: clarify commit and PR language`.
+
 ## Pull requests
 
 All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
 
-Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Write in English or Chinese without duplicating the body in both languages, and keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
+Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
 
 Use `type: short description` for the title, with a suitable prefix such as `feat:`, `fix:`, `docs:`, `ci:`, or `chore:`. Release preparation PRs use `chore: release vX.Y.Z`. GitHub fills in the template for web submissions after it is merged into the default branch. When creating a PR with `gh pr create --body-file`, prepare the body using the same template; do not assume it will be inserted automatically. The template guides the format; there is no automated PR-format check.
 

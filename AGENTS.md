@@ -142,7 +142,8 @@ GitHub Actions 的 `ci.yml` 在 PR 和 `main` 提交上只运行 Apple Silicon /
 - 后续所有仓库改动（包括代码、文档、配置和版本准备）通过独立分支创建 PR，完成适用验证与评审后合并到 `main`，不直接提交或推送到 `main`。合并时遵守仓库规则，不绕过检查、不强推。可用时优先 Squash merge，让一个 PR 对应一个主分支提交。
 - 工作分支统一使用 `<type>/<short-description>`，不添加工具名或作者前缀。类型为 `feat`、`fix`、`refactor`、`perf`、`docs`、`test`、`ci`、`chore`、`release`；描述使用小写英文和数字，单词用 `-` 分隔，如 `feat/group-colors`。有关联 Issue 时可使用 `fix/42-selection-reset`，没有则省略编号。发布准备使用 `release/vX.Y.Z`，普通工作分支不加日期或版本号。类型用途见[分支命名规范](./CONTRIBUTING.zh-CN.md#分支命名)。
 - 一个分支对应一个明确任务或 PR；合并后删除工作分支，后续修改从最新 `main` 创建新分支。命名规范从新分支开始执行，已有分支无需批量改名。
-- 创建 PR 时遵循 [PR 模板](./.github/pull_request_template.md)，网页和命令行创建均适用。正文保留变更说明、主要改动、验证三个部分，关联问题可选；使用中文或英文即可，篇幅与改动规模相匹配。验证仅填写实际执行的检查和结果，明确未验证项，界面截图使用示例内容。标题采用 `类型: 简短描述`，如 `feat:`、`fix:`、`docs:`、`ci:`、`chore:`；发布准备使用 `chore: release vX.Y.Z`。通过 CLI 的 `--body-file` 提交按模板填写好的正文，不假设 CLI 会自动套用模板。
+- commit 标题和正文、PR 标题和描述默认使用英文，包括 Squash merge 时的提交信息。只有用户明确要求本次任务使用其他语言时才例外；对话使用中文不改变此默认规则。
+- 创建 PR 时遵循 [PR 模板](./.github/pull_request_template.md)，网页和命令行创建均适用。正文保留 Summary、Changes、Validation 三个部分，Related issues 可选，篇幅与改动规模相匹配。验证仅填写实际执行的检查和结果，明确未验证项，界面截图使用示例内容。标题采用 `type: short description`，如 `feat: add group colors`；发布准备使用 `chore: release vX.Y.Z`。通过 CLI 的 `--body-file` 提交按模板填写好的正文，不假设 CLI 会自动套用模板。
 - 日常 PR 将用户可见变化累积到两份 CHANGELOG 的未发布部分，不因每个 PR 合并而发布新版本。用户要求发布时，单独创建发布 PR，统一更新应用版本、递增构建号、整理双语更新日志和下载文档；合并后为该 PR 的确切合并提交创建 `vX.Y.Z` 标签，从该提交构建并验证发布包。标签不能被移动或复用来替换已发布版本。`v*` 标签触发云端构建：校验版本、双语更新日志及提交属于 `main` 后，将 DMG 和校验文件上传到 Release 草稿；核对安装包与说明后再由维护者正式发布。手动运行 Release 工作流执行测试和构建，不创建标签或 Release；不通过更新已发布附件来重试失败任务。
 - README、CONTRIBUTING、CHANGELOG 分别维护英文 `.md` 与简体中文 `.zh-CN.md`，同一变更同步更新相关语言版本。
 - 面向用户的变更写入两份 CHANGELOG 的未发布部分；仅在实际发布时记录发布版本和日期。
