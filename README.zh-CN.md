@@ -62,9 +62,9 @@ Paste Lite 常驻 macOS 菜单栏，让复制过的内容随时可用。按下 *
 
 [下载最新正式版本 — macOS Universal 通用包、发布说明与校验文件](https://github.com/wygkzqa/paste-lite/releases/latest)
 
-当前源码版本为 **1.2.2（构建号 16）**。已发布安装包与版本说明见上方链接。
+当前源码版本为 **1.2.3（构建号 17）**。已发布安装包与版本说明见上方链接。
 
-1. 下载该 Release 的 Universal DMG（1.2.2 对应 `Paste-Lite-1.2.2-universal.dmg`），一个包同时包含 Apple Silicon（`arm64`）和 Intel（`x86_64`）版本，无需安装 Xcode。
+1. 下载该 Release 的 Universal DMG（1.2.3 对应 `Paste-Lite-1.2.3-universal.dmg`），一个包同时包含 Apple Silicon（`arm64`）和 Intel（`x86_64`）版本，无需安装 Xcode。
 2. 退出已运行的 Paste Lite，打开磁盘映像，将 **Paste Lite** 拖入 **Applications（应用程序）**。
 3. 推出磁盘映像，从应用程序中打开 Paste Lite，按 **⇧⌘V** 显示历史。
 

@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+## [1.2.3](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.3) — 2026-09-30
+
+Build 17.
+
 ### Improvements
 
 - Return to the beginning after clearing search in List and Cards, once the restored results are ready, while preserving other filters and search focus.

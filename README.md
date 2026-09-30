@@ -62,9 +62,9 @@ Single image files also appear under the image filter, while retaining their fil
 
 [Download the latest published release — macOS Universal DMG, notes and checksums](https://github.com/wygkzqa/paste-lite/releases/latest)
 
-This source revision is **1.2.2 (build 16)**. Use the link above for published packages and release notes.
+This source revision is **1.2.3 (build 17)**. Use the link above for published packages and release notes.
 
-1. Download the release's Universal DMG (`Paste-Lite-1.2.2-universal.dmg` for 1.2.2). It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
+1. Download the release's Universal DMG (`Paste-Lite-1.2.3-universal.dmg` for 1.2.3). It contains both Apple silicon (`arm64`) and Intel (`x86_64`) versions; you do not need Xcode.
 2. Quit an existing copy of Paste Lite, open the disk image, and drag **Paste Lite** into **Applications**.
 3. Eject the disk image, then open Paste Lite from Applications. Press **⇧⌘V** to show history.
 
