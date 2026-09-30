@@ -186,7 +186,8 @@
 "未分组" = "Ungrouped";
 "清除筛选" = "Clear Filters";
 "筛选" = "Filters";
-"筛选类型和来源" = "Filter by type and source";
+"筛选来源" = "Filter by source";
+"全部类型" = "All Types";
 "类型" = "Type";
 "列表" = "List";
 "重命名" = "Rename";

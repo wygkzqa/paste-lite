@@ -168,7 +168,7 @@ final class ClipboardPanelController: NSObject, NSWindowDelegate {
                 return nil
             }
             guard window === self.panel, !self.viewModel.isPresentingOverlay, !self.viewModel.isPresentingContextMenu,
-                  self.panel.attachedSheet == nil else { return event }
+                  self.panel.attachedSheet == nil, !(window.firstResponder is NSPopUpButton) else { return event }
 
             if selectsAll {
                 self.viewModel.selectAll()

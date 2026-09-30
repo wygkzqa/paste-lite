@@ -94,6 +94,11 @@ struct ClipboardHistoryView: View {
             .background(.white.opacity(colorScheme == .dark ? 0.06 : 0.2), in: Capsule())
             .overlay { Capsule().strokeBorder(.white.opacity(colorScheme == .dark ? 0.12 : 0.4), lineWidth: 0.5).allowsHitTesting(false) }
 
+            ClipboardTypePicker(selection: $viewModel.contentFilter,
+                onOpen: { searchIsFocused = false; viewModel.isPresentingContextMenu = true },
+                onClose: { viewModel.isPresentingContextMenu = false })
+                .frame(width: 100, height: 28)
+
             Button { showsFilters.toggle() } label: {
                 Image(systemName: "line.3.horizontal.decrease")
                     .foregroundStyle(viewModel.contentFilter != .all || !viewModel.sourceFilter.isEmpty ? Color.accentColor : Color.secondary)
@@ -101,13 +106,10 @@ struct ClipboardHistoryView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(L10n.tr("筛选"))
-            .help(L10n.tr("筛选类型和来源"))
+            .help(L10n.tr("筛选来源"))
             .popover(isPresented: $showsFilters) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(L10n.tr("筛选")).font(.headline)
-                    Picker(L10n.tr("类型"), selection: $viewModel.contentFilter) {
-                        ForEach(ContentFilter.allCases) { Text($0.title).tag($0) }
-                    }
                     Picker(L10n.tr("来源"), selection: $viewModel.sourceFilter) {
                         Text(L10n.tr("所有应用")).tag("")
                         ForEach(viewModel.sourceApps, id: \.self) { Text(viewModel.sourceAppNames[$0] ?? $0).tag($0) }

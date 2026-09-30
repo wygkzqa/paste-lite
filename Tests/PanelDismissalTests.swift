@@ -34,6 +34,10 @@ private final class PanelFileManager: FileManager, @unchecked Sendable {
     }
 }
 
+private final class PanelTestPopUpButton: NSPopUpButton {
+    override var acceptsFirstResponder: Bool { true }
+}
+
 @main
 @MainActor
 struct PanelDismissalTests {
@@ -185,6 +189,9 @@ struct PanelDismissalTests {
         let view = ClipboardItemContextMenu.MenuView(frame: NSRect(x: 0, y: 0, width: 200, height: 54))
         let window = NSWindow(contentRect: view.frame, styleMask: [], backing: .buffered, defer: false)
         window.contentView = view
+        let popup = PanelTestPopUpButton(frame: NSRect(x: 0, y: 0, width: 100, height: 24), pullsDown: false)
+        popup.addItem(withTitle: "All Types")
+        view.addSubview(popup)
         var activations = 0
         view.actions = ClipboardItemContextMenu(
             onSelect: { model.selectForClick(second, toggling: $0.contains(.command), extending: $0.contains(.shift)) },
@@ -198,7 +205,9 @@ struct PanelDismissalTests {
         }
 
         model.select(first)
+        precondition(window.makeFirstResponder(popup) && window.firstResponder === popup)
         view.mouseDown(with: event(.leftMouseDown))
+        precondition(window.firstResponder !== popup, "Selecting a record must release the type selector's keyboard focus")
         precondition(model.selectedIDs == [second.id] && activations == 0, "Selection must finish before mouse-up")
         view.mouseUp(with: event(.leftMouseUp))
         precondition(model.selectedIDs == [second.id] && activations == 0)
@@ -215,9 +224,12 @@ struct PanelDismissalTests {
         view.mouseDown(with: event(.leftMouseDown, .shift))
         precondition(model.selectedIDs == [first.id, second.id])
         view.mouseUp(with: event(.leftMouseUp, .shift))
+        precondition(window.makeFirstResponder(popup) && window.firstResponder === popup)
         _ = view.menu(for: event(.rightMouseDown))
+        precondition(window.firstResponder !== popup, "Opening a record menu must release the type selector's keyboard focus")
         precondition(model.selectedIDs == [first.id, second.id] && activations == 0)
         print("PASS: mouse-down immediately selects, command/shift selection applies once, and right-click preserves multiple selection")
+        print("PASS: left-click and right-click release focused type selectors without changing record selection semantics")
 
         view.mouseDown(with: event(.leftMouseDown, clicks: 2))
         precondition(activations == 0, "Double-click must wait for release")
