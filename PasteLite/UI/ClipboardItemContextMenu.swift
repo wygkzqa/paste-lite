@@ -37,6 +37,7 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
                 super.mouseDown(with: event)
                 return
             }
+            if window?.firstResponder is NSPopUpButton { window?.makeFirstResponder(nil) }
             actions?.onSelect(event.modifierFlags)
             doubleClickPending = event.clickCount == 2 && event.modifierFlags.intersection([.command, .shift]).isEmpty
         }
@@ -55,6 +56,7 @@ struct ClipboardItemContextMenu: NSViewRepresentable {
 
         override func menu(for event: NSEvent) -> NSMenu? {
             guard let actions else { return nil }
+            if window?.firstResponder is NSPopUpButton { window?.makeFirstResponder(nil) }
             actions.onOpen()
             let selected = actions.selection()
             itemIDs = Set(selected.keys)

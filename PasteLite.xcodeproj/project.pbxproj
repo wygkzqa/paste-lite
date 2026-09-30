@@ -42,6 +42,7 @@
 		B00000000000000000000024 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000024 /* ShortcutRecorder.swift */; };
 		B00000000000000000000025 /* AppVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* AppVariant.swift */; };
 		B00000000000000000000026 /* ClipboardMoreMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* ClipboardMoreMenu.swift */; };
+		B00000000000000000000028 /* ClipboardTypePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000028 /* ClipboardTypePicker.swift */; };
 		B00000000000000000000027 /* SourceAppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* SourceAppIcon.swift */; };
 /* End PBXBuildFile section */
 
@@ -83,6 +84,7 @@
 		F00000000000000000000024 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
 		F00000000000000000000025 /* AppVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVariant.swift; sourceTree = "<group>"; };
 		F00000000000000000000026 /* ClipboardMoreMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMoreMenu.swift; sourceTree = "<group>"; };
+		F00000000000000000000028 /* ClipboardTypePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTypePicker.swift; sourceTree = "<group>"; };
 		F00000000000000000000027 /* SourceAppIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceAppIcon.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -172,6 +174,7 @@
 				F0000000000000000000001C /* ClipboardGlass.swift */,
 				F0000000000000000000001D /* ClipboardGroupViews.swift */,
 				F00000000000000000000026 /* ClipboardMoreMenu.swift */,
+				F00000000000000000000028 /* ClipboardTypePicker.swift */,
 				F0000000000000000000001E /* ClipboardItemContextMenu.swift */,
 				F00000000000000000000024 /* ShortcutRecorder.swift */,
 				F00000000000000000000018 /* SettingsView.swift */,
@@ -281,6 +284,7 @@
 				B0000000000000000000001C /* ClipboardGlass.swift in Sources */,
 				B0000000000000000000001D /* ClipboardGroupViews.swift in Sources */,
 				B00000000000000000000026 /* ClipboardMoreMenu.swift in Sources */,
+				B00000000000000000000028 /* ClipboardTypePicker.swift in Sources */,
 				B0000000000000000000001E /* ClipboardItemContextMenu.swift in Sources */,
 				B00000000000000000000024 /* ShortcutRecorder.swift in Sources */,
 				B00000000000000000000018 /* SettingsView.swift in Sources */,

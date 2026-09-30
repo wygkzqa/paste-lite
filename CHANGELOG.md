@@ -6,12 +6,20 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Improvements
+
+- Return to the beginning after clearing search in List and Cards, once the restored results are ready, while preserving other filters and search focus.
+- Move the content-type selector beside the search field in both layouts; keep source filtering and clearing filters in the popover.
+- Put card content first with a compact icon-and-title row, regular-weight gray custom titles, smaller gray content-type labels, and up to four lines of higher-contrast 13 pt text.
+- Lighten selection in List and Cards with a highlighted blue border and a pale blue background, preserving standard text colors in light and dark appearances.
+
 ### Changed
 
 - Remove automatic pasting into the previous app and the associated Accessibility permission checks and prompts. Double-click, Return, and the preview’s Copy to Clipboard button now copy to the clipboard, close the panel, and return focus to the previous app for manual ⌘V. Update the bilingual documentation and website to match.
 
 ### Website
 
+- Refresh the website’s Chinese and English Cards and List screenshots with the latest interface and system-composited glass over a neutral sample page, correcting the gray cast in light appearance. Preserve native window shadows and scale the screenshot framing and rounded corners with the images.
 - Add a Chinese and English product website with actual Cards and List screenshots in both languages and appearances, feature and shortcut guides, installation FAQs, and links to the latest release. The website supports mobile screens and system light/dark appearance and deploys independently through GitHub Pages.
 
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28

@@ -118,7 +118,7 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
 
 打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表、网站地图、robots 文件及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
 
-`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。更换截图时，使用 `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` 重新生成，保留像素与颜色配置。截图时，在浅色下使用不透明白色背景、深色下使用中性深色背景，截取屏幕合成后的应用区域；单独截取玻璃窗口可能丢失背景并产生灰色蒙层。仅使用示例内容，并排除其他窗口。日常官网构建只复制已提交的资源，不需要图片转换工具。
+`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。日常官网构建只复制已提交的资源，不需要图片转换工具。更换应用截图时，遵循下方拍摄流程。
 
 在仓库 **Settings → Pages → Build and deployment** 中选择 **GitHub Actions**。[Website 工作流](./.github/workflows/pages.yml)在相关 PR 中构建，仅在 `main` 上的官网、图片资源、构建脚本或工作流变化后部署，也可手动运行。官网发布不创建应用新版本；下载始终链接到最新 GitHub Release。
 
@@ -127,6 +127,18 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
 [网站地图](./website/sitemap.xml)列出两种语言，发布地址为 `https://wygkzqa.github.io/paste-lite/sitemap.xml`，可直接提交给搜索引擎站长工具。[robots.txt](./website/robots.txt) 随构建提供可部署副本，但爬虫只读取 `https://wygkzqa.github.io/robots.txt`；项目路径 `/paste-lite/robots.txt` 下的副本不控制抓取，需要通过账号站点单独发布到域名根目录才会生效。根目录缺少 robots 文件不阻止抓取。
 
 以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址、网站地图与 robots 文件，以及两份 README 的官网入口。
+
+### 玻璃效果截图流程
+
+使用系统合成后的屏幕画面保留真实玻璃效果。单独截取窗口（`screencapture -l`，包括 `-o -l`）可能丢失后方背景，把不透明的灰色或黑色蒙层写入图片；官网 CSS 无法恢复缺失的合成效果，也不要改用视图离屏导出。
+
+1. **准备隔离应用。** 复用实际的 `ClipboardPanelController`、`ClipboardHistoryView` 和 `ClipboardGlass`，使用临时数据库、偏好、命名剪贴板和专用截图应用 bundle identifier。仅填入示例文本、链接、图片和分组，禁用拍摄程序中的复制与预览操作，不启动剪贴板监听，不读取正式版或 Beta 历史。拍摄程序和日志放在 `.build/` 下。
+2. **确认真实材质。** 展示 Liquid Glass 时使用 macOS 26 及以上，记录系统版本与面板实际外观。拍摄前检查“减少透明度”；若已开启，停止玻璃效果拍摄，不修改用户系统设置。明确将截图应用和面板设为浅色或深色。
+3. **在面板后放置中性示例页面。** 使用独立不透明窗口覆盖整个截图区域，防止个人桌面内容透出。浅色采用白色页面，深色采用中性深灰（当前拍摄程序的灰度分别为 1.0 与 0.13），放少量灰色示例文字，让真实玻璃自然模糊这些细节。不要为了突出透明感添加彩色渐变或大面积色块。面板置于背景之上，保留正式界面的窗口阴影，排除其他窗口；不为拍照修改正式界面的材质。
+4. **等待面板稳定后截取区域。** 激活截图应用，使面板成为 key window，等待示例记录和图片加载完成，选中第一条但不聚焦搜索框；关闭菜单、浮层和表单，拍摄前再次确认应用仍激活、面板仍为 key window。使用 `screencapture -x -R x,y,width,height output.png`，将矩形参数替换为 `panel.frame.insetBy(dx: -12, dy: -12)` 的屏幕逻辑点坐标；四周各留 12pt，保留原生阴影。将面板和背景放在主显示器上，用 `y = screen.frame.height - captureFrame.maxY` 转换 AppKit 左下角坐标原点；不要再将矩形乘以 Retina 倍率。拍摄前确认扩展后的整个矩形位于自有背景内。
+5. **成套更新图片。** 拍摄卡片/列表 × 中文/英文 × 浅色/深色，共八张 `docs/website-{cards,list}-{zh,en}-{light,dark}.png`。当前面板尺寸在 2× 拍摄并保留阴影边距时，卡片为 1248 × 628、列表为 1068 × 828 像素。逐张检查文案、图片加载、中性玻璃与隐约背景细节、完整阴影，以及是否残留菜单或灰色蒙层。合成后的 PNG 应完全不透明，包括窗口周围的背景。用 `cwebp -lossless -exact -metadata all input.png -o output.webp` 生成同名 WebP，并对照 PNG 检查解码像素、尺寸与颜色配置。
+6. **在官网裁切截图外框圆角。** 两个语言页面的对应图片都使用现有 `cards-screenshot` 或 `list-screenshot` 类，将原生窗口圆角和阴影完整保留在图片内部。外框裁切半径取原生 24pt 圆角加 12pt 边距，即 36pt，在 2× 图片中为 72px；卡片使用 `5.77% / 11.46%`，列表使用 `6.74% / 8.70%`。面板尺寸、边距或圆角变化时，重新计算比例并同步 HTML 图片尺寸。保留图片自身宽高比，固定尺寸的 `object-fit: contain` 容器可能无法裁到实际图像的四角。不要添加色罩、模糊或透明度层来模拟玻璃或遮掩拍摄问题。
+7. **验证与清理。** 构建官网，在桌面和手机宽度检查两种语言及浅深色，并从实际页面更新 `docs/website-preview.png`；验证记录留在 `.build/`。退出前等待存储任务结束，随后正常退出临时应用，移除其临时数据与偏好，仅清理已确认的测试 bundle identifier 对应权限及 `.app`。保留正式版与 Beta 的安装、数据和权限。
 
 ## 实现约定
 
