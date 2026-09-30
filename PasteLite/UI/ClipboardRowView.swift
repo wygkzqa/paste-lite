@@ -86,17 +86,19 @@ struct ClipboardRowView: View {
     }
 
     private var cardContent: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        let hasCustomTitle = item.customTitle?.isEmpty == false
+        return VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 5) {
+                Image(systemName: item.type.systemImage)
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(cardTitle).font(.system(size: hasCustomTitle ? 12 : 11)).lineLimit(1)
+                    .foregroundStyle(hasCustomTitle ? Color.primary : Color.secondary)
+                    .help(cardTitle)
+            }
             if item.hasImage {
                 preview.frame(height: 70)
             } else {
-                Image(systemName: item.type.systemImage)
-                    .font(.system(size: 12)).foregroundStyle(.secondary)
-            }
-            Text(cardTitle).font(.system(size: 12, weight: .medium)).lineLimit(1)
-                .help(cardTitle)
-            if !item.hasImage {
-                Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(3)
+                Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(.primary).lineLimit(4)
             }
             Spacer(minLength: 0)
             metadata
