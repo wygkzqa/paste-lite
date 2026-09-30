@@ -100,7 +100,7 @@ struct ClipboardSelectionTests {
         model.selectForClick(visible[20])
         model.selectForClick(visible[22], extending: true)
         let scrollsBeforeReopen = scrolls
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         precondition(model.selectedID == visible[0].id && model.selectedIDs == [visible[0].id])
         precondition(model.selectionForContextMenu == [visible[0].id: Set(visible[0].groupIDs ?? [])])
         precondition(scrolls == scrollsBeforeReopen, "Opening resets selection without requesting a keyboard scroll")
@@ -124,7 +124,7 @@ struct ClipboardSelectionTests {
             case "command-click": pagingModel.selectForClick(first, toggling: true)
             case "shift-click": pagingModel.selectForClick(first, extending: true)
             case "context menu": pagingModel.selectForContextMenu(last)
-            default: pagingModel.prepareForPresentation(hasAccessibilityPermission: false)
+            default: pagingModel.prepareForPresentation()
             }
             let selected = pagingModel.selectedIDs
             let focused = pagingModel.selectedID
@@ -142,7 +142,7 @@ struct ClipboardSelectionTests {
         model.query = "Record"
         try await waitUntil { model.filteredItems.count == 200 && model.resultCount > 200 && !model.isLoading }
         model.select(model.filteredItems[9])
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         precondition(model.selectedIDs == [model.filteredItems[0].id])
         precondition(model.groupFilter == .group(firstGroup.id) && model.contentFilter == .text && model.query == "Record")
         print("PASS: reopening selects the first matching result while preserving search, type and group filters")
@@ -221,7 +221,7 @@ struct ClipboardSelectionTests {
         model.query = "No matching result"
         try await waitUntil { model.resultCount == 0 && !model.isLoading }
         precondition(model.selectedIDs.isEmpty && !model.isSelectingAll)
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         precondition(model.selectedID == nil && model.selectedIDs.isEmpty && model.selectionForContextMenu.isEmpty)
         precondition(model.query == "No matching result")
         let remaining = try await repository.selection(for: ClipboardQuery())

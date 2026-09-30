@@ -46,9 +46,9 @@ struct ClipboardSearchTests {
         let originalItems = model.filteredItems
         let originalSelection = model.selectedIDs
         var scrolls = 0
-        var pastes = 0
+        var copies = 0
         let scrolling = model.keyboardScrollRequests.sink { _ in scrolls += 1 }
-        model.onPaste = { _ in pastes += 1 }
+        model.onCopy = { _ in copies += 1 }
         defer { scrolling.cancel() }
 
         // Pause the serial storage queue with a no-op deletion; the history itself is unchanged.
@@ -56,12 +56,12 @@ struct ClipboardSearchTests {
         let blocker = Task { try await repository.deleteItems([UUID()]) }
         await Task.detached { precondition(gate.started.wait(timeout: .now() + 5) == .success) }.value
         model.query = "Fixture"
-        model.pasteSelected() // Also reject old results during the text debounce.
+        model.copySelected() // Also reject old results during the text debounce.
         try await waitUntil { model.isLoading }
         precondition(model.filteredItems == originalItems && model.selectedIDs == originalSelection)
         precondition(!model.showsInitialLoading)
-        model.pasteSelected()
-        model.paste(originalItems[0])
+        model.copySelected()
+        model.copy(originalItems[0])
         model.query = "No matching fixture"
         try await Task.sleep(for: .milliseconds(150))
         model.query = "Record 2"
@@ -71,8 +71,8 @@ struct ClipboardSearchTests {
         try await blocker.value
         let expected = try await repository.query(ClipboardQuery(text: "Record 2"))
         try await waitUntil { !model.isLoading && model.filteredItems == expected.items }
-        precondition(model.selectedIDs == [expected.items[0].id] && pastes == 0 && scrolls == 0)
-        print("PASS: pending and cancelled searches retain displayed rows and highlight, do not paste stale results, and apply only the latest result without scrolling")
+        precondition(model.selectedIDs == [expected.items[0].id] && copies == 0 && scrolls == 0)
+        print("PASS: pending and cancelled searches retain displayed rows and highlight, do not copy stale results, and apply only the latest result without scrolling")
 
         model.query = "Fixture"
         try await waitUntil { !model.isLoading && model.resultCount == 610 }

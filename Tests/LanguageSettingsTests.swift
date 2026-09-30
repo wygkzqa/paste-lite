@@ -100,7 +100,7 @@ struct LanguageSettingsTests {
         model.sourceFilter = "Fixture App"
         model.contentFilter = .text
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         let item = repository.items[0]
         let selectedID = model.selectedID
         let token = model.presentationToken

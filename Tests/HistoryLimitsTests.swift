@@ -40,18 +40,18 @@ struct HistoryLimitsTests {
         precondition(firstMatches.total == 1_205 && nextMatches.total == 1_205)
         precondition(nextMatches.items.count == 200)
         precondition(Set(firstMatches.items.map(\.id)).isDisjoint(with: Set(nextMatches.items.map(\.id))))
-        var pasted: ClipboardItem?
-        model.onPaste = { pasted = $0 }
+        var copied: ClipboardItem?
+        model.onCopy = { copied = $0 }
         model.query = "legacy-tail-needle"
         try await waitUntil { model.resultCount == 1 && !model.isLoading }
-        model.pasteSelected()
-        try await waitUntil { pasted != nil }
-        precondition(pasted?.textContent == detail?.textContent)
+        model.copySelected()
+        try await waitUntil { copied != nil }
+        precondition(copied?.textContent == detail?.textContent)
         model.query = "no-match"
         model.loadNextPage()
         model.query = "Legacy record 0 "
         try await waitUntil { model.resultCount == 1 && model.filteredItems.first?.contentHash == "legacy-0" }
-        print("PASS: keyboard crosses page boundary, pages have no duplicate IDs, full-history search and paste return full content")
+        print("PASS: keyboard crosses page boundary, pages have no duplicate IDs, full-history search and copy return full content")
 
         let oneMB = 1_024 * 1_024
         var limits = ClipboardLimits(maxTextMB: 1, maxImageMB: 1)

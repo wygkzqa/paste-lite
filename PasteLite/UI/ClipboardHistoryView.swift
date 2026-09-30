@@ -9,7 +9,6 @@ struct ClipboardHistoryView: View {
     @FocusState private var searchIsFocused: Bool
     @State private var sheet: ClipboardSheet?
     @State private var showsFilters = false
-    @State private var showsPermission = false
     @State private var visibleItemID: UUID?
     @State private var pendingGroupOrder: [ClipboardGroup]?
 
@@ -36,7 +35,7 @@ struct ClipboardHistoryView: View {
             switch destination {
             case .edit(let item):
                 ClipboardItemForm(item: item, repository: repository,
-                    timeLabel: viewModel.timeLabel(for: item), isEditing: true, onPaste: {})
+                    timeLabel: viewModel.timeLabel(for: item), isEditing: true, onCopy: {})
             case .editGroup(let group):
                 ClipboardGroupEditor(repository: repository, group: group) { saved in
                     if group == nil { viewModel.groupFilter = .group(saved.id) }
@@ -55,26 +54,24 @@ struct ClipboardHistoryView: View {
             case .preview(let item):
                 ClipboardItemForm(item: item, repository: repository,
                     timeLabel: viewModel.timeLabel(for: item), isEditing: false,
-                    onPaste: { sheet = nil; viewModel.paste(item) })
+                    onCopy: { sheet = nil; viewModel.copy(item) })
             }
         }
         .onChange(of: sheet?.id) { updateOverlayState() }
         .onChange(of: showsFilters) { updateOverlayState() }
-        .onChange(of: showsPermission) { updateOverlayState() }
         .onReceive(viewModel.previewRequests) { item in
             sheet = .preview(item)
         }
         .onChange(of: viewModel.presentationToken) {
             sheet = nil
             showsFilters = false
-            showsPermission = false
             searchIsFocused = false
             visibleItemID = nil
         }
     }
 
     private func updateOverlayState() {
-        viewModel.isPresentingOverlay = sheet != nil || showsFilters || showsPermission
+        viewModel.isPresentingOverlay = sheet != nil || showsFilters
     }
 
     private var searchHeader: some View {
@@ -258,7 +255,7 @@ struct ClipboardHistoryView: View {
                             searchIsFocused = false
                             viewModel.selectForClick(item, toggling: modifiers.contains(.command), extending: modifiers.contains(.shift))
                         },
-                        onDoubleClick: { viewModel.select(item); viewModel.pasteSelected() },
+                        onDoubleClick: { viewModel.select(item); viewModel.copySelected() },
                         onOpen: { searchIsFocused = false; viewModel.selectForContextMenu(item); viewModel.isPresentingContextMenu = true },
                         onClose: { viewModel.isPresentingContextMenu = false },
                         onEdit: { sheet = .edit(item) },
@@ -279,25 +276,8 @@ struct ClipboardHistoryView: View {
         HStack(spacing: 9) {
             Text(viewModel.isSelectingAll ? L10n.tr("正在全选…") : (viewModel.selectedIDs.count > 1 ? L10n.tr("已选 %d 条", viewModel.selectedIDs.count) : L10n.tr("%d 条记录", viewModel.resultCount)))
                 .foregroundStyle(.secondary)
-            if !viewModel.hasAccessibilityPermission {
-                Button { showsPermission.toggle() } label: {
-                    Image(systemName: "exclamationmark.shield").foregroundStyle(.orange)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L10n.tr("辅助功能权限"))
-                .popover(isPresented: $showsPermission) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(L10n.tr("授予辅助功能权限后，可以直接粘贴到原应用；未授权时只会复制到剪贴板。"))
-                            .font(.callout)
-                        Button(L10n.tr("打开设置")) {
-                            showsPermission = false
-                            viewModel.requestAccessibilityPermission()
-                        }
-                    }.padding(18).frame(width: 290)
-                }
-            }
             Spacer(minLength: 4)
-            Text("\(layout == .cards ? "←→" : "↑↓") \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("粘贴"))").foregroundStyle(.secondary)
+            Text("\(layout == .cards ? "←→" : "↑↓") \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("复制"))").foregroundStyle(.secondary)
             Button {
                 settings.clipboardLayout = layout == .list ? .cards : .list
             } label: {

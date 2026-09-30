@@ -5,7 +5,7 @@ struct ClipboardItemForm: View {
     let repository: ClipboardRepository
     let timeLabel: String
     let isEditing: Bool
-    let onPaste: () -> Void
+    let onCopy: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var fullItem: ClipboardItem?
@@ -71,7 +71,7 @@ struct ClipboardItemForm: View {
                         .keyboardShortcut(.return, modifiers: .command)
                         .disabled(fullItem == nil)
                 } else {
-                    Button(L10n.tr("粘贴到原应用"), action: onPaste).disabled(fullItem == nil)
+                    Button(L10n.tr("复制到剪贴板"), action: onCopy).disabled(fullItem == nil)
                 }
             }
         }
@@ -119,7 +119,7 @@ struct ClipboardItemForm: View {
                 ClipboardPreviewText(text: String(previewText.prefix(10_000)))
                     .accessibilityLabel(L10n.tr("内容"))
                 if previewText.count > 10_000 {
-                    Text(L10n.tr("仅预览前 10,000 字，粘贴时使用完整内容。"))
+                    Text(L10n.tr("仅预览前 10,000 字，复制时使用完整内容。"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

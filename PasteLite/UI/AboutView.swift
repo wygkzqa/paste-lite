@@ -55,7 +55,7 @@ struct AboutView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: 360)
 
-            Text(L10n.tr("Paste Lite 是一款轻量的 macOS 剪贴板管理工具，支持文本、链接、图片和文件记录。通过搜索、分组和快捷粘贴，快速找回并复用复制过的内容。"))
+            Text(L10n.tr("Paste Lite 是一款轻量的 macOS 剪贴板管理工具，支持文本、链接、图片和文件记录。通过搜索、分组和快捷复制，快速找回并复用复制过的内容。"))
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

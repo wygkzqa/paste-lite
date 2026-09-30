@@ -72,9 +72,9 @@ struct ClipboardImageTests {
         checkImage(at: repository.assetURL(for: imageFile)!, maxPixelSize: 1_200)
         let pasteService = PasteService(repository: repository, monitor: monitor, pasteboard: board)
         precondition(pasteService.writeToPasteboard(imageFile))
-        let pastedURLs = board.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
-        precondition(pastedURLs == [jpegURL])
-        print("PASS: JPEG file appears in images, has previews and still pastes as a file")
+        let copiedURLs = board.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        precondition(copiedURLs == [jpegURL])
+        print("PASS: JPEG file appears in images, has previews and still copies as a file")
 
         viewModel.query = "  图片  "
         waitUntil { viewModel.filteredItems.count == 4 }

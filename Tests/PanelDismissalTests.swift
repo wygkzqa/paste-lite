@@ -69,7 +69,7 @@ struct PanelDismissalTests {
         panel.orderFront(nil)
         model.isPresentingOverlay = true
         controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
-        precondition(panel.isVisible, "Opening a filter or permission popover must retain its parent panel")
+        precondition(panel.isVisible, "Opening a filter popover must retain its parent panel")
         NotificationCenter.default.post(name: NSApplication.didResignActiveNotification, object: app)
         precondition(!panel.isVisible, "Leaving the app must close the panel even if a popover already took key focus")
         model.isPresentingOverlay = false
@@ -103,19 +103,44 @@ struct PanelDismissalTests {
         let first = model.filteredItems[0]
         let second = model.filteredItems[1]
         checkMouseSelection(model, first: first, second: second)
-        var pastedIDs: [UUID] = []
-        // Observe requests without sending paste events or accessing the system clipboard.
-        model.onPaste = { pastedIDs.append($0.id) }
+
+        model.prepareForPresentation()
+        panel.orderFront(nil)
+        model.select(first)
+        model.copySelected()
+        try await waitUntil { !panel.isVisible }
+        let fullFirst = try await repository.item(id: first.id)!
+        precondition(pasteboard.string(forType: .string) == fullFirst.textContent)
+        precondition(model.errorMessage == nil)
+        print("PASS: copying a selected record writes its full contents to the named clipboard and dismisses the panel")
+
+        model.prepareForPresentation()
+        panel.orderFront(nil)
+        let missingFile = root.appendingPathComponent("missing-fixture.txt")
+        let unavailableItem = ClipboardItem(id: UUID(), type: .file, textContent: nil, assetFilename: nil,
+            thumbnailFilename: nil, filePaths: [missingFile.path], sourceAppName: "Fixture",
+            sourceBundleID: "example.fixture", contentHash: "missing-fixture", createdAt: Date(), lastCopiedAt: Date())
+        model.onCopy?(unavailableItem)
+        precondition(panel.isVisible, "A failed clipboard write must keep the panel open")
+        controller.dismiss(reactivateTarget: false)
+        pasteboard.setString("Keep named clipboard", forType: .string)
+        model.onCopy?(fullFirst)
+        precondition(pasteboard.string(forType: .string) == "Keep named clipboard", "A hidden panel must reject copy requests")
+        print("PASS: a failed clipboard write retains the panel; a hidden panel does not overwrite the clipboard")
+
+        var copiedIDs: [UUID] = []
+        // Observe requests without accessing the system clipboard.
+        model.onCopy = { copiedIDs.append($0.id) }
         pasteboard.setString("Keep named clipboard", forType: .string)
 
         for dismissal in ["explicit", "key loss", "application deactivation"] {
-            model.prepareForPresentation(hasAccessibilityPermission: false)
+            model.prepareForPresentation()
             panel.orderFront(nil)
             let gate = manager.pauseNextDeletion()
             // Deleting a nonexistent ID holds the storage queue without removing either fixture.
             let deletion = Task { try await repository.deleteItems([UUID()]) }
             try await waitUntil { gate.started.wait(timeout: .now()) == .success }
-            model.paste(first)
+            model.copy(first)
             try await Task.sleep(for: .milliseconds(10))
             switch dismissal {
             case "explicit": controller.dismiss(reactivateTarget: false)
@@ -128,32 +153,32 @@ struct PanelDismissalTests {
             precondition(!panel.isVisible)
             gate.resume.signal()
             try await deletion.value
-            precondition(pastedIDs.isEmpty, "A paste survived \(dismissal)")
+            precondition(copiedIDs.isEmpty, "A copy survived \(dismissal)")
             precondition(model.errorMessage == nil && pasteboard.string(forType: .string) == "Keep named clipboard")
         }
-        print("PASS: explicit dismissal, key loss and application deactivation cancel queued paste reads without changing the clipboard")
+        print("PASS: explicit dismissal, key loss and application deactivation cancel queued copy reads without changing the clipboard")
 
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         panel.orderFront(nil)
         let gate = manager.pauseNextDeletion()
         let deletion = Task { try await repository.deleteItems([UUID()]) }
         try await waitUntil { gate.started.wait(timeout: .now()) == .success }
-        model.paste(first)
+        model.copy(first)
         try await Task.sleep(for: .milliseconds(10))
         controller.dismiss(reactivateTarget: false)
-        model.prepareForPresentation(hasAccessibilityPermission: false)
+        model.prepareForPresentation()
         panel.orderFront(nil)
-        model.paste(second)
-        model.paste(first)
+        model.copy(second)
+        model.copy(first)
         gate.resume.signal()
         try await deletion.value
-        try await waitUntil { !pastedIDs.isEmpty }
-        precondition(pastedIDs == [second.id], "Only the new presentation's request should finish")
-        model.paste(first)
-        try await waitUntil { pastedIDs.count == 2 }
-        precondition(pastedIDs == [second.id, first.id])
+        try await waitUntil { !copiedIDs.isEmpty }
+        precondition(copiedIDs == [second.id], "Only the new presentation's request should finish")
+        model.copy(first)
+        try await waitUntil { copiedIDs.count == 2 }
+        precondition(copiedIDs == [second.id, first.id])
         controller.dismiss(reactivateTarget: false)
-        print("PASS: reopening accepts a new paste, rejects stale/overlapping requests, and allows subsequent pastes after completion")
+        print("PASS: reopening accepts a new copy, rejects stale/overlapping requests, and allows subsequent copies after completion")
     }
 
     private static func checkMouseSelection(_ model: ClipboardViewModel, first: ClipboardItem, second: ClipboardItem) {
@@ -207,7 +232,7 @@ struct PanelDismissalTests {
         view.mouseUp(with: event(.leftMouseUp, clicks: 2))
         view.mouseDown(with: event(.leftMouseDown, clicks: 2))
         view.mouseUp(with: event(.leftMouseUp, clicks: 2, point: NSPoint(x: 250, y: 20)))
-        precondition(activations == 1, "Modified clicks, drags and releases outside the entry must not activate paste")
+        precondition(activations == 1, "Modified clicks, drags and releases outside the entry must not activate copying")
         print("PASS: double-click activates once on release; modifiers, dragging and release outside cancel activation")
     }
 
