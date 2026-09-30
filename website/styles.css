@@ -49,9 +49,9 @@ h1 span { color: var(--blue); }
 .hero-visual { margin: 0; position: relative; padding: 35px 18px 22px; border: 1px solid var(--line); border-radius: 32px; background: var(--surface); }
 .visual-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 15px; margin-bottom: 16px; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
 .hero-visual > picture img { width: 100%; }
-/* Scale the native window’s 24 pt corners with each screenshot. */
-.cards-screenshot { border-radius: 4% / 8.28%; }
-.list-screenshot { border-radius: 4.71% / 6.16%; }
+/* Preserve the native 24 pt corners and 12 pt shadow margin as screenshots scale. */
+.cards-screenshot { border-radius: 5.77% / 11.46%; }
+.list-screenshot { border-radius: 6.74% / 8.70%; }
 .hero-visual figcaption { text-align: center; color: var(--muted); font-size: 12px; margin-top: 12px; }
 .overview { display: grid; grid-template-columns: repeat(4, 1fr); padding-block: 26px; border-block: 1px solid var(--line); }
 .overview div { text-align: center; padding: 4px 12px; }

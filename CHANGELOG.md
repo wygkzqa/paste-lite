@@ -18,7 +18,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Website
 
-- Refresh the website’s Chinese and English Cards and List screenshots with the latest interface and the system-composited glass background, correcting the gray cast in light appearance. Match the screenshots’ rounded corners to the native window at every display size.
+- Refresh the website’s Chinese and English Cards and List screenshots with the latest interface and system-composited glass over a neutral sample page, correcting the gray cast in light appearance. Preserve native window shadows and scale the screenshot framing and rounded corners with the images.
 - Add a Chinese and English product website with actual Cards and List screenshots in both languages and appearances, feature and shortcut guides, installation FAQs, and links to the latest release. The website supports mobile screens and system light/dark appearance and deploys independently through GitHub Pages.
 
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
