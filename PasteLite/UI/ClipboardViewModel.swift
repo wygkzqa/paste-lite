@@ -43,6 +43,7 @@ final class ClipboardViewModel: ObservableObject {
     @Published private(set) var selectedIDs = Set<UUID>()
     @Published private(set) var isSelectingAll = false
     @Published var presentationToken = 0
+    @Published private(set) var scrollToStartToken = 0
     @Published private(set) var filteredItems: [ClipboardItem] = []
     @Published private(set) var resultCount = 0
     @Published private(set) var isLoading = false
@@ -67,6 +68,7 @@ final class ClipboardViewModel: ObservableObject {
     private let dateFormatter = DateFormatter()
     private var activeQuery = ClipboardQuery()
     private var displayedQuery: ClipboardQuery?
+    private var scrollToStartAfterSearch = false
     private var selectionQuery = ClipboardQuery()
     private var queryGeneration = 0
     private var keyboardAdvance = 0
@@ -104,8 +106,8 @@ final class ClipboardViewModel: ObservableObject {
         Publishers.CombineLatest4(
             repository.$revision,
             $query
-                .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
-                .removeDuplicates(),
+                .removeDuplicates()
+                .debounce(for: .milliseconds(100), scheduler: RunLoop.main),
             $contentFilter.removeDuplicates(),
             $sourceFilter.removeDuplicates()
         )
@@ -144,6 +146,9 @@ final class ClipboardViewModel: ObservableObject {
         if nextQuery != activeQuery {
             selectAllTask?.cancel()
             isSelectingAll = false
+        }
+        if nextQuery.text != activeQuery.text {
+            scrollToStartAfterSearch = nextQuery.text.isEmpty
         }
         activeQuery = nextQuery
         fetchPage(reset: true, limit: limit)
@@ -194,6 +199,11 @@ final class ClipboardViewModel: ObservableObject {
                 resultCount = page.total
                 isLoading = false
                 normalizeSelection()
+                if reset, scrollToStartAfterSearch, query.text.isEmpty,
+                   self.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    scrollToStartAfterSearch = false
+                    scrollToStartToken += 1
+                }
                 if !reset, keyboardAdvance > 0, !page.items.isEmpty {
                     let index = min(offset + keyboardAdvance - 1, filteredItems.count - 1)
                     selectForClick(filteredItems[index], extending: keyboardExtendsSelection)

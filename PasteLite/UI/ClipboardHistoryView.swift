@@ -192,52 +192,63 @@ struct ClipboardHistoryView: View {
         .accessibilityAddTraits(viewModel.groupFilter == filter ? .isSelected : [])
     }
 
-    @ViewBuilder
     private var historyContent: some View {
-        if let error = viewModel.errorMessage ?? repository.errorMessage {
-            VStack(spacing: 10) {
-                Text(L10n.tr(error)).font(.callout).foregroundStyle(.secondary)
-                Button(L10n.tr("重试")) { viewModel.retrySearch() }
+        ScrollViewReader { proxy in
+            Group {
+                if let error = viewModel.errorMessage ?? repository.errorMessage {
+                    VStack(spacing: 10) {
+                        Text(L10n.tr(error)).font(.callout).foregroundStyle(.secondary)
+                        Button(L10n.tr("重试")) { viewModel.retrySearch() }
+                    }
+                } else if viewModel.filteredItems.isEmpty {
+                    if viewModel.showsInitialLoading { ProgressView().controlSize(.small) }
+                    else {
+                        VStack(spacing: 8) {
+                            Image(systemName: "clipboard").font(.system(size: 25, weight: .light)).foregroundStyle(.secondary)
+                            Text(repository.totalCount == 0 ? L10n.tr("复制的内容，会出现在这里") : L10n.tr("没有匹配的记录"))
+                                .font(.system(size: 13, weight: .medium))
+                            Text(viewModel.groupFilter == .all ? L10n.tr("试试其他关键词，或调整筛选条件。") : L10n.tr("在全部历史中选择记录，即可加入分组。"))
+                                .font(.system(size: 11)).foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    ScrollView(layout == .cards ? .horizontal : .vertical) {
+                        if layout == .cards {
+                            LazyHStack(spacing: 8) { historyItems }
+                                .scrollTargetLayout()
+                                .padding(.horizontal, 1)
+                        } else {
+                            LazyVStack(spacing: 2) { historyItems }
+                                .scrollTargetLayout()
+                        }
+                    }
+                    .scrollIndicators(.never)
+                    // Track the visible record so new captures do not displace the content being read.
+                    .scrollPosition(id: $visibleItemID)
+                    .id(layout)
+                    .onChange(of: viewModel.presentationToken) {
+                        if let first = viewModel.filteredItems.first {
+                            proxy.scrollTo(first.id, anchor: layout == .cards ? .leading : .top)
+                        }
+                    }
+                    .onReceive(viewModel.keyboardScrollRequests) { id in
+                        searchIsFocused = false
+                        // Let newly loaded rows enter the view before scrolling across a page boundary.
+                        DispatchQueue.main.async {
+                            guard viewModel.selectedID == id else { return }
+                            proxy.scrollTo(id)
+                        }
+                    }
+                }
             }
-        } else if viewModel.filteredItems.isEmpty {
-            if viewModel.showsInitialLoading { ProgressView().controlSize(.small) }
-            else {
-                VStack(spacing: 8) {
-                    Image(systemName: "clipboard").font(.system(size: 25, weight: .light)).foregroundStyle(.secondary)
-                    Text(repository.totalCount == 0 ? L10n.tr("复制的内容，会出现在这里") : L10n.tr("没有匹配的记录"))
-                        .font(.system(size: 13, weight: .medium))
-                    Text(viewModel.groupFilter == .all ? L10n.tr("试试其他关键词，或调整筛选条件。") : L10n.tr("在全部历史中选择记录，即可加入分组。"))
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-            }
-        } else {
-            ScrollViewReader { proxy in
-                ScrollView(layout == .cards ? .horizontal : .vertical) {
-                    if layout == .cards {
-                        LazyHStack(spacing: 8) { historyItems }
-                            .scrollTargetLayout()
-                            .padding(.horizontal, 1)
-                    } else {
-                        LazyVStack(spacing: 2) { historyItems }
-                            .scrollTargetLayout()
-                    }
-                }
-                .scrollIndicators(.never)
-                // Track the visible record so new captures do not displace the content being read.
-                .scrollPosition(id: $visibleItemID)
-                .id(layout)
-                .onChange(of: viewModel.presentationToken) {
-                    if let first = viewModel.filteredItems.first {
-                        proxy.scrollTo(first.id, anchor: layout == .cards ? .leading : .top)
-                    }
-                }
-                .onReceive(viewModel.keyboardScrollRequests) { id in
-                    searchIsFocused = false
-                    // Let newly loaded rows enter the view before scrolling across a page boundary.
-                    DispatchQueue.main.async {
-                        guard viewModel.selectedID == id else { return }
-                        proxy.scrollTo(id)
-                    }
+            .onChange(of: viewModel.scrollToStartToken) { _, token in
+                visibleItemID = nil
+                // Keep this outside the result branches so clearing an empty search also resets its anchor.
+                DispatchQueue.main.async {
+                    guard viewModel.scrollToStartToken == token,
+                          viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                          let first = viewModel.filteredItems.first else { return }
+                    proxy.scrollTo(first.id, anchor: layout == .cards ? .leading : .top)
                 }
             }
         }

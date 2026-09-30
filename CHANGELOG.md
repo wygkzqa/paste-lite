@@ -8,6 +8,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Improvements
 
+- Return to the beginning after clearing search in List and Cards, once the restored results are ready, while preserving other filters and search focus.
 - Move the content-type selector beside the search field in both layouts; keep source filtering and clearing filters in the popover.
 - Put card content first with a compact icon-and-title row, regular-weight gray custom titles, smaller gray content-type labels, and up to four lines of higher-contrast 13 pt text.
 - Lighten selection in List and Cards with a highlighted blue border and a pale blue background, preserving standard text colors in light and dark appearances.
