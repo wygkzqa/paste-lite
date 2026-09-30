@@ -98,7 +98,7 @@ struct ClipboardRowView: View {
             if item.hasImage {
                 preview.frame(height: 70)
             } else {
-                Text(item.displayDetail).font(.system(size: 12)).foregroundStyle(.primary).lineLimit(4)
+                Text(item.displayDetail).font(.system(size: 13)).foregroundStyle(.primary).lineLimit(4)
             }
             Spacer(minLength: 0)
             metadata
