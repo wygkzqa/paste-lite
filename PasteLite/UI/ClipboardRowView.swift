@@ -92,7 +92,7 @@ struct ClipboardRowView: View {
                 Image(systemName: item.type.systemImage)
                     .font(.system(size: 11)).foregroundStyle(.secondary)
                 Text(cardTitle).font(.system(size: hasCustomTitle ? 12 : 11)).lineLimit(1)
-                    .foregroundStyle(hasCustomTitle ? Color.primary : Color.secondary)
+                    .foregroundStyle(.secondary)
                     .help(cardTitle)
             }
             if item.hasImage {

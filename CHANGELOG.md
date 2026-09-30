@@ -8,7 +8,7 @@ Notable changes to Paste Lite are recorded here.
 
 ### Improvements
 
-- Put card content first with a compact icon-and-title row, regular-weight custom titles, smaller content-type labels, and up to four lines of higher-contrast text.
+- Put card content first with a compact icon-and-title row, regular-weight gray custom titles, smaller gray content-type labels, and up to four lines of higher-contrast text.
 - Lighten selection in List and Cards with a highlighted blue border and a pale blue background, preserving standard text colors in light and dark appearances.
 
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
