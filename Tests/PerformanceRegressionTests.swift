@@ -40,12 +40,12 @@ struct PerformanceRegressionTests {
 
         var unseen = entries[0].item
         unseen.lastCopiedAt = Date().addingTimeInterval(-59)
-        model.prepareForPresentation(hasAccessibilityPermission: true)
+        model.prepareForPresentation()
         let token = model.presentationToken
         try await Task.sleep(for: .milliseconds(1_100))
         precondition(model.timeLabel(for: unseen) == "Just now")
         precondition(model.presentationToken == token)
-        model.prepareForPresentation(hasAccessibilityPermission: true)
+        model.prepareForPresentation()
         precondition(model.timeLabel(for: unseen) == "1 min ago")
         print("PASS: first rendering after scrolling uses the opening snapshot, not the current clock")
 

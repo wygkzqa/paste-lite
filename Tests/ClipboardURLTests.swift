@@ -91,7 +91,7 @@ struct ClipboardURLTests {
         try await repository.editItem(id: plainItem.id, title: "Edited link", textContent: "https://example.com/edited")
         let edited = try await repository.item(id: plainItem.id)!
         precondition(edited.type == .url && edited.groupIDs == [group.id] && edited.customTitle == "Edited link" && edited.createdAt == plainItem.createdAt)
-        print("PASS: link paste publishes a valid URL and exact original plain text; editing text into a URL updates stored classification")
+        print("PASS: copying a link publishes a valid URL and exact original plain text; editing text into a URL updates stored classification")
     }
 
     private static func capture(_ text: String, type: ClipboardContentType = .text) -> ClipboardCapture {

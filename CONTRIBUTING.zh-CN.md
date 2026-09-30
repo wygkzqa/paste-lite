@@ -8,7 +8,7 @@
 
 提交前先查看已有 Issue。请提供 macOS 版本、“关于 Paste Lite”中的应用版本和构建号、复现步骤、预期行为与实际行为。构建问题还需要 Xcode 版本和相关错误输出。
 
-请使用示例剪贴板内容，并移除截图、日志中的个人信息。权限问题请说明安装路径、签名方式，以及最近是否重新构建过应用；不要上传剪贴板数据库或凭证。
+请使用示例剪贴板内容，并移除截图、日志中的个人信息。启动或更新问题请说明安装路径、签名方式，以及最近是否重新构建过应用；不要上传剪贴板数据库或凭证。
 
 ## 开发环境
 
@@ -27,9 +27,9 @@ sh scripts/build-beta.sh
 
 脚本把 `Paste Lite Beta.app` 安装到 `~/Applications/`。后续运行只替换此 Beta 应用包，保留历史和设置；如果该 Beta 正在运行，先请求正常退出，替换后重新打开。编辑或导入阻止退出时中止替换，不强制结束进程。首次安装保持未运行状态。直接从 Xcode 构建只更新构建产物；需要更新安装版本时运行上述脚本。
 
-Beta 使用 `com.local.PasteLite.beta` 和 `~/Library/Application Support/PasteLiteBeta/`，与正式版的 `com.local.PasteLite`、`~/Library/Application Support/PasteLite/` 分开。偏好、登录项和辅助功能授权按独立应用身份管理，不自动导入正式历史。菜单栏图标带 `β`，默认快捷键为 `⇧⌘V`。Beta 不创建在线更新器，由本地构建替换；正式版继续走原有在线更新渠道。
+Beta 使用 `com.local.PasteLite.beta` 和 `~/Library/Application Support/PasteLiteBeta/`，与正式版的 `com.local.PasteLite`、`~/Library/Application Support/PasteLite/` 分开。偏好和登录项按独立应用身份管理，不自动导入正式历史。菜单栏图标带 `β`，默认快捷键为 `⇧⌘V`。Beta 不创建在线更新器，由本地构建替换；正式版继续走原有在线更新渠道。
 
-两版可以同时保留和运行，默认快捷键相同；其中一版已注册时，另一版会提示快捷键被占用。如需同时使用两版快捷键，可在通用设置中为其中一版改键。系统剪贴板仍共享，各自按自己的收录设置记录复制内容。默认采用临时签名，替换 Beta 后其辅助功能授权可能需要重新添加；脚本不重置任何权限记录。长期 Beta 及其数据不会在验证完成后删除，临时隔离测试应用仍按测试流程清理。
+两版可以同时保留和运行，默认快捷键相同；其中一版已注册时，另一版会提示快捷键被占用。如需同时使用两版快捷键，可在通用设置中为其中一版改键。系统剪贴板仍共享，各自按自己的收录设置记录复制内容。默认采用临时签名，脚本不重置任何权限记录。长期 Beta 及其数据不会在验证完成后删除，临时隔离测试应用仍按测试流程清理。
 
 正式版构建使用原有配置，仅构建不安装：
 
@@ -50,7 +50,7 @@ xcodebuild -project PasteLite.xcodeproj -scheme PasteLite \
 
 在选定的发布提交上运行 `sh Tests/run.sh`。在已安装 Rosetta 的 Apple Silicon Mac 上，再运行 `TEST_ARCH=x86_64 sh Tests/run.sh`；两套测试共用 `.build/tests/`，需顺序执行。Rosetta 测试通过不能替代 Intel 实机验证。使用最终 DMG 验证安装并如实记录限制，将 DMG 与校验文件作为 Release 附件上传。二进制文件和验证日志不提交到 Git。
 
-[CI](./.github/workflows/ci.yml) 在每个 PR 和 `main` 推送时，仅使用标准 Apple Silicon 与 Intel macOS 云端机器运行隔离回归测试，固定 Xcode 26.6。必需检查为 `Test (arm64)` 和 `Test (x86_64)`。云端测试不能替代实际安装、辅助功能授权和跨应用粘贴检查。
+[CI](./.github/workflows/ci.yml) 在每个 PR 和 `main` 推送时，仅使用标准 Apple Silicon 与 Intel macOS 云端机器运行隔离回归测试，固定 Xcode 26.6。必需检查为 `Test (arm64)` 和 `Test (x86_64)`。云端测试不能替代实际安装、复制和原应用焦点恢复检查。
 
 [Release](./.github/workflows/release.yml) 在推送 `v*` 标签时复用上述测试，并通过独立任务构建 Universal DMG；测试和打包全部通过后才准备发布草稿。要求标签格式为稳定版本 `vX.Y.Z`、与应用版本一致、提交已合入 `main`，且两份更新日志均包含该版本说明。随后创建带有 DMG、已签名的 `appcast.xml`、校验文件和双语说明的 Release **草稿**，并重新下载校验已上传附件。检查最终 DMG 和说明后，再正式发布并设为 Latest。不会覆盖已有 Release；若创建草稿后上传失败，先检查并仅删除该未完成草稿，再重新运行，保持原标签不变。
 
@@ -83,7 +83,7 @@ python3 Tests/run-updates.py \
   --sparkle-directory .build/SourcePackages/artifacts/sparkle/Sparkle
 ```
 
-测试使用 `UPDATE_TESTING` 编译独立身份的原生应用，在 Keychain 之外生成临时密钥，通过本机地址提供签名清单，验证真实 DMG 替换重启、偏好保留、取消、准备好更新后退出、无新版本、安装包篡改和清单篡改，结束后清理测试应用、偏好和权限记录。正式 target 不得启用 `UPDATE_TESTING`；仅该测试构建允许本机 HTTP 清单，普通构建要求 HTTPS。主回归测试还验证退出时等待已排队写入、重新打开后数据完整。真实界面交互、辅助功能权限与最低系统版本仍需对应环境验证。
+测试使用 `UPDATE_TESTING` 编译独立身份的原生应用，在 Keychain 之外生成临时密钥，通过本机地址提供签名清单，验证真实 DMG 替换重启、偏好保留、取消、准备好更新后退出、无新版本、安装包篡改和清单篡改，结束后清理测试应用、偏好和权限记录。正式 target 不得启用 `UPDATE_TESTING`；仅该测试构建允许本机 HTTP 清单，普通构建要求 HTTPS。主回归测试还验证退出时等待已排队写入、重新打开后数据完整。真实界面交互与最低系统版本仍需对应环境验证。
 
 ## 项目结构
 
@@ -91,11 +91,42 @@ python3 Tests/run-updates.py \
 | --- | --- |
 | `PasteLite/App/` | 应用生命周期、菜单栏、快捷键和关于窗口 |
 | `PasteLite/Models/` | 剪贴板采集结果与历史记录值类型 |
-| `PasteLite/Services/` | 剪贴板监测、SwiftData 存储、全局快捷键和粘贴 |
+| `PasteLite/Services/` | 剪贴板监测、SwiftData 存储、全局快捷键和剪贴板写入 |
 | `PasteLite/UI/` | SwiftUI 视图、展示状态、面板控制器和图片加载 |
 | `PasteLite/AppIcon.icon/` | 原生应用图标源文件 |
 | `Tests/` | 独立回归测试 |
 | `docs/` | README 图片资源 |
+| `website/` | 中英文静态官网与共用样式表 |
+
+## 官网
+
+官网使用纯 HTML 和 CSS，不依赖包管理器或 JavaScript 运行时。编辑[中文页面](./website/index.html)、[英文页面](./website/en/index.html)与[共用样式表](./website/styles.css)，保持双语同步；截图使用示例内容，保留签名和隐私的已知限制说明。
+
+<details>
+<summary>官网预览（示例内容）</summary>
+
+![Paste Lite 中文官网的桌面浅色外观](./docs/website-preview.png)
+
+</details>
+
+在仓库根目录构建并预览：
+
+```bash
+sh scripts/build-website.sh
+python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
+```
+
+打开 `http://127.0.0.1:4173/` 或 `http://127.0.0.1:4173/en/`，修改后重新执行构建。构建仅将官网页面、样式表、网站地图、robots 文件及 `docs/` 中选定的图片复制到 `.build/website/`。提交前检查两种语言、窄屏与桌面布局、浅色与深色外观、键盘导航、FAQ 展开及本地链接。仅修改官网无需构建 macOS 应用。
+
+`docs/` 保留原始 PNG。官网图标使用 256 × 256 的 `logo-web.png`（页面最大显示尺寸为 72 CSS 像素），应用截图使用无损 `.webp` 副本。更换截图时，使用 `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` 重新生成，保留像素与颜色配置。截图时，在浅色下使用不透明白色背景、深色下使用中性深色背景，截取屏幕合成后的应用区域；单独截取玻璃窗口可能丢失背景并产生灰色蒙层。仅使用示例内容，并排除其他窗口。日常官网构建只复制已提交的资源，不需要图片转换工具。
+
+在仓库 **Settings → Pages → Build and deployment** 中选择 **GitHub Actions**。[Website 工作流](./.github/workflows/pages.yml)在相关 PR 中构建，仅在 `main` 上的官网、图片资源、构建脚本或工作流变化后部署，也可手动运行。官网发布不创建应用新版本；下载始终链接到最新 GitHub Release。
+
+默认公开地址为 `https://wygkzqa.github.io/paste-lite/` 及其 `en/` 子目录。资源使用相对链接，兼容项目路径。
+
+[网站地图](./website/sitemap.xml)列出两种语言，发布地址为 `https://wygkzqa.github.io/paste-lite/sitemap.xml`，可直接提交给搜索引擎站长工具。[robots.txt](./website/robots.txt) 随构建提供可部署副本，但爬虫只读取 `https://wygkzqa.github.io/robots.txt`；项目路径 `/paste-lite/robots.txt` 下的副本不控制抓取，需要通过账号站点单独发布到域名根目录才会生效。根目录缺少 robots 文件不阻止抓取。
+
+以后绑定自定义域名时，还需同步修改两份 HTML 中的 canonical、多语言 alternate 与 Open Graph 地址、网站地图与 robots 文件，以及两份 README 的官网入口。
 
 ## 实现约定
 
@@ -118,11 +149,11 @@ sh Tests/run.sh
 
 构建 Beta 后，运行 `python3 Tests/run-beta.py` 验证应用身份、安装保护和在线更新禁用。该测试仅创建可丢弃的应用，不安装到 Applications。
 
-测试使用临时数据库和独立命名的剪贴板，覆盖 PNG/TIFF/JPEG 采集、图片文件分类、搜索、缩略图、预览、文件粘贴语义、持久化重载和图片缺失处理。不会修改正式历史或系统剪贴板，也不会验证真实辅助功能授权和跨应用自动粘贴。
+测试使用临时数据库和独立命名的剪贴板，覆盖 PNG/TIFF/JPEG 采集、图片文件分类、搜索、缩略图、预览、文件剪贴板表示、持久化重载和图片缺失处理。不会修改正式历史或系统剪贴板，也不会验证原应用焦点恢复或在原应用中手动粘贴。
 
 导入测试构造合成 SQLite/WAL 数据库与压缩附件，覆盖源数据不变、内容映射、原始元数据、去重、容量扩展持久化、预览过期、取消清理和附件部分写入后的回滚。不要使用个人 Paste 数据库作为测试样本。格式兼容通过已验证的实体哈希控制，变更需要新增合成用例并明确核对兼容范围。
 
-界面改动需在浅色和深色外观下检查受影响的行为。粘贴改动需使用可丢弃的示例内容，手动验证有权限时的自动粘贴和无权限时的仅复制行为。未执行的检查不要标记为通过。
+界面改动需在浅色和深色外观下检查受影响的行为。复制改动需使用可丢弃的示例内容，手动验证剪贴板写入、面板收起、原应用焦点恢复，以及在原应用中按 ⌘V 粘贴。未执行的检查不要标记为通过。
 
 保持 `en.lproj` 和 `zh-Hans.lproj` 文案同步，并检查两种语言，尤其是较长的英文标签。`AppSettings` 将语言选择与历史分开保存，`L10n` 在显示时读取翻译。切换时保留内容、稳定的筛选值和列表时间快照。语言回归使用隔离数据与偏好，覆盖默认回退、偏好持久化、翻译占位符及展示状态保留。
 
@@ -162,13 +193,19 @@ sh Tests/run.sh
 - 一个分支对应一个明确任务或 PR；合并后删除工作分支，后续修改从最新 `main` 创建新分支。
 - 规范从新分支开始执行，已有分支无需改名。目前通过文档约定，尚未添加 CI 强制校验。
 
+## commit 与 PR 语言
+
+commit 标题和正文、PR 标题和描述，以及 Squash merge 时的提交信息，默认使用英文。只有明确要求本次任务使用其他语言时才例外；对话语言不改变此默认规则。
+
+提交信息应简明描述改动，按需使用 `docs:`、`fix:`、`feat:` 等前缀，例如 `docs: clarify commit and PR language`。
+
 ## Pull Request
 
 所有仓库改动（包括代码、文档、配置和版本准备）通过独立分支创建 PR 并合并到 `main`，不直接向 `main` 提交或推送改动。合并前完成适用验证与评审，遵守仓库规则，不绕过检查或强推 `main`。优先使用 Squash merge，让一个 PR 对应一个主分支提交。
 
-网页和命令行创建 PR 时，均使用 [PR 模板](./.github/pull_request_template.md)。保留**变更说明**、**主要改动**、**验证**三个部分，没有关联问题时删除**关联问题**部分。正文使用中文或英文即可，无需重复翻译，篇幅与改动规模相匹配。说明解决的问题、修改后的行为和主要改动，仅填写实际执行的检查及结果，并明确未验证的部分。视觉改动请提供使用示例内容的截图。
+网页和命令行创建 PR 时，均使用 [PR 模板](./.github/pull_request_template.md)。保留 **Summary**（变更说明）、**Changes**（主要改动）、**Validation**（验证）三个部分，没有关联问题时删除 **Related issues**（关联问题）部分。篇幅与改动规模相匹配。说明解决的问题、修改后的行为和主要改动，仅填写实际执行的检查及结果，并明确未验证的部分。视觉改动请提供使用示例内容的截图。
 
-标题使用 `类型: 简短描述`，选择合适的常见前缀，如 `feat:`、`fix:`、`docs:`、`ci:` 或 `chore:`。发布准备 PR 使用 `chore: release vX.Y.Z`。模板合并到默认分支后，GitHub 网页创建 PR 时会自动填入。使用 `gh pr create --body-file` 时，应先按同一模板准备正文，不假设命令行会自动插入模板。模板用于引导格式，目前没有自动校验 PR 格式的检查。
+标题使用 `type: short description`，选择合适的常见前缀，如 `feat:`、`fix:`、`docs:`、`ci:` 或 `chore:`。发布准备 PR 使用 `chore: release vX.Y.Z`。模板合并到默认分支后，GitHub 网页创建 PR 时会自动填入。使用 `gh pr create --body-file` 时，应先按同一模板准备正文，不假设命令行会自动插入模板。模板用于引导格式，目前没有自动校验 PR 格式的检查。
 
 无关清理单独提交。贡献遵循项目的 [MIT 许可证](./LICENSE)。
 

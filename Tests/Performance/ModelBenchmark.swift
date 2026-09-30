@@ -33,7 +33,7 @@ struct ModelBenchmark {
             var opens: [Double] = []
             for _ in 0..<5 {
                 let start = Date()
-                model.prepareForPresentation(hasAccessibilityPermission: false)
+                model.prepareForPresentation()
                 opens.append(Date().timeIntervalSince(start) * 1_000)
             }
             var searches: [Double] = []

@@ -14,7 +14,7 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="MIT license" /></a>
   </p>
 
-  <p><a href="#getting-started">Getting started</a> · <a href="./CONTRIBUTING.md">Contributing</a> · <a href="./CHANGELOG.md">Changelog</a></p>
+  <p><a href="https://wygkzqa.github.io/paste-lite/en/">Website</a> · <a href="#getting-started">Getting started</a> · <a href="./CONTRIBUTING.md">Contributing</a> · <a href="./CHANGELOG.md">Changelog</a></p>
 </div>
 
 ## About
@@ -30,8 +30,8 @@ Built with SwiftUI, AppKit, and SwiftData, it stores history on your Mac without
 - **Source icons** — save application icons locally and show them in both layouts; Paste imports preserve available icons even when the source app is no longer installed. Unknown sources show no icon.
 - **Quick search** — search content, filenames, and source apps, with filters for content type and application.
 - **Image previews** — browse thumbnails and open an on-demand preview for images, text, links, or file paths.
-- **Keyboard access** — customize the history shortcut in General settings (default ⇧⌘V), navigate with arrow keys, preview one selected item with Space, and paste with Return.
-- **Return to your app** — double-click a result or press Return to copy it and attempt a paste into the previous application. Automatic pasting requires Accessibility permission.
+- **Keyboard access** — customize the history shortcut in General settings (default ⇧⌘V), navigate with arrow keys, preview one selected item with Space, and copy with Return.
+- **Return to your app** — double-click a result or press Return to copy it to the clipboard, close the panel, and return to the previous application. Press **⌘V** there to paste; no Accessibility permission is needed.
 - **Native presentation** — a menu bar app with no Dock icon, system, light, or dark appearance and cached time labels based on when the panel opens.
 - **Two compact layouts** — switch between List and Cards in Settings, with native Liquid Glass on macOS 26 and translucent materials on earlier versions.
 - **Groups** — drag tabs to reorder groups, choose a colored dot from the group context menu, assign an entry to multiple groups, and search within a group. Deleting a group keeps its history entries.
@@ -68,7 +68,7 @@ This source revision is **1.2.2 (build 16)**. Use the link above for published p
 2. Quit an existing copy of Paste Lite, open the disk image, and drag **Paste Lite** into **Applications**.
 3. Eject the disk image, then open Paste Lite from Applications. Press **⇧⌘V** to show history.
 
-**Signing:** the app uses ad-hoc signing and has not been notarized by Apple. Sparkle update signatures do not replace Apple code signing or notarization. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval. Automatic pasting also has a separate [known Accessibility issue](#accessibility-permission).
+**Signing:** the app uses ad-hoc signing and has not been notarized by Apple. Sparkle update signatures do not replace Apple code signing or notarization. Gatekeeper may block the first launch. If you trust this repository and have checked the download, follow [Apple’s instructions for opening an app from an unidentified developer](https://support.apple.com/en-us/102445). A successful local build does not imply Gatekeeper approval.
 
 For 1.1.1 and later, download the DMG, `appcast.xml`, and `SHA256SUMS.txt` from the same Release into one folder, then run `shasum -a 256 -c SHA256SUMS.txt` there. The checksum file covers both the package and update feed; 1.0.0 only needs its DMG and checksum file. CI runs regression tests on Apple Silicon and Intel macOS runners; the Release workflow also builds the Universal package. GUI installation and online upgrades on a physical Intel Mac have not been verified.
 
@@ -78,7 +78,7 @@ In builds configured for online updates, use **Check for Updates…** in the men
 
 **Automatically check for updates** is off by default. When enabled, Sparkle checks about once a day and shows availability in the menu and About page without stealing focus. Downloads and installation require your action. Errors leave the current app available, and **Downloads** opens the GitHub release page.
 
-Version 1.0.0 does not include the updater: install the current release manually once. Versions 1.1.1 and later can receive subsequent releases through the signed in-app update feed. Source builds without a configured public update key show an explicit unavailable message; see [Contributing](./CONTRIBUTING.md#configure-online-update-publishing) for configuration. Updating does not resolve the known Accessibility authorization issue.
+Version 1.0.0 does not include the updater: install the current release manually once. Versions 1.1.1 and later can receive subsequent releases through the signed in-app update feed. Source builds without a configured public update key show an explicit unavailable message; see [Contributing](./CONTRIBUTING.md#configure-online-update-publishing) for configuration.
 
 ### Build from source
 
@@ -108,7 +108,7 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 | Select multiple entries | ⌘-click toggles entries; ⇧-click or ⇧↑ / ⇧↓ extends a range; cards also support ⇧← / ⇧→ |
 | Select all matching entries | ⌘A when focus is on history, or right-click → Select All |
 | Delete selected entries | Right-click → Delete…, then confirm |
-| Copy and attempt to paste a result | Double-click or Return |
+| Copy a result and return to your app | Double-click or Return |
 | Close the panel | Esc |
 | Preview selected content | Space, or right-click an entry → Preview |
 | Switch layout | Layout button in the footer, or Settings → General → Clipboard Layout |
@@ -117,7 +117,7 @@ To install, quit any running copy of Paste Lite, then copy `.build/Build/Product
 
 Opening Paste Lite from Spotlight or Finder shows the main panel, including when the app is already running. Login-item launches stay in the menu bar without opening the panel.
 
-Selecting a row does not paste. Arrow-key navigation keeps the selected row or card visible; clicking an entry does not automatically scroll. When the search field has focus, Left / Right retain normal text editing. Without Accessibility permission, a paste action still copies the result to the clipboard; return to the destination app and press **⌘V** manually.
+Selecting a row does not copy it. Arrow-key navigation keeps the selected row or card visible; clicking an entry does not automatically scroll. When the search field has focus, Left / Right retain normal text editing. Double-click, Return, or the preview’s **Copy to Clipboard** button copies the selected result to the clipboard and closes the panel. Paste Lite returns focus to the previous app; press **⌘V** there to paste. Accessibility permission is not required.
 
 ### Layouts and groups
 
@@ -153,7 +153,7 @@ Turn on **Settings… → General → Launch at Login** to open Paste Lite when 
 
 **Settings… → History** controls retention in days, maximum entry count, and cleanup interval in hours. Each defaults to 0: keep forever, unlimited entries, and no periodic cleanup. Startup still checks retention rules once. Changing a setting does not immediately delete entries, and history may temporarily exceed its count limit between cleanups. Cleanup uses creation date rather than last use, removes expired entries first, then keeps the newest entries within the count limit.
 
-History is queried in the database, with 200 summaries per page and full text loaded for preview or paste. Search covers all stored history, including unloaded pages. It uses substring queries, not a full-text index, so large text collections can still take longer to search.
+History is queried in the database, with 200 summaries per page and full text loaded for preview or copying. Search covers all stored history, including unloaded pages. It uses substring queries, not a full-text index, so large text collections can still take longer to search.
 
 ### Clear history
 
@@ -167,7 +167,7 @@ Choose **Delete…** from the context menu and confirm the entry count. Deletion
 
 ### Edit and preview entries
 
-Right-click a list entry or card to select it and open the context menu. **Edit…** and **Preview** use the same title-and-content form; Preview is read-only. Text and link entries support body editing, while images and files support title editing and retain their original content. ⌘Return saves, Return inserts a line break in text, and Esc cancels. Saving updates history only; the system clipboard changes when you copy or paste the entry.
+Right-click a list entry or card to select it and open the context menu. **Edit…** and **Preview** use the same title-and-content form; Preview is read-only. Text and link entries support body editing, while images and files support title editing and retain their original content. ⌘Return saves, Return inserts a line break in text, and Esc cancels. Saving updates history only; the system clipboard changes when you copy the entry.
 
 Enter up to 100 characters on one line for a new title; clear it to show the content type on cards and the automatic title in the list and preview. Existing long titles imported from Paste can be preserved when editing only the body. Titles appear in both layouts and previews and participate in full-library search. Edits preserve identity, timestamps, order, source, and groups; body changes update the search summary and content deduplication. Empty text, invalid links, text above the configured size limit, and content that duplicates another entry are rejected without discarding the draft. Recopying the edited content keeps its title.
 
@@ -178,7 +178,7 @@ Enter up to 100 characters on one line for a new title; clear it to show the con
 3. Click **Scan data** (`扫描数据`) and review new records, duplicates, skipped items, and required capacity.
 4. Click **Import N records**. History is unlimited by default. If you configured an entry limit, choose **Increase entry limit and import all**, or import only recent records that fit the remaining count.
 
-The importer recognizes the local data structure verified against **Paste 6.0.3**; other structures are rejected. It reads a database snapshot and leaves the source database and attachments unchanged. Import runs locally without Accessibility permission, network access, or writing to the system clipboard. It does not synchronize the two apps.
+The importer recognizes the local data structure verified against **Paste 6.0.3**; other structures are rejected. It reads a database snapshot and leaves the source database and attachments unchanged. Import runs locally without network access or writing to the system clipboard. It does not synchronize the two apps.
 
 Text, links, PNG/TIFF/JPEG images, and accessible file references are supported. RTF is reduced to plain text; HTML requires an accompanying plain-text representation. Titles, Pinboard names (including empty boards), supported group colors, and record memberships are retained. For duplicate content in Paste, the most recent nonempty title is used. Imported titles are preserved in full, including those longer than the manual editor’s 100-character limit. Groups with matching names are merged case-insensitively; missing local colors are filled while existing colors are kept. Reimporting can fill colors for previously imported groups. Unknown or missing source colors leave groups uncolored. Content found in multiple Pinboards keeps all memberships without storing duplicate payloads. Group and item ordering, pinned status, sharing, and rich-text styles are not retained. Missing cloud content, unavailable attachments, invalid file references, and unsupported formats are counted as skipped; previews are never substituted for original images.
 
@@ -194,12 +194,6 @@ Text, links, PNG/TIFF/JPEG images, and accessible file references are supported.
 Existing duplicates keep their IDs, timestamps, source apps, and local group memberships; missing memberships and titles are added. Existing local titles take priority. You can use **Import groups and titles** even when all records already exist or the history entry limit is full. Groups are matched by name on each import, so renaming a destination group may create a group with the original name when importing again. Import never removes existing history to make room. An increased entry limit persists across restarts. Imported entries remain subject to the configured retention period, using their original creation dates. Capture-size changes require a fresh scan. You can cancel scanning before the final save. Repeating an import adds no duplicates.
 
 For local testing, retain a separate **Paste Lite Beta** with `sh scripts/build-beta.sh`. Each successful build refreshes `~/Applications/Paste Lite Beta.app` while preserving Beta data. Beta has its own data, preferences, and app identity, defaults to `⇧⌘V`, and does not use stable online updates. Stable keeps its existing update channel. See [Contributing](./CONTRIBUTING.md#development-setup).
-
-## Accessibility permission
-
-Use **Open Settings** (`打开设置`) in the history panel, or go to **System Settings → Privacy & Security → Accessibility**, then enable Paste Lite. If it is missing, add `/Applications/Paste Lite.app` with the **+** button.
-
-**Known issue:** permission detection can still report “not authorized” even with the system switch enabled. This remains unresolved. Restarting the app or removing and re-adding the installed app may help, but is not a confirmed fix. The project currently uses ad-hoc signing, so replacing a build can also invalidate a previous grant. Manual copying and ⌘V remain available.
 
 ## Data and privacy
 

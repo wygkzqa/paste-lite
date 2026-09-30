@@ -8,7 +8,7 @@ Thank you for helping improve Paste Lite. Small, focused changes are easier to r
 
 Check existing issues before opening a new one. Include the macOS version, app version and build number from **About Paste Lite**, reproduction steps, expected behavior, and actual behavior. For build problems, include your Xcode version and the relevant error output.
 
-Use sample clipboard content and remove personal information from screenshots and logs. For permission issues, describe the installation path, signing method, and whether the app was recently rebuilt; do not attach clipboard databases or credentials.
+Use sample clipboard content and remove personal information from screenshots and logs. For launch or update issues, describe the installation path, signing method, and whether the app was recently rebuilt; do not attach clipboard databases or credentials.
 
 ## Development setup
 
@@ -27,9 +27,9 @@ sh scripts/build-beta.sh
 
 The script installs `Paste Lite Beta.app` in `~/Applications/`. Subsequent runs replace only that Beta app bundle and preserve its history and preferences. If the installed Beta is running, the script requests a normal quit and reopens it after replacement. If editing or importing prevents quitting, replacement stops without forcing termination. A first install is left closed. Building directly in Xcode only updates the build product; run the script to refresh the installed copy.
 
-Beta uses `com.local.PasteLite.beta` and `~/Library/Application Support/PasteLiteBeta/`, separate from stable's `com.local.PasteLite` and `~/Library/Application Support/PasteLite/`. Preferences, login items, and Accessibility authorization use the separate app identity; stable history is not imported automatically. Beta's menu bar icon has a `β` label and its default shortcut is `⇧⌘V`. Beta never creates an online updater and is replaced by local builds. Stable keeps its existing online update channel.
+Beta uses `com.local.PasteLite.beta` and `~/Library/Application Support/PasteLiteBeta/`, separate from stable's `com.local.PasteLite` and `~/Library/Application Support/PasteLite/`. Preferences and login items use the separate app identity; stable history is not imported automatically. Beta's menu bar icon has a `β` label and its default shortcut is `⇧⌘V`. Beta never creates an online updater and is replaced by local builds. Stable keeps its existing online update channel.
 
-Both apps can be retained and run together. They default to the same shortcut; if it is already registered by one app, the other reports a conflict. Set a different shortcut in General settings to use both hotkeys at once. The system clipboard remains shared, and each app records copied content according to its own capture settings. Signing is ad-hoc, so Beta may need Accessibility authorization again after replacement; the script never resets permissions. The retained Beta and its data are not deleted after validation. Disposable isolated test apps are still cleaned up.
+Both apps can be retained and run together. They default to the same shortcut; if it is already registered by one app, the other reports a conflict. Set a different shortcut in General settings to use both hotkeys at once. The system clipboard remains shared, and each app records copied content according to its own capture settings. Signing is ad-hoc; the script never resets permissions. The retained Beta and its data are not deleted after validation. Disposable isolated test apps are still cleaned up.
 
 Build stable with its original configuration, without installing it:
 
@@ -50,7 +50,7 @@ Run `sh scripts/package-release.sh` to build the Universal Release app, verify b
 
 On the selected release commit, run `sh Tests/run.sh`. On an Apple silicon Mac with Rosetta installed, also run `TEST_ARCH=x86_64 sh Tests/run.sh`; run these suites sequentially because they share `.build/tests/`. A Rosetta pass does not replace physical Intel testing. Test installation from the final DMG, record limitations accurately, and upload the DMG and checksum file as Release assets. Keep binaries and verification logs out of Git.
 
-[CI](./.github/workflows/ci.yml) runs only isolated regression tests on standard Apple Silicon and Intel macOS runners for every PR and `main` push, using Xcode 26.6. The required checks are `Test (arm64)` and `Test (x86_64)`. Hosted tests do not replace manual installation, Accessibility, or cross-app paste checks.
+[CI](./.github/workflows/ci.yml) runs only isolated regression tests on standard Apple Silicon and Intel macOS runners for every PR and `main` push, using Xcode 26.6. The required checks are `Test (arm64)` and `Test (x86_64)`. Hosted tests do not replace manual installation or checks of copying and returning focus to the previous app.
 
 [Release](./.github/workflows/release.yml) reuses these tests and builds a Universal DMG in a separate job when a `v*` tag is pushed. Draft preparation waits for both tests and packaging to pass. It requires a stable `vX.Y.Z` tag matching the app version, a commit already merged into `main`, and notes for that version in both changelogs. It creates a **draft** Release with the DMG, signed `appcast.xml`, checksum file, and bilingual notes, then downloads and verifies the uploaded assets. Review the final DMG and notes before publishing and marking the release Latest. Existing releases are never overwritten; if an upload fails after draft creation, inspect and remove only that incomplete draft before rerunning, keeping the original tag unchanged.
 
@@ -83,7 +83,7 @@ python3 Tests/run-updates.py \
   --sparkle-directory .build/SourcePackages/artifacts/sparkle/Sparkle
 ```
 
-The suite compiles a separately identified native fixture with `UPDATE_TESTING`, generates disposable keys outside Keychain, and serves a signed feed on loopback. It tests actual DMG replacement/relaunch, preference preservation, cancellation, quitting with a prepared update, no newer build, archive tampering and feed tampering. It cleans up its apps, test preferences and test permission records. Never set `UPDATE_TESTING` in a production target; only that fixture permits a loopback HTTP feed. Ordinary builds require HTTPS. The main regression suite also verifies that quitting drains pending storage writes before reopening. GUI/Accessibility and minimum-supported-OS checks still require the corresponding real environment.
+The suite compiles a separately identified native fixture with `UPDATE_TESTING`, generates disposable keys outside Keychain, and serves a signed feed on loopback. It tests actual DMG replacement/relaunch, preference preservation, cancellation, quitting with a prepared update, no newer build, archive tampering and feed tampering. It cleans up its apps, test preferences and test permission records. Never set `UPDATE_TESTING` in a production target; only that fixture permits a loopback HTTP feed. Ordinary builds require HTTPS. The main regression suite also verifies that quitting drains pending storage writes before reopening. GUI and minimum-supported-OS checks still require the corresponding real environment.
 
 ## Project structure
 
@@ -91,11 +91,42 @@ The suite compiles a separately identified native fixture with `UPDATE_TESTING`,
 | --- | --- |
 | `PasteLite/App/` | App lifecycle, menu bar, shortcuts, and About window |
 | `PasteLite/Models/` | Clipboard capture and history value types |
-| `PasteLite/Services/` | Pasteboard monitoring, SwiftData persistence, hotkeys, and pasting |
+| `PasteLite/Services/` | Pasteboard monitoring, SwiftData persistence, hotkeys, and clipboard writes |
 | `PasteLite/UI/` | SwiftUI views, presentation state, panel controller, and image loading |
 | `PasteLite/AppIcon.icon/` | Native application icon source |
 | `Tests/` | Standalone regression tests |
 | `docs/` | README image assets |
+| `website/` | Chinese/English static website and shared stylesheet |
+
+## Website
+
+The product website uses plain HTML and CSS, without a package manager or JavaScript runtime dependency. Edit [the Chinese page](./website/index.html), [the English page](./website/en/index.html), and [the shared stylesheet](./website/styles.css). Keep both languages in sync; use sample content in screenshots and preserve the documented signing and privacy limitations.
+
+<details>
+<summary>Website preview (sample content)</summary>
+
+![Paste Lite website in Chinese, desktop light appearance](./docs/website-preview.png)
+
+</details>
+
+Build and preview from the repository root:
+
+```bash
+sh scripts/build-website.sh
+python3 -m http.server 4173 --bind 127.0.0.1 --directory .build/website
+```
+
+Open `http://127.0.0.1:4173/` or `http://127.0.0.1:4173/en/`. Re-run the build after edits. The build copies only the website pages, stylesheet, sitemap, robots file, and selected images from `docs/` into `.build/website/`. Before submitting, check both languages, narrow and desktop layouts, light/dark appearance, keyboard navigation, FAQ expansion, and local links. No macOS app build is needed for website-only changes.
+
+Keep source PNGs in `docs/`. The website uses the 256 × 256 `logo-web.png` for its icons (displayed at up to 72 CSS pixels) and lossless `.webp` copies of the app screenshots. When replacing screenshots, regenerate the WebP with `cwebp -lossless -exact -metadata icc -m 6 input.png -o output.webp` to preserve pixels and the color profile. Capture the composited screen region with an opaque white backdrop in light appearance and a neutral dark backdrop in dark appearance; capturing the glass window alone can lose its backdrop and produce a gray veil. Use only synthetic content and exclude other windows. The normal website build only copies committed assets and does not require image conversion tools.
+
+In repository **Settings → Pages → Build and deployment**, select **GitHub Actions**. The [Website workflow](./.github/workflows/pages.yml) builds on relevant pull requests and deploys only from `main`, after website, selected asset, build-script, or workflow changes; it can also be run manually. Website publishing does not create an application release. Downloads always link to the latest GitHub Release.
+
+The default public URLs are `https://wygkzqa.github.io/paste-lite/` and its `en/` subdirectory. Relative asset links support this project path.
+
+The [sitemap](./website/sitemap.xml) lists both language versions and is published at `https://wygkzqa.github.io/paste-lite/sitemap.xml`; it can be submitted directly to search-engine webmaster tools. [robots.txt](./website/robots.txt) is included in the build as a deployable copy, but crawlers only use `https://wygkzqa.github.io/robots.txt`. The project-path copy at `/paste-lite/robots.txt` has no effect on crawling; deploy the file separately through the account site to enable it. A missing host-root robots file does not block crawling.
+
+If a custom domain is added, also update the canonical, alternate-language, and Open Graph URLs in both HTML files, the sitemap and robots file, and the website links in both READMEs.
 
 ## Implementation guidelines
 
@@ -118,11 +149,11 @@ sh Tests/run.sh
 
 After building Beta, run `python3 Tests/run-beta.py` to validate its identity, installer safeguards, and disabled online updates. This suite creates disposable apps and does not install into Applications.
 
-The tests use a temporary database and named pasteboards. They cover PNG/TIFF/JPEG capture, image-file filtering, search, thumbnails, previews, file paste semantics, persistence reloads, and missing-image handling. They do not modify normal history or the system clipboard, and do not validate live Accessibility authorization or automatic pasting into other apps.
+The tests use a temporary database and named pasteboards. They cover PNG/TIFF/JPEG capture, image-file filtering, search, thumbnails, previews, file clipboard representations, persistence reloads, and missing-image handling. They do not modify normal history or the system clipboard, and do not validate returning focus to the previous app or manually pasting there.
 
 Import tests construct synthetic SQLite/WAL stores and compressed attachments. They cover source immutability, content mapping, original metadata, duplicate handling, persistent capacity expansion, stale previews, cancellation cleanup, and rollback after partial asset writes. Do not use a personal Paste database as a test fixture. Format compatibility is gated by verified entity hashes; changes require new synthetic cases and an explicit compatibility review.
 
-For UI changes, check the affected behavior in light and dark appearance. For paste changes, manually check both authorized automatic pasting and the copy-only fallback using disposable sample content. Do not claim a check passed if it was not run.
+For UI changes, check the affected behavior in light and dark appearance. For copy changes, use disposable sample content to manually check clipboard writes, panel dismissal, returning focus to the previous app, and pasting there with ⌘V. Do not claim a check passed if it was not run.
 
 Keep the `en.lproj` and `zh-Hans.lproj` strings in sync and check both languages, including longer English labels. `AppSettings` stores the language choice separately from history; `L10n` resolves strings at display time. Preserve content, stable filter values, and the panel's time snapshot when switching languages. Language regression tests cover fallback, preference persistence, translation placeholders, and retained presentation state using isolated data and preferences.
 
@@ -162,11 +193,17 @@ Name work branches `<type>/<short-description>`, without a tool or author prefix
 - Keep each branch focused on one task or PR. Delete the work branch after merging, and start subsequent work from the latest `main` on a new branch.
 - Apply this convention to new branches; existing branches do not need to be renamed. This is a documented convention and is not currently enforced by CI.
 
+## Commit and PR language
+
+Write commit subjects and bodies, PR titles and descriptions, and squash merge messages in English by default. Use another language only when explicitly requested for the task; the language of the conversation does not change this default.
+
+Keep commit messages concise and describe the change, using prefixes such as `docs:`, `fix:`, or `feat:` where appropriate, for example `docs: clarify commit and PR language`.
+
 ## Pull requests
 
 All repository changes, including code, documentation, configuration, and release preparation, go through a branch and pull request into `main`. Do not commit or push changes directly to `main`. Complete the applicable validation and review before merging, respect repository rules, and do not bypass checks or force-push `main`. Prefer squash merging so each PR becomes one main-branch commit.
 
-Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Write in English or Chinese without duplicating the body in both languages, and keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
+Use the [PR template](./.github/pull_request_template.md) for both web and command-line submissions. Keep the **Summary**, **Changes**, and **Validation** sections; remove **Related issues** when not applicable. Keep the detail proportional to the change. Explain the problem and resulting behavior, list the main changes, and report only checks actually performed with their results and any unverified areas. Include screenshots for visual changes using synthetic content.
 
 Use `type: short description` for the title, with a suitable prefix such as `feat:`, `fix:`, `docs:`, `ci:`, or `chore:`. Release preparation PRs use `chore: release vX.Y.Z`. GitHub fills in the template for web submissions after it is merged into the default branch. When creating a PR with `gh pr create --body-file`, prepare the body using the same template; do not assume it will be inserted automatically. The template guides the format; there is no automated PR-format check.
 

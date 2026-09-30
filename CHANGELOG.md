@@ -11,6 +11,14 @@ Notable changes to Paste Lite are recorded here.
 - Put card content first with a compact icon-and-title row, regular-weight gray custom titles, smaller gray content-type labels, and up to four lines of higher-contrast 13 pt text.
 - Lighten selection in List and Cards with a highlighted blue border and a pale blue background, preserving standard text colors in light and dark appearances.
 
+### Changed
+
+- Remove automatic pasting into the previous app and the associated Accessibility permission checks and prompts. Double-click, Return, and the preview’s Copy to Clipboard button now copy to the clipboard, close the panel, and return focus to the previous app for manual ⌘V. Update the bilingual documentation and website to match.
+
+### Website
+
+- Add a Chinese and English product website with actual Cards and List screenshots in both languages and appearances, feature and shortcut guides, installation FAQs, and links to the latest release. The website supports mobile screens and system light/dark appearance and deploys independently through GitHub Pages.
+
 ## [1.2.2](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.2) — 2026-09-28
 
 Build 16.

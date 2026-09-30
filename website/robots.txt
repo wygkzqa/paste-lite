@@ -1,0 +1,6 @@
+# Deploy this file at https://wygkzqa.github.io/robots.txt to apply crawl rules.
+# The copy under /paste-lite/ does not control crawlers for this host.
+User-agent: *
+Allow: /
+
+Sitemap: https://wygkzqa.github.io/paste-lite/sitemap.xml

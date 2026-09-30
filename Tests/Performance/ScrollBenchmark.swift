@@ -69,9 +69,9 @@ final class ScrollBenchmark: NSObject, NSApplicationDelegate, ObservableObject {
                     try await Task.sleep(for: .milliseconds(10))
                 }
                 let start = Date()
-                model.prepareForPresentation(hasAccessibilityPermission: true)
+                model.prepareForPresentation()
                 openMS = Date().timeIntervalSince(start) * 1_000
-                model.onPaste = { [weak self] _ in self?.status = "Paste action received" }
+                model.onCopy = { [weak self] _ in self?.status = "Copy action received" }
                 self.model = model
                 status = "Ready: \(count) records"
             } catch { status = "Fixture failed: \(error)" }
