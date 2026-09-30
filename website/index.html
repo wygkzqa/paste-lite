@@ -100,7 +100,7 @@
                 </div>
                 <ol class="steps"><li><span class="step-number" aria-hidden="true">01</span><div><h3>照常复制</h3><p>复制文本、链接、图片或文件，应用自动记录支持的内容。</p></div></li>
 <li><span class="step-number" aria-hidden="true">02</span><div><h3>呼出，再找到</h3><p>按 ⇧⌘V 打开历史，输入关键词搜索，方向键选择，空格预览。</p></div></li>
-<li><span class="step-number" aria-hidden="true">03</span><div><h3>接着用</h3><p>双击或按 Return 复制并尝试粘贴。自动粘贴需要辅助功能权限；未授权时可手动按 ⌘V。</p></div></li></ol>
+<li><span class="step-number" aria-hidden="true">03</span><div><h3>接着用</h3><p>双击或按 Return 复制到剪贴板，面板收起并返回原应用后，按 ⌘V 粘贴即可。无需辅助功能权限。</p></div></li></ol>
             </div>
         </section>
         <section class="container section groups" aria-labelledby="groups-title">
@@ -119,11 +119,11 @@
             <div class="section-heading">
                 <p class="eyebrow">开始之前</p>
                 <h2 id="faq-title">你可能想知道。</h2>
-                <p>安装、权限和数据，说明白再开始。</p>
+                <p>安装、使用和数据，说明白再开始。</p>
             </div>
             <div class="faq-list"><details><summary>如何安装？支持哪些 Mac？</summary><div><p>需要 macOS 14 或更新版本。前往 <a href="https://github.com/wygkzqa/paste-lite/releases/latest">最新正式版</a> 下载 Universal DMG，一个安装包同时支持 Apple Silicon 与 Intel。</p><p>打开 DMG，将 Paste Lite 拖到“应用程序”，再从那里启动。应用常驻菜单栏，默认按 ⇧⌘V 打开历史。</p></div></details>
 <details><summary>首次打开被 macOS 阻止怎么办？</summary><div><p>目前应用使用临时签名，尚未经过 Apple 公证。确认信任本项目并核对下载后，请参考 <a href="https://support.apple.com/zh-cn/102445">Apple 关于打开身份未验证应用的说明</a>。应用内更新签名不替代 Apple 公证。</p></div></details>
-<details><summary>为什么没有自动粘贴到原应用？</summary><div><p>自动粘贴需要在“系统设置 → 隐私与安全性 → 辅助功能”中授权。当前存在系统开关已开启但应用仍判断未授权的已知问题，替换构建也可能使旧授权失效。</p><p>未授权时仍会复制到系统剪贴板，切回目标应用后手动按 ⌘V 即可。详见 <a href="https://github.com/wygkzqa/paste-lite/blob/main/README.zh-CN.md#辅助功能权限">权限说明</a>。</p></div></details>
+<details><summary>如何把历史记录用于其他应用？</summary><div><p>双击记录、按 Return 或点击预览中的“复制到剪贴板”，即可把内容写入系统剪贴板。面板收起并恢复原应用焦点后，按 ⌘V 粘贴。</p><p>Paste Lite 不需要辅助功能权限，也不会自动发送粘贴按键。</p></div></details>
 <details><summary>剪贴板内容会上传吗？是否加密？</summary><div><p>剪贴板历史保存在本机，无需账号，不提供云同步，也不收集遥测数据。本地数据未经应用加密；跳过机密等剪贴板标记，并不意味着能识别所有密码或密钥。</p><p>主动检查或下载更新会访问 GitHub，但请求不包含剪贴板内容；自动检查默认关闭。本网站由 GitHub Pages 托管，GitHub 会记录访问者 IP 用于安全目的，见 <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection">托管服务说明</a>。</p></div></details>
 <details><summary>文件记录和 Paste 导入有什么限制？</summary><div><p>文件记录保存路径引用，不是文件备份。原文件移动或删除后，该记录可能无法继续使用。</p><p>导入目前针对 Paste 6.0.3 的本地数据结构验证。仅在云端的内容、缺失附件和不支持的格式会跳过，富文本样式不会保留。详见 <a href="https://github.com/wygkzqa/paste-lite/blob/main/README.zh-CN.md#从-paste-导入">导入范围与步骤</a>。</p></div></details>
 <details><summary>如何更新？需要付费吗？</summary><div><p>Paste Lite 免费开源，采用 MIT 许可证。1.1.1 及后续版本可在菜单栏或“设置 → 关于”中检查更新，下载与安装由你确认；自动检查默认关闭。也可以随时从 GitHub Releases 下载正式版。</p></div></details></div>

@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Changed
+
+- Remove automatic pasting into the previous app and the associated Accessibility permission checks and prompts. Double-click, Return, and the preview’s Copy to Clipboard button now copy to the clipboard, close the panel, and return focus to the previous app for manual ⌘V. Update the bilingual documentation and website to match.
+
 ### Website
 
 - Add a Chinese and English product website with actual Cards and List screenshots in both languages and appearances, feature and shortcut guides, installation FAQs, and links to the latest release. The website supports mobile screens and system light/dark appearance and deploys independently through GitHub Pages.

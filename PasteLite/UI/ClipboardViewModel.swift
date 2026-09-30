@@ -43,7 +43,6 @@ final class ClipboardViewModel: ObservableObject {
     @Published private(set) var selectedIDs = Set<UUID>()
     @Published private(set) var isSelectingAll = false
     @Published var presentationToken = 0
-    @Published var hasAccessibilityPermission = false
     @Published private(set) var filteredItems: [ClipboardItem] = []
     @Published private(set) var resultCount = 0
     @Published private(set) var isLoading = false
@@ -53,9 +52,8 @@ final class ClipboardViewModel: ObservableObject {
     let keyboardScrollRequests = PassthroughSubject<UUID, Never>()
     let previewRequests = PassthroughSubject<ClipboardItem, Never>()
 
-    var onPaste: ((ClipboardItem) -> Void)?
+    var onCopy: ((ClipboardItem) -> Void)?
     var onDismiss: (() -> Void)?
-    var onRequestAccessibilityPermission: (() -> Void)?
     var onShowSettings: (() -> Void)?
     var onQuit: (() -> Void)?
 
@@ -72,7 +70,7 @@ final class ClipboardViewModel: ObservableObject {
     private var selectionQuery = ClipboardQuery()
     private var queryGeneration = 0
     private var keyboardAdvance = 0
-    private var pasteTask: Task<Void, Never>?
+    private var copyTask: Task<Void, Never>?
     private var selectionAnchorID: UUID?
     private var keyboardExtendsSelection = false
     private var selectedGroups: [UUID: Set<UUID>] = [:]
@@ -121,7 +119,7 @@ final class ClipboardViewModel: ObservableObject {
         .store(in: &cancellables)
     }
 
-    deinit { filterTask?.cancel(); selectAllTask?.cancel(); pasteTask?.cancel() }
+    deinit { filterTask?.cancel(); selectAllTask?.cancel(); copyTask?.cancel() }
 
     private func updateSources(_ names: [String]) {
         sourceApps = names
@@ -211,12 +209,11 @@ final class ClipboardViewModel: ObservableObject {
         }
     }
 
-    func prepareForPresentation(hasAccessibilityPermission: Bool) {
-        cancelPendingPaste()
+    func prepareForPresentation() {
+        cancelPendingCopy()
         keyboardAdvance = 0
         selectAllTask?.cancel()
         isSelectingAll = false
-        self.hasAccessibilityPermission = hasAccessibilityPermission
         presentationDate = Date()
         calendar = Calendar.current
         today = calendar.startOfDay(for: presentationDate)
@@ -325,9 +322,9 @@ final class ClipboardViewModel: ObservableObject {
         }
     }
 
-    func pasteSelected() {
+    func copySelected() {
         guard selectedIDs.count == 1, let item = selectedItem else { return }
-        paste(item)
+        copy(item)
     }
 
     func previewSelected() {
@@ -337,27 +334,27 @@ final class ClipboardViewModel: ObservableObject {
         previewRequests.send(item)
     }
 
-    func paste(_ item: ClipboardItem) {
+    func copy(_ item: ClipboardItem) {
         guard displayedQuery == activeQuery,
               query.trimmingCharacters(in: .whitespacesAndNewlines) == activeQuery.text,
-              pasteTask == nil else { return }
-        pasteTask = Task { [weak self] in
+              copyTask == nil else { return }
+        copyTask = Task { [weak self] in
             guard let self, !Task.isCancelled else { return }
-            // A cancelled read may finish after a new presentation has started another paste.
-            defer { if !Task.isCancelled { pasteTask = nil } }
+            // A cancelled read may finish after a new presentation has started another copy.
+            defer { if !Task.isCancelled { copyTask = nil } }
             do {
                 let fullItem = try await repository.item(id: item.id)
                 guard !Task.isCancelled, let fullItem else { return }
-                onPaste?(fullItem)
+                onCopy?(fullItem)
             } catch {
                 if !Task.isCancelled { errorMessage = "无法读取历史记录，请重试。" }
             }
         }
     }
 
-    func cancelPendingPaste() {
-        pasteTask?.cancel()
-        pasteTask = nil
+    func cancelPendingCopy() {
+        copyTask?.cancel()
+        copyTask = nil
     }
 
     func moveSelection(by offset: Int, extending: Bool = false) {
@@ -379,10 +376,6 @@ final class ClipboardViewModel: ObservableObject {
         let nextIndex = min(max(currentIndex + offset, 0), items.count - 1)
         selectForClick(items[nextIndex], extending: extending)
         keyboardScrollRequests.send(items[nextIndex].id)
-    }
-
-    func requestAccessibilityPermission() {
-        onRequestAccessibilityPermission?()
     }
 
     var selectedItem: ClipboardItem? {

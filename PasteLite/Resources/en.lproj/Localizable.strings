@@ -9,7 +9,7 @@
 "Paste（导入）" = "Paste (imported)";
 "yyyy年M月d日 HH:mm" = "MMM d, yyyy HH:mm";
 "· 文件已不存在" = "· File unavailable";
-"仅预览前 10,000 字，粘贴时使用完整内容。" = "Only the first 10,000 characters are shown. Pasting uses the full content.";
+"仅预览前 10,000 字，复制时使用完整内容。" = "Only the first 10,000 characters are shown. Copying uses the full content.";
 "今天" = "Today";
 "从 Paste 导入" = "Import from Paste";
 "从 Paste 导入…" = "Import from Paste…";
@@ -42,11 +42,8 @@
 "展开内容预览" = "Show preview";
 "已取消扫描，历史记录未更改。" = "Scan canceled. Your history has not changed.";
 "已处理 %d / %d 条" = "Processed %d of %d";
-"快速粘贴" = "Quick paste";
 "所有应用" = "All Apps";
 "打开 Paste Lite" = "Open Paste Lite";
-"打开设置" = "Open Settings";
-"打开辅助功能设置，为 Paste Lite 开启权限" = "Open Accessibility settings to allow Paste Lite";
 "扫描前请先退出 Paste。当前已验证 Paste 6.0.3 的数据结构；其他结构会提示暂不支持。" = "Quit Paste before scanning. The data structure verified against Paste 6.0.3 is supported; other structures are rejected.";
 "扫描后历史记录发生了变化，已更新导入数量和容量，请重新确认。" = "History changed after scanning. Review the updated counts and capacity, then confirm again.";
 "扫描完成" = "Scan Complete";
@@ -54,7 +51,6 @@
 "扫描期间 Paste 数据发生了变化。请退出 Paste 后重新扫描。" = "Paste data changed during the scan. Quit Paste and scan again.";
 "找到记录" = "Records found";
 "把历史带到 Paste Lite" = "Bring your history to Paste Lite";
-"授予辅助功能权限后，可以直接粘贴到原应用；未授权时只会复制到剪贴板。" = "Allow Accessibility access to paste into the previous app. Without it, items are copied to the clipboard.";
 "搜索剪贴板历史…" = "Search clipboard history…";
 "收起内容预览" = "Hide preview";
 "数据来源" = "Data source";
@@ -66,7 +62,6 @@
 "新记录" = "New";
 "无法保存导入结果，已有历史未被本次导入替换。请检查存储空间和目录权限后重试。" = "Could not save the import. Existing history was not replaced. Check disk space and folder permissions, then try again.";
 "无法导入的内容" = "Skipped content";
-"无法打开系统设置" = "Could Not Open System Settings";
 "无法读取 Paste 数据。请确认已退出 Paste，并重新选择数据文件夹授权访问。" = "Could not read Paste data. Quit Paste and select its data folder again to allow access.";
 "昨天" = "Yesterday";
 "暂不支持的多项组合内容" = "Unsupported combination of items";
@@ -87,8 +82,8 @@
 "版本 %@（%@）" = "Version %@ (%@)";
 "磁盘剩余空间不足，请释放空间后重试。" = "Not enough disk space. Free up space and try again.";
 "空文本" = "Empty text";
-"粘贴" = "Paste";
-"粘贴到原应用" = "Paste into Previous App";
+"复制" = "Copy";
+"复制到剪贴板" = "Copy to Clipboard";
 "缺少可用文本或不支持的格式" = "No usable text or unsupported format";
 "缺少有效时间" = "Missing a valid timestamp";
 "缺少本地内容" = "Missing local content";
@@ -98,7 +93,6 @@
 "试试其他关键词，或调整筛选条件。" = "Try another search or adjust the filters.";
 "语言" = "Language";
 "请先退出 Paste，再点击扫描。导入不会修改 Paste 的原始数据。" = "Quit Paste before scanning. Importing does not modify the original Paste data.";
-"请前往“系统设置 → 隐私与安全性 → 辅助功能”，为 Paste Lite 开启权限。" = "Go to System Settings → Privacy & Security → Accessibility and enable Paste Lite.";
 "请选择" = "Choose a source";
 "请选择包含 db.sqlite 和 .db_SUPPORT 的文件夹。" = "Select the folder containing db.sqlite and .db_SUPPORT.";
 "读取失败，请检查目录权限和剩余空间后重试。" = "Could not read the data. Check folder permissions and disk space, then try again.";
@@ -183,7 +177,7 @@
 "外观" = "Appearance";
 "深色" = "Dark";
 "浅色" = "Light";
-"Paste Lite 是一款轻量的 macOS 剪贴板管理工具，支持文本、链接、图片和文件记录。通过搜索、分组和快捷粘贴，快速找回并复用复制过的内容。" = "Paste Lite is a lightweight clipboard manager for macOS. Keep text, links, images, and file references close at hand, with search, groups, and quick paste to reuse what you copy.";
+"Paste Lite 是一款轻量的 macOS 剪贴板管理工具，支持文本、链接、图片和文件记录。通过搜索、分组和快捷复制，快速找回并复用复制过的内容。" = "Paste Lite is a lightweight clipboard manager for macOS. Keep text, links, images, and file references close at hand, with search, groups, and quick copying to reuse what you copy.";
 "已有同名分组。" = "A group with that name already exists.";
 "搜索剪贴板…" = "Search clipboard…";
 "文件已不存在" = "File no longer exists";
@@ -198,7 +192,6 @@
 "重命名" = "Rename";
 "编辑分组" = "Edit Group";
 "记录或分组已不存在，请刷新后重试。" = "The entry or group no longer exists. Refresh and try again.";
-"辅助功能权限" = "Accessibility Permission";
 "预览" = "Preview";
 "空格键" = "Space";
 "%d 个" = "%d groups";
