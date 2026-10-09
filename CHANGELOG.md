@@ -6,6 +6,10 @@ Notable changes to Paste Lite are recorded here.
 
 ## Unreleased
 
+### Improvements
+
+- Remove the preview shortcut hint from the bottom-right footer in Cards and List, while keeping Space to preview available.
+
 ## [1.2.3](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.3) — 2026-09-30
 
 Build 17.

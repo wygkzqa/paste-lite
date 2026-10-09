@@ -290,7 +290,7 @@ struct ClipboardHistoryView: View {
             Text(viewModel.isSelectingAll ? L10n.tr("正在全选…") : (viewModel.selectedIDs.count > 1 ? L10n.tr("已选 %d 条", viewModel.selectedIDs.count) : L10n.tr("%d 条记录", viewModel.resultCount)))
                 .foregroundStyle(.secondary)
             Spacer(minLength: 4)
-            Text("\(layout == .cards ? "←→" : "↑↓") \(L10n.tr("选择"))  ␣ \(L10n.tr("预览"))  ↵ \(L10n.tr("复制"))").foregroundStyle(.secondary)
+            Text("\(layout == .cards ? "←→" : "↑↓") \(L10n.tr("选择"))  ↵ \(L10n.tr("复制"))").foregroundStyle(.secondary)
             Button {
                 settings.clipboardLayout = layout == .list ? .cards : .list
             } label: {
