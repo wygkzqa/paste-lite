@@ -65,6 +65,7 @@ struct PanelDismissalTests {
         let model = hosting.rootView.viewModel
         // Exercise native notifications in this process without activating a window over the user's apps.
         panel.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
+        try await checkSearchFocus(panel, model: model)
         panel.orderFront(nil)
         precondition(panel.isVisible)
         controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
@@ -183,6 +184,51 @@ struct PanelDismissalTests {
         precondition(copiedIDs == [second.id, first.id])
         controller.dismiss(reactivateTarget: false)
         print("PASS: reopening accepts a new copy, rejects stale/overlapping requests, and allows subsequent copies after completion")
+    }
+
+    private static func checkSearchFocus(_ panel: ClipboardPanel, model: ClipboardViewModel) async throws {
+        let previousLayout = AppSettings.shared.clipboardLayout
+        let previousAppearance = panel.appearance
+        defer {
+            panel.orderOut(nil)
+            AppSettings.shared.clipboardLayout = previousLayout
+            panel.appearance = previousAppearance
+            model.query = ""
+        }
+
+        for layout in ClipboardLayout.allCases {
+            AppSettings.shared.clipboardLayout = layout
+            for appearance in [NSAppearance.Name.aqua, .darkAqua] {
+                panel.appearance = NSAppearance(named: appearance)
+                for cycle in 1...6 {
+                    let query = model.query
+                    model.prepareForPresentation()
+                    panel.makeKeyAndOrderFront(nil)
+                    try await Task.sleep(for: .milliseconds(50))
+                    precondition(!(panel.firstResponder is NSTextView) && !(panel.firstResponder is NSTextField),
+                        "Opening \(layout.rawValue)/\(appearance.rawValue) cycle \(cycle) must not focus search")
+                    precondition(model.query == query, "Reopening must preserve the search query")
+                    precondition(!NSApp.isActive, "Focus regression tests must never activate over the user's apps")
+
+                    if cycle >= 4 {
+                        // Use the native key-view loop to enter search, without global keyboard or mouse events.
+                        panel.selectNextKeyView(nil)
+                        guard let editor = panel.firstResponder as? NSTextView else {
+                            preconditionFailure("Search must still accept explicit keyboard focus")
+                        }
+                        editor.selectAll(nil)
+                        editor.insertText("Synthetic search", replacementRange: editor.selectedRange())
+                        try await waitUntil { model.query == "Synthetic search" }
+                        panel.makeKeyAndOrderFront(nil)
+                        try await Task.sleep(for: .milliseconds(50))
+                        precondition(panel.firstResponder === editor, "An already visible panel must retain search focus")
+                    }
+                    panel.orderOut(nil)
+                    try await Task.sleep(for: .milliseconds(50))
+                }
+                print("PASS: \(layout.rawValue)/\(appearance.rawValue): six opens clear native search focus; explicit search and visible-window focus survive")
+            }
+        }
     }
 
     private static func checkMouseSelection(_ model: ClipboardViewModel, first: ClipboardItem, second: ClipboardItem) {
