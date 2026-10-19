@@ -65,7 +65,6 @@ struct ClipboardHistoryView: View {
         .onChange(of: viewModel.presentationToken) {
             sheet = nil
             showsFilters = false
-            searchIsFocused = false
             visibleItemID = nil
         }
     }

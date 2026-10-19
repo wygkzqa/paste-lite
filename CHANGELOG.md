@@ -10,6 +10,10 @@ Notable changes to Paste Lite are recorded here.
 
 - Remove the preview shortcut hint from the bottom-right footer in Cards and List, while keeping Space to preview available.
 
+### Fixed
+
+- Keep search unfocused every time the hidden main panel opens, including after searching, while preserving input focus when bringing an already visible panel forward.
+
 ## [1.2.3](https://github.com/wygkzqa/paste-lite/releases/tag/v1.2.3) — 2026-09-30
 
 Build 17.

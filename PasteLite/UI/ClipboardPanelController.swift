@@ -6,6 +6,15 @@ class ClipboardPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 
+    override func makeKeyAndOrderFront(_ sender: Any?) {
+        let isOpening = !isVisible
+        if isOpening { contentView?.layoutSubtreeIfNeeded() }
+        super.makeKeyAndOrderFront(sender)
+        // Clear AppKit's restored/default text focus after showing the window.
+        // A SwiftUI FocusState already set to false does not reset that responder.
+        if isOpening { makeFirstResponder(nil) }
+    }
+
     override func mouseDown(with event: NSEvent) {
         // Only unhandled background clicks reach the window. Let controls handle
         // their drags before explicitly handing a window move to WindowServer.
