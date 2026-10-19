@@ -201,11 +201,13 @@ struct PanelDismissalTests {
             for appearance in [NSAppearance.Name.aqua, .darkAqua] {
                 panel.appearance = NSAppearance(named: appearance)
                 for cycle in 1...6 {
+                    let query = model.query
                     model.prepareForPresentation()
                     panel.makeKeyAndOrderFront(nil)
                     try await Task.sleep(for: .milliseconds(50))
                     precondition(!(panel.firstResponder is NSTextView) && !(panel.firstResponder is NSTextField),
                         "Opening \(layout.rawValue)/\(appearance.rawValue) cycle \(cycle) must not focus search")
+                    precondition(model.query == query, "Reopening must preserve the search query")
                     precondition(!NSApp.isActive, "Focus regression tests must never activate over the user's apps")
 
                     if cycle >= 4 {
@@ -224,7 +226,6 @@ struct PanelDismissalTests {
                     panel.orderOut(nil)
                     try await Task.sleep(for: .milliseconds(50))
                 }
-                precondition(model.query == "Synthetic search", "Reopening must preserve the search query")
                 print("PASS: \(layout.rawValue)/\(appearance.rawValue): six opens clear native search focus; explicit search and visible-window focus survive")
             }
         }
